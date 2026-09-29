@@ -1,0 +1,10 @@
+# Secrets and business data: never commit
+accounts.csv
+data.js
+settle.js
+settlements/
+raw/
+web/
+Acc*_*/
+New Text Document.txt
+_preview.html
