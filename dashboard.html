@@ -523,7 +523,7 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
 <script>
 // Icon in each KPI tile's chip, picked from its title
 (function () {
-  const I = [[/cancel/i, '❌'], [/rto/i, '🚚'], [/return rate|rate/i, '📉'], [/customer return|returns settled|return charge/i, '↩️'], [/delivered/i, '📦'],
+  const I = [[/cancel/i, '❌'], [/refund|wapas/i, '💸'], [/kitne returns|charged return|average charge/i, '⚠️'], [/payment mile/i, '🏦'], [/total settle/i, '🧮'], [/rto/i, '🚚'], [/return rate|rate/i, '📉'], [/customer return|returns settled|return charge/i, '↩️'], [/delivered/i, '📦'],
     [/units/i, '🧮'], [/avg/i, '🏷️'], [/orders/i, '🛒'], [/total sales|sale/i, '💰'], [/bank/i, '🏦'], [/fees/i, '💸'], [/tax|gst/i, '🧾'],
     [/product cost/i, '🏭'], [/packing/i, '📦'], [/profit %/i, '📊'], [/profit/i, '📈']];
   const put = () => document.querySelectorAll('.k>span:not([data-i])').forEach(s => { const m = I.find(([r]) => r.test(s.textContent)); s.dataset.i = m ? m[1] : '•'; });
