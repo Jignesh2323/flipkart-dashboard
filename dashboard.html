@@ -506,7 +506,7 @@ drawChips();
     btns.forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
     document.querySelectorAll('section.tab').forEach(s => s.hidden = s.dataset.tab !== name);
     // charts drawn while their tab was hidden have no size yet
-    setTimeout(() => { try { Object.values(charts).forEach(c => c </body></body> c.resize()); } catch (e) {} }, 30);
+    setTimeout(() => { try { Object.values(charts).forEach(c => c && c.resize()); } catch (e) {} }, 30);
     try { localStorage.fkTab = name; } catch (e) {}
   }
   btns.forEach(b => b.onclick = () => show(b.dataset.tab));
