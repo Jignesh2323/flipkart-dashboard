@@ -254,9 +254,9 @@ function renderSettle() {
 // (settlement "cr" rows [MM-DD payment date, order item id, charge ₹], joined to the API return type).
 function renderSkuCharges(keys, from, to) {
   const retOf = new Map(D.returns.map(r => [r.acc + '|' + r.itemId, r])), skuOf = new Map(D.orders.map(o => [o.acc + '|' + o.itemId, o.sku]));
-  const rows = new Map(), row = (acc, sku) => { const k = acc + '|' + sku; if (!rows.has(k)) rows.set(k, { acc, sku, sold: 0, cu: 0, rto: 0, cCu: 0, cRto: 0, cNa: 0, chg: 0 }); return rows.get(k); };
+  const rows = new Map(), row = (acc, sku) => { const k = acc + '|' + sku; if (!rows.has(k)) rows.set(k, { acc, sku, sold: 0, del: 0, cu: 0, rto: 0, cCu: 0, cRto: 0, cNa: 0, chg: 0 }); return rows.get(k); };
   const inP = d => d >= from && d <= to;
-  for (const o of D.orders) if (keys.includes(o.acc) && inP(o.date) && !isLost(o)) row(o.acc, o.sku).sold += o.qty;
+  for (const o of D.orders) if (keys.includes(o.acc) && inP(o.date)) { const x = row(o.acc, o.sku); if (!isLost(o)) x.sold += o.qty; if (o.status === 'DELIVERED') x.del += o.qty; }
   for (const r of D.returns) if (keys.includes(r.acc) && inP(r.date)) { const x = row(r.acc, r.sku || skuOf.get(r.acc + '|' + r.itemId) || '—'); r.type === 'courier_return' ? x.rto++ : x.cu++; }
   let hasCr = false;
   for (const k of keys) for (const [md, item, amt] of (window.FK_SETTLE[k].cr || [])) {
@@ -265,9 +265,9 @@ function renderSkuCharges(keys, from, to) {
     x.chg += amt; if (!r) x.cNa++; else if (r.type === 'courier_return') x.cRto++; else x.cCu++;
   }
   const list = [...rows.values()].filter(x => x.chg > 0 || x.cu + x.rto > 0).sort((a, b) => b.chg - a.chg || (b.cu + b.rto) - (a.cu + a.rto)).slice(0, 20);
-  $('tLoss').innerHTML = '<tr><th>SKU</th><th>Account</th><th>Sold</th><th>Customer Ret</th><th>RTO</th><th>Charge laga: Customer</th><th>Charge laga: RTO</th><th>Return charge</th><th>Charge / charged return</th></tr>' +
+  $('tLoss').innerHTML = '<tr><th>SKU</th><th>Account</th><th>Sold</th><th>Customer Ret</th><th>RTO</th><th>Delivered</th><th>Charge laga: Customer</th><th>Charge laga: RTO</th><th>Return charge</th><th>Charge / charged return</th></tr>' +
     list.map(x => { const n = x.cCu + x.cRto + x.cNa;
-      return `<tr><td>${x.sku}</td><td>${short(x.acc)}</td><td>${x.sold}</td><td>${x.cu}</td><td>${x.rto}</td><td>${hasCr ? x.cCu : '—'}</td><td>${hasCr ? x.cRto + (x.cNa ? ` <span title="order ka return type data me nahi">(+${x.cNa}?)</span>` : '') : '—'}</td><td class="bad">${hasCr ? inr(x.chg) : '—'}</td><td>${n ? inr(x.chg / n) : '—'}</td></tr>`; }).join('');
+      return `<tr><td>${x.sku}</td><td>${short(x.acc)}</td><td>${x.sold}</td><td>${x.cu}</td><td>${x.rto}</td><td>${x.del}</td><td>${hasCr ? x.cCu : '—'}</td><td>${hasCr ? x.cRto + (x.cNa ? ` <span title="order ka return type data me nahi">(+${x.cNa}?)</span>` : '') : '—'}</td><td class="bad">${hasCr ? inr(x.chg) : '—'}</td><td>${n ? inr(x.chg / n) : '—'}</td></tr>`; }).join('');
 }
 function makeDemo() {
   const o = [], r = [], st = ['DELIVERED','SHIPPED','READY_TO_DISPATCH','CANCELLED'], rs = ['Size issue','Damaged','Not as described','Changed mind'];
