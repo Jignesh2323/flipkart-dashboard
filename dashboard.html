@@ -129,7 +129,7 @@ function renderSettle() {
   const retLoss = sum(k => T(k, 'Return', 'settle'));
   const retN = sum(k => T(k, 'Return', 'n'));
   $('sKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Flipkart Fees', inr(-fees)], ['Taxes (TCS/TDS/GST)', inr(-taxes)],
-    ['Return Charges', inr(-retChg)], ['Return se kul nuksaan', inr(-retLoss)], ['Returns settled', retN]]
+    ['Return Charges', inr(-retChg)], ['Returns settled', retN]]
     .map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const byDay = {}; keys.forEach(k => S[k].p.forEach(p => byDay[p[0]] = (byDay[p[0]] || 0) + p[1]));
   const d = Object.keys(byDay).sort();
