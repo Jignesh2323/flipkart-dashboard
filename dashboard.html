@@ -139,6 +139,12 @@ function renderSettle() {
   // Returns in this payment window: refund covers every returned order, but "sale" only those whose
   // sale was ALSO paid in this window; the gap is sale money already received in an earlier cycle.
   const rs = sum(k => T(k, 'Return', 'sale')), rf = -sum(k => T(k, 'Return', 'refund')), gap = rf - rs;
+  // Charge burden: charges spread over all sale orders settled in the same payment window.
+  // 'charged' (returns with a non-zero charge) exists only once collected from Seller Hub.
+  const chgOf = k => -(T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')), chgAll = sum(chgOf);
+  const retAll = sum(k => T(k, 'Return', 'n')), ordAll = sum(k => T(k, 'Sale', 'n'));
+  const hasCharged = keys.length && keys.every(k => S[k].t.Return && S[k].t.Return.charged != null);
+  const chargedAll = hasCharged ? sum(k => T(k, 'Return', 'charged')) : null;
   $('rExplain').innerHTML = `
     <p style="margin:0 0 8px">Customer ko order price se <b>zyada paisa nahi</b> diya gaya. Har return me refund utna hi hota hai jitne ka order tha.</p>
     <p style="margin:0 0 8px">Farak <b>timing</b> ka hai. Flipkart order ka paisa aur return ka paisa alag alag din deta/kaatta hai.
@@ -151,12 +157,18 @@ function renderSettle() {
       <div class="k"><span>Refund kata (sab returns)</span><b class="bad">${inr(rf)}</b></div>
       <div class="k"><span>In returns ki sale jo isi period me mili</span><b>${inr(rs)}</b></div>
       <div class="k"><span>Pehle mila paisa, ab wapas kata</span><b>${inr(gap)}</b></div>
-      <div class="k"><span>Asli nuksaan (Flipkart return charges)</span><b class="bad">${inr(-sum(k => T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')))}</b></div>
+      <div class="k"><span>Asli nuksaan (Flipkart return charges)</span><b class="bad">${inr(chgAll)}</b></div>
+    </div>
+    <div class="kpis" style="margin:0 0 12px">
+      <div class="k"><span>Kitne returns par charge laga</span><b>${chargedAll == null ? '—' : chargedAll + ' / ' + retAll}</b></div>
+      <div class="k"><span>Ek charged return ka average charge</span><b class="bad">${chargedAll ? inr(chgAll / chargedAll) : '—'}</b></div>
+      <div class="k"><span>Settled orders (sale)</span><b>${ordAll}</b></div>
+      <div class="k"><span>Har order par return charge ka bojh</span><b class="bad">${ordAll ? '₹' + (chgAll / ordAll).toFixed(1) : '—'}</b></div>
     </div>
     <p style="margin:0 0 8px;color:var(--mut)">"Pehle mila paisa, ab wapas kata" nuksaan nahi hai: wo paisa aapko pehle mil gaya tha aur product bhi wapas aa gaya. Asli nuksaan sirf Flipkart ke return charges hain.</p>`;
-  $('tRefund').innerHTML = '<tr><th>Account</th><th>Returns</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th><th>Return charges</th></tr>' +
-    keys.map(k => { const s = T(k, 'Return', 'sale'), r = -T(k, 'Return', 'refund');
-      return `<tr><td>${short(k)}</td><td>${T(k, 'Return', 'n')}</td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td><td class="bad">${inr(-(T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')))}</td></tr>`; }).join('');
+  $('tRefund').innerHTML = '<tr><th>Account</th><th>Returns</th><th>Charge lage</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th><th>Return charges</th><th>Avg / charged return</th><th>Orders</th><th>Charge / order</th></tr>' +
+    keys.map(k => { const s = T(k, 'Return', 'sale'), r = -T(k, 'Return', 'refund'), c = chgOf(k), o = T(k, 'Sale', 'n'), ch = hasCharged ? T(k, 'Return', 'charged') : null;
+      return `<tr><td>${short(k)}</td><td>${T(k, 'Return', 'n')}</td><td>${ch ?? '—'}</td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td><td class="bad">${inr(c)}</td><td>${ch ? inr(c / ch) : '—'}</td><td>${o}</td><td class="bad">${o ? '₹' + (c / o).toFixed(1) : '—'}</td></tr>`; }).join('');
   const sk = keys.flatMap(k => S[k].s.map(s => [k, ...s])).filter(s => s[9] < 0).sort((x, y) => x[9] - y[9]).slice(0, 15);
   $('tLoss').innerHTML = '<tr><th>SKU</th><th>Account</th><th>Sold</th><th>Returns</th><th>Return chg</th><th>Net settle</th></tr>' +
     sk.map(s => `<tr><td>${s[1]}</td><td>${short(s[0])}</td><td>${s[7]}</td><td>${s[8]}</td><td class="bad">${inr(-s[9])}</td><td class="${s[6] < 0 ? 'bad' : ''}">${inr(s[6])}</td></tr>`).join('');
