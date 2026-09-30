@@ -98,11 +98,18 @@ function render() {
   chart('cTrend', { type: 'line', data: { labels: days, datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: '#2874f0', backgroundColor: '#2874f022', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
   const allO = D.orders.filter(o => (!f || o.date >= f) && (!t || o.date <= t)), allR = D.returns.filter(r => (!f || r.date >= f) && (!t || r.date <= t));
   const rows = accs.map(ac => { const o = allO.filter(x => x.acc === ac), l = o.filter(x => !isLost(x)), r = allR.filter(x => x.acc === ac), u = l.reduce((s, x) => s + x.qty, 0);
-    return { ac, s: l.reduce((s, x) => s + x.amount, 0), n: new Set(o.map(x => x.orderId)).size, c: o.filter(isCancel).length, r: r.length, rr: u ? r.length / u * 100 : 0 }; }).sort((x, y) => y.s - x.s);
+    // Return % is over shipped units (everything not cancelled, incl. items later returned)
+    const sh = o.filter(x => !isCancel(x)).reduce((s, x) => s + x.qty, 0), pct = k => sh ? k / sh * 100 : 0;
+    const cu = r.filter(x => x.type === 'customer_return').length, rto = r.filter(x => x.type === 'courier_return').length;
+    return { ac, s: l.reduce((s, x) => s + x.amount, 0), n: new Set(o.map(x => x.orderId)).size, c: o.filter(isCancel).length,
+      cu, rto, r: r.length, cuP: pct(cu), rtoP: pct(rto), rr: pct(r.length), api: o.length > 0 }; }).sort((x, y) => y.s - x.s);
   chart('cAcc', { type: 'bar', data: { labels: rows.map(r => short(r.ac)), datasets: [{ data: rows.map(r => r.s), backgroundColor: '#2874f0' }] },
     options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: { size: 11, weight: 'bold' } } } } } });
-  $('tAcc').innerHTML = '<tr><th>Account</th><th>Sales</th><th>Orders</th><th>Cancel</th><th>Returns</th><th>Ret %</th></tr>' +
-    rows.map(r => `<tr><td>${short(r.ac)}</td><td>${inr(r.s)}</td><td>${r.n}</td><td>${r.c}</td><td>${r.r}</td><td class="${r.rr > 15 ? 'bad' : ''}">${r.rr.toFixed(1)}%</td></tr>`).join('');
+  const pc = (v, lim) => `<td class="${v > lim ? 'bad' : ''}">${v.toFixed(1)}%</td>`;
+  $('tAcc').innerHTML = '<tr><th>Account</th><th>Sales</th><th>Orders</th><th>Cancel</th><th>Customer Ret</th><th>RTO</th><th>Total Ret</th><th>Cust %</th><th>RTO %</th><th>Total %</th></tr>' +
+    rows.map(r => r.api
+      ? `<tr><td>${short(r.ac)}</td><td>${inr(r.s)}</td><td>${r.n}</td><td>${r.c}</td><td>${r.cu}</td><td>${r.rto}</td><td><b>${r.r}</b></td>${pc(r.cuP, 10)}${pc(r.rtoP, 10)}${pc(r.rr, 20)}</tr>`
+      : `<tr><td>${short(r.ac)}</td><td colspan="9" style="text-align:left;color:var(--mut)">API approval baaki hai</td></tr>`).join('');
   const st = grp(O, 'status');
   chart('cStatus', { type: 'doughnut', data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: ['#2874f0','#1f9d55','#f7b500','#d64545','#8a5cf6','#14b8a6','#f97316'] }] } });
   const top = grp(live, o => o.sku, o => o.qty), topS = grp(live, o => o.sku, o => o.amount);
