@@ -1,7 +1,10 @@
 # Flipkart multi-account data fetcher
 # Reads accounts.csv, pulls orders (shipments) + returns via Flipkart Seller API,
 # writes data.js which dashboard.html reads.
-param([int]$Days = 30)
+# -Days: how far back to fetch now; -Keep: how many days of history data.js holds.
+# Older rows already in data.js are kept (fresh rows win), so a daily 30-day fetch
+# maintains a 6-month history after one initial run with -Days 180.
+param([int]$Days = 30, [int]$Keep = 180)
 
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -125,10 +128,27 @@ foreach ($a in $accounts) {
     }
 }
 
-$orders  = $orders  | Sort-Object acc, itemId -Unique
-$returns = $returns | Sort-Object acc, returnId -Unique
+function Merge-Rows($fresh, $old, $idProp, $cutoff) {
+    $m = [ordered]@{}
+    foreach ($r in $fresh) { $m["$($r.acc)|$($r.$idProp)"] = $r }
+    foreach ($r in $old) { $k = "$($r.acc)|$($r.$idProp)"; if (-not $m.Contains($k) -and "$($r.date)" -ge $cutoff) { $m[$k] = $r } }
+    @($m.Values)
+}
+$cutoff = (Get-Date).AddDays(-$Keep).ToString('yyyy-MM-dd')
+$oldOrders = @(); $oldReturns = @()
+$dataPath = Join-Path $root 'data.js'
+if (Test-Path $dataPath) {
+    try {
+        $t = Get-Content $dataPath -Raw -Encoding utf8
+        $prev = $t.Substring($t.IndexOf('{'), $t.LastIndexOf('}') - $t.IndexOf('{') + 1) | ConvertFrom-Json
+        $oldOrders = @($prev.orders); $oldReturns = @($prev.returns)
+    } catch { Write-Host "purana data.js padh nahi paya, sirf naya data rakhenge" -ForegroundColor Yellow }
+}
+$orders  = Merge-Rows $orders  $oldOrders  'itemId'   $cutoff
+$returns = Merge-Rows $returns $oldReturns 'returnId' $cutoff
+Write-Host "data.js: $($orders.Count) order items, $($returns.Count) returns ($cutoff se)"
 $data = [pscustomobject]@{
-    generated = (Get-Date).ToString('yyyy-MM-dd HH:mm'); days = $Days
+    generated = (Get-Date).ToString('yyyy-MM-dd HH:mm'); days = $Keep
     orders = @($orders); returns = @($returns); status = @($status)
 }
 "window.FK_DATA = " + ($data | ConvertTo-Json -Depth 6 -Compress) + ";" |

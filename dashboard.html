@@ -68,8 +68,8 @@ if (demo) $('note').innerHTML = '<div class="warn">Abhi demo data dikh raha hai.
 // Only accounts whose API works; pending ones (settlement data only) join automatically once approved
 const accs = [...new Set(D.orders.map(o => o.acc))].sort();
 $('fAcc').innerHTML = '<option value="">All Accounts</option>' + accs.map(a => `<option value="${a}">${short(a)}</option>`).join('');
-const dates = D.orders.map(o => o.date).sort(); $('fFrom').value = dates[0] || ''; $('fTo').value = dates.at(-1) || '';
-['fAcc','fFrom','fTo'].forEach(i => $(i).onchange = render);
+const dates = D.orders.map(o => o.date).concat(Object.values(window.FK_SETTLE || {}).flatMap(a => a.p.map(p => p[0]))).sort(); $('fFrom').value = dates[0] || ''; $('fTo').value = dates.at(-1) || '';
+['fAcc','fFrom','fTo'].forEach(i => $(i).onchange = () => { render(); renderSettle(); });
 const charts = {};
 function chart(id, cfg) { charts[id]?.destroy(); charts[id] = new Chart($(id), cfg); }
 const isCancel = o => /CANCEL/i.test(o.status || "");
@@ -115,12 +115,30 @@ function render() {
   chart('cReason', { type: 'bar', data: { labels: rs.map(r => r[0]), datasets: [{ data: rs.map(r => r[1]), backgroundColor: '#f7b500' }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } } } });
   $('tApi').innerHTML = '<tr><th>Account</th><th>Status</th></tr>' + D.status.map(s => `<tr><td>${short(s.acc)}</td><td class="${s.ok ? 'ok' : 'bad'}">${s.ok ? '✔ ' : '✖ '}${s.msg}</td></tr>`).join('');
 }
+// Settlement files hold per-month buckets (m: {"YYYY-MM": {t, s}}); older files have one flat {t, s}.
+// Build the view for the months the date filter touches (by payment date).
+function settleView(raw, from, to) {
+  const f = (from || '0000-00-00'), t = (to || '9999-12-31'), V = {};
+  for (const [k, a] of Object.entries(raw)) {
+    const p = a.p.filter(x => x[0] >= f && x[0] <= t);
+    if (!a.m) { V[k] = { p, t: a.t, s: a.s }; continue; }
+    const tt = {}, sk = {};
+    for (const [ym, b] of Object.entries(a.m)) {
+      if (ym < f.slice(0, 7) || ym > t.slice(0, 7)) continue;
+      for (const [ty, v] of Object.entries(b.t)) { const d = tt[ty] || (tt[ty] = {}); for (const [x, y] of Object.entries(v)) d[x] = (d[x] || 0) + y; }
+      for (const r of b.s) { const s = sk[r[0]] || (sk[r[0]] = [0, 0, 0, 0, 0, 0, 0, 0]); for (let i = 0; i < 8; i++) s[i] += r[i + 1]; }
+    }
+    V[k] = { p, t: tt, s: Object.entries(sk).map(([n, v]) => [n, ...v]) };
+  }
+  return V;
+}
 function renderSettle() {
-  const S = window.FK_SETTLE; if (!S) return;
+  if (!window.FK_SETTLE) return;
+  const S = settleView(window.FK_SETTLE, $('fFrom').value, $('fTo').value);
   $('settle').hidden = false; $('settleTop').hidden = false;
   const a = $('fAcc').value, keys = Object.keys(S).filter(k => accs.includes(k) && (!a || k === a)).sort();
   const dates = keys.flatMap(k => S[k].p.map(p => p[0])).sort();
-  $('sNote').textContent = `Seller Hub se liya gaya (${window.FK_SETTLE_AT}) · payment dates ${dates[0] || ''} → ${dates.at(-1) || ''} · date filter yahan lagu nahi hota`;
+  $('sNote').textContent = `Seller Hub se liya gaya (${window.FK_SETTLE_AT}) · payment dates ${dates[0] || ''} → ${dates.at(-1) || ''} · upar ki date filter payment date par lagti hai (poore mahine ke hisaab se)`;
   const T = (k, typ, f) => (S[k].t[typ] || {})[f] || 0, sum = f => keys.reduce((s, k) => s + f(k), 0);
   const bank = sum(k => S[k].p.reduce((s, p) => s + p[1], 0));
   const fees = sum(k => Object.values(S[k].t).reduce((s, t) => s + t.fees, 0));
@@ -186,7 +204,6 @@ function makeDemo() {
   return { generated: new Date().toISOString().slice(0, 16).replace('T', ' '), orders: o, returns: r, status: Array.from({ length: 9 }, (_, i) => ({ acc: 'Account' + (i + 1), ok: true, msg: 'demo' })) };
 }
 render(); renderSettle();
-$('fAcc').addEventListener('change', renderSettle);
 // Account boxes on top: same effect as the dropdown
 function drawChips() {
   const cur = $('fAcc').value;
