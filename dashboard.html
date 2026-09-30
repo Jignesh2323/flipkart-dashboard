@@ -61,6 +61,14 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
+// Clean returns: drop returns the customer cancelled (item never came back) and keep one record
+// per order item (the latest), so a re-opened return is not counted twice.
+{ const m = new Map();
+  for (const r of D.returns) { if (/cancel/i.test(r.status || '')) continue; const k = r.acc + '|' + r.itemId, o = m.get(k); if (!o || r.date > o.date) m.set(k, r); }
+  D.returns = [...m.values()]; }
+// Order history from the API starts later than returns/settlement; orders & returns are only
+// compared from this date so counts and rates cover the same days.
+const ORD_MIN = D.orders.map(o => o.date).sort()[0] || '';
 const PACK = 15; // packing cost per dispatched order: box + authorised plastic bag (₹)
 const short = a => String(a).replace(/^Acc\d+_/, '').toUpperCase();
 const $ = id => document.getElementById(id), inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
@@ -85,7 +93,8 @@ const isCancel = o => /CANCEL/i.test(o.status || "");
 const isLost = o => /CANCEL|^RETURNED$/i.test(o.status || "");
 function grp(arr, key, val) { const m = {}; arr.forEach(x => { const k = typeof key == 'function' ? key(x) : x[key] || '—'; m[k] = (m[k] || 0) + (val ? val(x) : 1); }); return m; }
 function render() {
-  const a = $('fAcc').value, f = $('fFrom').value, t = $('fTo').value;
+  const a = $('fAcc').value, t = $('fTo').value, f0 = $('fFrom').value, f = f0 < ORD_MIN ? ORD_MIN : f0;
+  $('note').innerHTML = f0 < ORD_MIN && !demo ? `<div class="warn">Flipkart API se orders sirf <b>${ORD_MIN}</b> se mile hain. Isliye Sales, Orders aur Returns wale number ${ORD_MIN} se ${t} tak ke hain. Bank Settlement wale boxes poore chune gaye mahino ke hain.</div>` : (demo ? $('note').innerHTML : '');
   const inR = x => (!a || x.acc === a) && (!f || x.date >= f) && (!t || x.date <= t);
   const O = D.orders.filter(inR), R = D.returns.filter(inR), live = O.filter(o => !isLost(o));
   const sales = live.reduce((s, o) => s + o.amount, 0), units = live.reduce((s, o) => s + o.qty, 0);
@@ -159,7 +168,10 @@ function renderSettle() {
   const bank = sum(k => S[k].p.reduce((s, p) => s + p[1], 0));
   const fees = sum(k => Object.values(S[k].t).reduce((s, t) => s + t.fees, 0));
   const taxes = sum(k => Object.values(S[k].t).reduce((s, t) => s + t.taxes, 0));
-  const retChg = sum(k => T(k, 'Return', 'fees') + T(k, 'Return', 'taxes'));
+  // Return charge = what Flipkart actually deducted on charged returns (chargedAmt). The net of the
+  // return rows also contains commission Flipkart gives back, which can even make it negative.
+  const hasAmt = k => S[k].t.Return && S[k].t.Return.chargedAmt != null;
+  const retChg = -sum(k => hasAmt(k) ? T(k, 'Return', 'chargedAmt') : -(T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')));
   const retLoss = sum(k => T(k, 'Return', 'settle'));
   const retN = sum(k => T(k, 'Return', 'n'));
   $('sKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Flipkart Fees', inr(-fees)], ['Taxes (TCS/TDS/GST)', inr(-taxes)],
@@ -176,7 +188,7 @@ function renderSettle() {
   const rs = sum(k => T(k, 'Return', 'sale')), rf = -sum(k => T(k, 'Return', 'refund')), gap = rf - rs;
   // Charge burden: charges spread over all sale orders settled in the same payment window.
   // 'charged' (returns with a non-zero charge) exists only once collected from Seller Hub.
-  const chgOf = k => -(T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')), chgAll = sum(chgOf);
+  const chgOf = k => hasAmt(k) ? T(k, 'Return', 'chargedAmt') : -(T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')), chgAll = sum(chgOf);
   const retAll = sum(k => T(k, 'Return', 'n')), ordAll = sum(k => T(k, 'Sale', 'n'));
   const hasCharged = keys.length && keys.every(k => S[k].t.Return && S[k].t.Return.charged != null);
   const chargedAll = hasCharged ? sum(k => T(k, "Return", "charged")) : null, chargedAmt = hasCharged ? sum(k => T(k, "Return", "chargedAmt")) : 0;

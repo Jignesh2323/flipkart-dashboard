@@ -4,7 +4,7 @@
 # -Days: how far back to fetch now; -Keep: how many days of history data.js holds.
 # Older rows already in data.js are kept (fresh rows win), so a daily 30-day fetch
 # maintains a 6-month history after one initial run with -Days 180.
-param([int]$Days = 30, [int]$Keep = 180)
+param([int]$Days = 30, [int]$Keep = 180, [string]$Only = "")
 
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -56,12 +56,26 @@ function Get-Shipments($token, $type, $states, $from, $to) {
     Invoke-Paged $token { param($h) Invoke-RestMethod -Method Post -Headers $h -Body $body -Uri "$api/sellers/v3/shipments/filter" } 'shipments' '/sellers'
 }
 
+# Long ranges time out (504) on busy accounts: ask in 15-day slices, retry each slice, and keep
+# the slices that worked; a slice that still fails is reported so it is never silently missing.
 function Get-Returns($token, $source, $from, $to) {
-    Invoke-Paged $token { param($h) Invoke-RestMethod -Method Get -Headers $h `
-        -Uri "$api/sellers/v2/returns?source=$source&createdAfter=$($from.Substring(0,10))&createdBefore=$($to.Substring(0,10))" } 'returnItems' '/sellers/v2'
+    $all = @(); $a = [datetime]$from.Substring(0, 10); $end = [datetime]$to.Substring(0, 10)
+    while ($a -lt $end) {
+        $b = $a.AddDays(15); if ($b -gt $end) { $b = $end }
+        $u = "$api/sellers/v2/returns?source=$source&createdAfter=$($a.ToString('yyyy-MM-dd'))&createdBefore=$($b.ToString('yyyy-MM-dd'))"
+        for ($try = 1; ; $try++) {
+            try { $all += Invoke-Paged $token { param($h) Invoke-RestMethod -Method Get -Headers $h -Uri $u -TimeoutSec 90 } 'returnItems' '/sellers/v2'; break }
+            catch {
+                if ($try -ge 4) { Write-Host "  returns $source $($a.ToString('MM-dd'))..$($b.ToString('MM-dd')) FAIL: $($_.Exception.Message)" -ForegroundColor Red; break }
+                Start-Sleep -Seconds (10 * $try)
+            }
+        }
+        $a = $b
+    }
+    $all
 }
 
-$accounts = Import-Csv (Join-Path $root 'accounts.csv') | Where-Object { $_.AppId -and $_.AppId -notmatch 'PASTE' }
+$accounts = Import-Csv (Join-Path $root 'accounts.csv') | Where-Object { $_.AppId -and $_.AppId -notmatch 'PASTE' -and (-not $Only -or $_.Name -eq $Only) }
 if (-not $accounts) { Write-Host 'accounts.csv me koi AppId nahi mila.' -ForegroundColor Red; exit 1 }
 
 $to   = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ss.000+05:30')
@@ -142,6 +156,7 @@ if (Test-Path $dataPath) {
         $t = Get-Content $dataPath -Raw -Encoding utf8
         $prev = $t.Substring($t.IndexOf('{'), $t.LastIndexOf('}') - $t.IndexOf('{') + 1) | ConvertFrom-Json
         $oldOrders = @($prev.orders); $oldReturns = @($prev.returns)
+        if ($Only) { $status = @($prev.status | Where-Object { $_.acc -ne $Only }) + @($status) }
     } catch { Write-Host "purana data.js padh nahi paya, sirf naya data rakhenge" -ForegroundColor Yellow }
 }
 $orders  = Merge-Rows $orders  $oldOrders  'itemId'   $cutoff
