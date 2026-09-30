@@ -25,6 +25,7 @@ main{padding:16px;max-width:1300px;margin:auto}
 .card h3{margin:0 0 10px;font-size:15px}
 table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:6px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
 th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
+.range{background:var(--card);border:1px solid var(--line);padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:14px}.range span{color:var(--mut);font-size:13px}
 .warn{background:#fff4d6;color:#6b4e00;padding:10px;border-radius:8px;margin-bottom:12px}.bad{color:var(--bad)}.ok{color:var(--ok)}
 @media(max-width:500px){.grid{grid-template-columns:1fr}}
 </style></head><body>
@@ -72,7 +73,9 @@ const ORD_MIN = D.orders.map(o => o.date).sort()[0] || '';
 const PACK = 15; // packing cost per dispatched order: box + authorised plastic bag (₹)
 const short = a => String(a).replace(/^Acc\d+_/, '').toUpperCase();
 const $ = id => document.getElementById(id), inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
-$('gen').textContent = (demo ? 'DEMO DATA — ' : 'Updated: ') + D.generated;
+// Dates are stored as yyyy-mm-dd; show them as dd-mm-yyyy everywhere
+const dmy = s => String(s || '').replace(/(\d{4})-(\d{2})-(\d{2})/g, '$3-$2-$1');
+$('gen').textContent = (demo ? 'DEMO DATA — ' : 'Updated: ') + dmy(D.generated);
 if (demo) $('note').innerHTML = '<div class="warn">Abhi demo data dikh raha hai. RUN.bat chalaiye.</div>';
 // Only accounts whose API works; pending ones (settlement data only) join automatically once approved
 const accs = [...new Set(D.orders.map(o => o.acc))].sort();
@@ -94,7 +97,8 @@ const isLost = o => /CANCEL|^RETURNED$/i.test(o.status || "");
 function grp(arr, key, val) { const m = {}; arr.forEach(x => { const k = typeof key == 'function' ? key(x) : x[key] || '—'; m[k] = (m[k] || 0) + (val ? val(x) : 1); }); return m; }
 function render() {
   const a = $('fAcc').value, t = $('fTo').value, f0 = $('fFrom').value, f = f0 < ORD_MIN ? ORD_MIN : f0;
-  $('note').innerHTML = f0 < ORD_MIN && !demo ? `<div class="warn">Flipkart API se orders sirf <b>${ORD_MIN}</b> se mile hain. Isliye Sales, Orders aur Returns wale number ${ORD_MIN} se ${t} tak ke hain. Bank Settlement wale boxes poore chune gaye mahino ke hain.</div>` : (demo ? $('note').innerHTML : '');
+  if (!demo) $('note').innerHTML = `<div class="range">📅 Orders &amp; Returns: <b>${dmy(f)}</b> se <b>${dmy(t)}</b> tak`
+    + (f0 < ORD_MIN ? ` <span>(Flipkart API se orders ${dmy(ORD_MIN)} se hi milte hain)</span>` : '') + '</div>';
   const inR = x => (!a || x.acc === a) && (!f || x.date >= f) && (!t || x.date <= t);
   const O = D.orders.filter(inR), R = D.returns.filter(inR), live = O.filter(o => !isLost(o));
   const sales = live.reduce((s, o) => s + o.amount, 0), units = live.reduce((s, o) => s + o.qty, 0);
@@ -110,7 +114,7 @@ function render() {
   k.push(['Customer Return Rate', rate(custM)], ['RTO Rate', rate(rtoM)], ['Total Return Rate', rate(custM + rtoM)]);
   $('kpis').innerHTML = k.map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const byDay = grp(live, 'date', o => o.amount), days = Object.keys(byDay).sort();
-  chart('cTrend', { type: 'line', data: { labels: days, datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: '#2874f0', backgroundColor: '#2874f022', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
+  chart('cTrend', { type: 'line', data: { labels: days.map(dmy), datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: '#2874f0', backgroundColor: '#2874f022', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
   const allO = D.orders.filter(o => (!f || o.date >= f) && (!t || o.date <= t)), allR = D.returns.filter(r => (!f || r.date >= f) && (!t || r.date <= t));
   const rows = accs.filter(ac => !a || ac === a).map(ac => { const o = allO.filter(x => x.acc === ac), l = o.filter(x => !isLost(x)), r = allR.filter(x => x.acc === ac), u = l.reduce((s, x) => s + x.qty, 0);
     // Return % is over shipped units (everything not cancelled, incl. items later returned)
@@ -159,11 +163,13 @@ function settleView(raw, from, to) {
 }
 function renderSettle() {
   if (!window.FK_SETTLE) return;
-  const S = settleView(window.FK_SETTLE, $('fFrom').value, $('fTo').value);
+  // Settlement starts no earlier than the orders' first month, so every box covers the same time
+  const sf0 = $('fFrom').value, sf = sf0 < ORD_MIN ? ORD_MIN.slice(0, 8) + '01' : sf0;
+  const S = settleView(window.FK_SETTLE, sf, $('fTo').value);
   $('settle').hidden = false; $('settleTop').hidden = false;
   const a = $('fAcc').value, keys = Object.keys(S).filter(k => accs.includes(k) && (!a || k === a)).sort();
   const dates = keys.flatMap(k => S[k].p.map(p => p[0])).sort();
-  $('sNote').textContent = `Seller Hub se liya gaya (${window.FK_SETTLE_AT}) · payment dates ${dates[0] || ''} → ${dates.at(-1) || ''} · chune gaye period ke poore mahine (payment date se)`;
+  $('sNote').innerHTML = `📅 Payments: <b>${dmy(dates[0])}</b> se <b>${dmy(dates.at(-1))}</b> tak (poore mahine) · Seller Hub se liya: ${dmy(window.FK_SETTLE_AT)}`;
   const T = (k, typ, f) => (S[k].t[typ] || {})[f] || 0, sum = f => keys.reduce((s, k) => s + f(k), 0);
   const bank = sum(k => S[k].p.reduce((s, p) => s + p[1], 0));
   const fees = sum(k => Object.values(S[k].t).reduce((s, t) => s + t.fees, 0));
@@ -179,7 +185,7 @@ function renderSettle() {
     .map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const byDay = {}; keys.forEach(k => S[k].p.forEach(p => byDay[p[0]] = (byDay[p[0]] || 0) + p[1]));
   const d = Object.keys(byDay).sort();
-  chart('cBank', { type: 'bar', data: { labels: d, datasets: [{ data: d.map(x => byDay[x]), backgroundColor: '#1f9d55' }] }, options: { plugins: { legend: { display: false } } } });
+  chart('cBank', { type: 'bar', data: { labels: d.map(dmy), datasets: [{ data: d.map(x => byDay[x]), backgroundColor: '#1f9d55' }] }, options: { plugins: { legend: { display: false } } } });
   $('tSet').innerHTML = '<tr><th>Account</th><th>Bank me</th><th>Fees</th><th>Return chg</th><th>Return loss</th></tr>' +
     keys.map(k => ({ k, b: S[k].p.reduce((s, p) => s + p[1], 0), f: Object.values(S[k].t).reduce((s, t) => s + t.fees + t.taxes, 0), rc: T(k, 'Return', 'fees') + T(k, 'Return', 'taxes'), rl: T(k, 'Return', 'settle') }))
       .sort((x, y) => y.b - x.b).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.b)}</td><td class="bad">${inr(-r.f)}</td><td class="bad">${inr(-r.rc)}</td><td class="bad">${inr(-r.rl)}</td></tr>`).join('');
@@ -195,7 +201,7 @@ function renderSettle() {
   $('rExplain').innerHTML = `
     <p style="margin:0 0 8px">Customer ko order price se <b>zyada paisa nahi</b> diya gaya. Har return me refund utna hi hota hai jitne ka order tha.</p>
     <p style="margin:0 0 8px">Farak <b>timing</b> ka hai. Flipkart order ka paisa aur return ka paisa alag alag din deta/kaatta hai.
-      Is hisaab me sirf <b>${dates[0] || ''} se ${dates.at(-1) || ''}</b> ke payments hain:</p>
+      Is hisaab me sirf <b>${dmy(dates[0])} se ${dmy(dates.at(-1))}</b> ke payments hain:</p>
     <ul style="margin:0 0 8px;padding-left:20px">
       <li><b>Isi period me bike aur return hue orders</b>: sale bhi yahan hai, refund bhi → dono barabar cancel.</li>
       <li><b>Pehle (pichhle mahine) bike, ab return hue orders</b>: sale ka paisa <b>pichhle payment me mil chuka tha</b>, isliye yahan sale ₹0 dikhti hai, lekin refund yahan kata.</li>
