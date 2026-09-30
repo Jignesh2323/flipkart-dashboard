@@ -114,6 +114,9 @@ tr:hover td{background:#f8fafc}
 
 <section class="tab" data-tab="paisa" hidden>
 <div class="card"><h3>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
+<div class="card"><h3>Item-wise Profit (zyada profit sabse upar)</h3>
+<p class="note" style="margin:14px 18px 0">Flipkart bank payout SKU-wise nahi deta, isliye har account ka "Bank me aaya" us account ke items me unki delivered sale ke hisaab se baanta gaya hai; return charge har item ka asli (Seller Hub se) ghataya gaya hai. Packing ₹15 har dispatch order par.</p>
+<div class="tw"><table id="tItem"></table></div></div>
 <section id="settle" hidden>
 <div class="grid"><div class="card"><h3>Bank Credits by Date (₹)</h3><canvas id="cBank"></canvas></div>
 <div class="card"><h3>Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
@@ -428,8 +431,35 @@ function renderProfit(keys, S, from, to) {
     .map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const top = [...missing.entries()].sort((a, b) => b[1] - a[1]);
   $('pWarn').innerHTML = top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? '…' : ''}</div>` : '';
+  renderItemProfit(keys, rows, from, to);
   $('tProfit').innerHTML = '<tr><th>Account</th><th>Bank me aaya</th><th>Delivered units</th><th>Product cost</th><th>Packing</th><th>GST</th><th>Profit</th><th>Profit %</th></tr>' +
-    rows.sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td>${inr(r.gst)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+    [...rows].sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td>${inr(r.gst)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+}
+// Item-wise profit: account payout shared by delivered sale, minus the item's own return charges, cost and packing
+function renderItemProfit(keys, rows, from, to) {
+  const C = window.FK_COST || {}, N = window.FK_NAME || {}, inP = d => d >= from && d <= to;
+  const retOf = new Map(D.returns.map(r => [r.acc + '|' + r.itemId, r])), skuOf = new Map(D.orders.map(o => [o.acc + '|' + o.itemId, o.sku]));
+  const it = new Map(), acc = {}, get = p => { if (!it.has(p)) it.set(p, { p, accs: new Set(), units: 0, sale: 0, bank: 0, chg: 0, cogs: 0, pack: 0, miss: 0 }); return it.get(p); };
+  for (const k of keys) acc[k] = { sale: 0, disp: 0, chg: 0, items: new Map() };
+  const share = (k, p) => { const m = acc[k].items; if (!m.has(p)) m.set(p, { sale: 0, disp: 0 }); return m.get(p); };
+  for (const o of D.orders) if (acc[o.acc] && inP(o.date)) {
+    const p = productOf(o.sku), x = get(p), a = acc[o.acc], s = share(o.acc, p);
+    if (o.status === 'DELIVERED') { x.units += o.qty; x.sale += o.amount; a.sale += o.amount; s.sale += o.amount; x.accs.add(o.acc);
+      if (C[p]) x.cogs += C[p] * o.qty; else x.miss += o.qty; }
+    if (!isLost(o)) { a.disp++; s.disp++; }
+  }
+  for (const k of keys) for (const [md, item, amt] of (window.FK_SETTLE[k].cr || [])) {
+    if (!inP('2026-' + md)) continue; const r = retOf.get(k + '|' + item), sku = (r && r.sku) || skuOf.get(k + '|' + item);
+    if (!sku) continue; get(productOf(sku)).chg += amt; acc[k].chg += amt;
+  }
+  for (const r of rows) { const a = acc[r.k]; if (!a) continue;
+    for (const [p, s] of a.items) { const x = get(p);
+      if (a.sale) x.bank += (r.bank + a.chg) * s.sale / a.sale;
+      if (a.disp) x.pack += r.pack * s.disp / a.disp; } }
+  const list = [...it.values()].filter(x => x.units || x.chg).map(x => ({ ...x, bank: x.bank - x.chg, profit: x.bank - x.chg - x.cogs - x.pack }))
+    .sort((a, b) => b.profit - a.profit);
+  $('tItem').innerHTML = '<tr><th>Item</th><th>Product</th><th>Accounts</th><th>Delivered units</th><th>Sale</th><th>Bank me aaya (anumaan)</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
+    list.map(x => `<tr><td>${N[x.p] || x.p}</td><td>${x.p}</td><td>${[...x.accs].map(short).join(', ') || '—'}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(${x.miss} bina cost)</span>` : ''}</td><td>${inr(x.sale)}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
 }
 // Per SKU: customer / RTO returns (API, cleaned) and the returns Flipkart actually charged
 // (settlement "cr" rows [MM-DD payment date, order item id, charge ₹], joined to the API return type).
