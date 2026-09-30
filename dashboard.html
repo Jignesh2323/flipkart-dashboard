@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Flipkart Accounts Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="data.js"></script>
+<script>document.write('<script src="data.js?v=' + Date.now() + '"><\/script>')</script>
 <style>
 :root{--bg:#f4f6fb;--card:#fff;--ink:#1c2233;--mut:#6b7385;--line:#e3e7ef;--pri:#2874f0;--acc:#f7b500;--bad:#d64545;--ok:#1f9d55}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10131a;--card:#191e28;--ink:#e8ebf2;--mut:#98a0b3;--line:#2a3140;color-scheme:dark}}
@@ -42,21 +42,21 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 <div class="card"><h3>Account-wise Sales (₹)</h3><canvas id="cAcc"></canvas></div></div>
 <div class="grid"><div class="card"><h3>Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
 <div class="card"><h3>Order Status</h3><div style="position:relative;height:240px"><canvas id="cStatus"></canvas></div></div></div>
+<div class="card" style="margin-bottom:16px"><h3>Returns ka hisaab: Refund, Sale se zyada kyun dikhta hai?</h3>
+<div id="rExplain" style="font-size:14px;line-height:1.6"></div>
+<div class="tw"><table id="tRefund"></table></div></div>
 <div class="grid"><div class="card"><h3>Top Selling SKUs</h3><div class="tw"><table id="tTop"></table></div></div>
 <div class="card"><h3>Most Returned SKUs</h3><div class="tw"><table id="tRet"></table></div></div></div>
 <section id="settle" hidden>
 <h2 style="font-size:18px;margin:24px 0 12px">Settlement Details</h2>
 <div class="grid"><div class="card"><h3>Bank Credits by Date (₹)</h3><canvas id="cBank"></canvas></div>
 <div class="card"><h3>Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
-<div class="card" style="margin-bottom:16px"><h3>Returns ka hisaab: Refund, Sale se zyada kyun dikhta hai?</h3>
-<div id="rExplain" style="font-size:14px;line-height:1.6"></div>
-<div class="tw"><table id="tRefund"></table></div></div>
 <div class="grid"><div class="card"><h3>SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div></div>
 </section>
 <div class="grid"><div class="card"><h3>Return Reasons</h3><canvas id="cReason"></canvas></div>
 <div class="card"><h3>API Status</h3><div class="tw"><table id="tApi"></table></div></div></div>
 </main>
-<script src="settle.js"></script>
+<script>document.write('<script src="settle.js?v=' + Date.now() + '"><\/script>')</script>
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
