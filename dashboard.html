@@ -93,9 +93,12 @@ function render() {
   const cust = R.filter(r => r.type === 'customer_return').length, rto = R.filter(r => r.type === 'courier_return').length;
   const k = [['Total Sales', inr(sales)], ['Orders', orderCount], ['Units Sold', units], ['Avg Order Value', inr(live.length ? sales / new Set(live.map(o => o.orderId)).size : 0)],
     ['Cancelled', canc], ['Customer Returns', cust], ['RTO (Courier)', rto]];
-  // Rates over shipped units (not cancelled), same basis as the Account Comparison table
+  // Rates: returns of orders placed in this period ÷ shipped units of those orders. Returns whose order is
+  // outside the period (or older than the API's order history) would otherwise inflate the rate.
   const shipped = O.filter(o => !isCancel(o)).reduce((s, o) => s + o.qty, 0), rate = n => (shipped ? n / shipped * 100 : 0).toFixed(1) + '%';
-  k.push(['Customer Return Rate', rate(cust)], ['RTO Rate', rate(rto)], ['Total Return Rate', rate(cust + rto)]);
+  const inO = new Set(O.map(o => o.acc + '|' + o.itemId)), RM = D.returns.filter(r => (!a || r.acc === a) && inO.has(r.acc + '|' + r.itemId));
+  const custM = RM.filter(r => r.type === 'customer_return').length, rtoM = RM.filter(r => r.type === 'courier_return').length;
+  k.push(['Customer Return Rate', rate(custM)], ['RTO Rate', rate(rtoM)], ['Total Return Rate', rate(custM + rtoM)]);
   $('kpis').innerHTML = k.map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const byDay = grp(live, 'date', o => o.amount), days = Object.keys(byDay).sort();
   chart('cTrend', { type: 'line', data: { labels: days, datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: '#2874f0', backgroundColor: '#2874f022', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
@@ -104,8 +107,10 @@ function render() {
     // Return % is over shipped units (everything not cancelled, incl. items later returned)
     const sh = o.filter(x => !isCancel(x)).reduce((s, x) => s + x.qty, 0), pct = k => sh ? k / sh * 100 : 0;
     const cu = r.filter(x => x.type === 'customer_return').length, rto = r.filter(x => x.type === 'courier_return').length;
+    const ids = new Set(o.map(x => x.itemId)), rm = D.returns.filter(x => x.acc === ac && ids.has(x.itemId));
+    const cuM = rm.filter(x => x.type === 'customer_return').length, rtoM = rm.filter(x => x.type === 'courier_return').length;
     return { ac, s: l.reduce((s, x) => s + x.amount, 0), n: new Set(o.map(x => x.orderId)).size, c: o.filter(isCancel).length,
-      cu, rto, r: r.length, cuP: pct(cu), rtoP: pct(rto), rr: pct(r.length), api: o.length > 0 }; }).sort((x, y) => y.s - x.s);
+      cu, rto, r: r.length, cuP: pct(cuM), rtoP: pct(rtoM), rr: pct(cuM + rtoM), api: o.length > 0 }; }).sort((x, y) => y.s - x.s);
   chart('cAcc', { type: 'bar', data: { labels: rows.map(r => short(r.ac)), datasets: [{ data: rows.map(r => r.s), backgroundColor: '#2874f0' }] },
     options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: { size: 11, weight: 'bold' } } } } } });
   const pc = (v, lim) => `<td class="${v > lim ? 'bad' : ''}">${v.toFixed(1)}%</td>`;
