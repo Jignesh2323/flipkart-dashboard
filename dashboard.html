@@ -96,6 +96,16 @@ tr:hover td{background:#f8fafc}
 .swatch[aria-pressed="true"]{border-color:var(--ink)}
 .setrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}.setrow>label{min-width:170px;color:var(--mut);font-size:13px}
 .info td{font-family:var(--sans)}
+/* centred coloured title bar */
+header{flex-direction:column;justify-content:center;text-align:center;padding:16px 20px 12px;background:linear-gradient(135deg,var(--pri),color-mix(in srgb,var(--pri) 65%,#000));border-bottom:0;color:#fff}
+header h1{font-size:30px;letter-spacing:.5px;color:#fff}header h1 span{color:#fff;opacity:.85;font-weight:600}
+header small{color:rgba(255,255,255,.85);font-size:12.5px;margin-top:4px}
+header .bar button{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+header .bar button:hover{background:rgba(255,255,255,.25);color:#fff}
+header .bar button[aria-pressed="true"]{background:#fff;color:var(--pri);border-color:#fff}
+[data-theme="dark"] header{background:linear-gradient(135deg,var(--pri),color-mix(in srgb,var(--pri) 45%,#000))}
+[data-theme="dark"] header .bar button{background:rgba(255,255,255,.1)}[data-theme="dark"] header .bar button[aria-pressed="true"]{background:#fff}
+@media(max-width:768px){header h1{font-size:22px}}
 </style>
 <script>
 // Saved theme (per browser) applied before anything draws
