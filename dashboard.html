@@ -52,7 +52,7 @@ h2.sec{font-size:12.5px;font-weight:700;color:var(--mut);text-transform:uppercas
 .k{--t:#1a7f37;background:linear-gradient(135deg,#fff 55%,color-mix(in srgb,var(--t) 7%,#fff));border:1px solid color-mix(in srgb,var(--t) 22%,var(--line));
   border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .k>span{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
-.k>span::before{content:"";width:26px;height:26px;border-radius:8px;flex:none;background:color-mix(in srgb,var(--t) 16%,#fff);border:1px solid color-mix(in srgb,var(--t) 30%,#fff)}
+.k>span::before{content:attr(data-i);width:26px;height:26px;border-radius:8px;flex:none;background:color-mix(in srgb,var(--t) 16%,#fff);border:1px solid color-mix(in srgb,var(--t) 30%,#fff);display:grid;place-items:center;font-size:14px}
 .k b{display:block;font-size:26px;font-weight:600;font-family:var(--mono);letter-spacing:-1px;color:var(--ink)}
 #sKpis .k{--t:#0969da}#pKpis .k{--t:#bf8700}
 /* cards with a tinted, collapsible header */
@@ -515,6 +515,16 @@ drawChips();
   let start = 'overview'; try { if (localStorage.fkTab) start = localStorage.fkTab; } catch (e) {}
   show(btns.some(b => b.dataset.tab === start) ? start : 'overview');
   document.addEventListener('click', e => { const h = e.target.closest('.card > h3'); if (h) h.parentElement.classList.toggle('closed'); });
+})();
+</script>
+<script>
+// Icon in each KPI tile's chip, picked from its title
+(function () {
+  const I = [[/cancel/i, '❌'], [/rto/i, '🚚'], [/return rate|rate/i, '📉'], [/customer return|returns settled|return charge/i, '↩️'], [/delivered/i, '📦'],
+    [/units/i, '🧮'], [/avg/i, '🏷️'], [/orders/i, '🛒'], [/total sales|sale/i, '💰'], [/bank/i, '🏦'], [/fees/i, '💸'], [/tax|gst/i, '🧾'],
+    [/product cost/i, '🏭'], [/packing/i, '📦'], [/profit %/i, '📊'], [/profit/i, '📈']];
+  const put = () => document.querySelectorAll('.k>span:not([data-i])').forEach(s => { const m = I.find(([r]) => r.test(s.textContent)); s.dataset.i = m ? m[1] : '•'; });
+  put(); new MutationObserver(put).observe(document.querySelector('main'), { childList: true, subtree: true });
 })();
 </script>
 </body></html>
