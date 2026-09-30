@@ -103,7 +103,7 @@ tr:hover td{background:#f8fafc}
 </div>
 <div id="profitTop" hidden>
 <h2 class="sec">Profit</h2>
-<p class="note">Profit = Bank me aaya − Product cost (delivered units × aapki cost) − Packing (₹15/order). GST sirf jaankari ke liye dikhaya hai, profit me nahi ghataya.</p>
+<p class="note">Profit = Bank me aaya − Product cost (delivered units × aapki cost) − Packing (₹15/order).</p>
 <div id="pWarn"></div>
 <div class="kpis" id="pKpis"></div>
 </div>
@@ -426,7 +426,7 @@ function renderProfit(keys, S, from, to) {
     return { k, bank, cogs, pack, gst, units, miss, profit: bank - cogs - pack };
   });
   const s = f => rows.reduce((a, r) => a + r[f], 0), bank = s('bank'), profit = s('profit');
-  $('pKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Product cost', inr(s('cogs'))], ['Packing', inr(s('pack'))], ['GST (sale par, profit me nahi ghataya)', inr(s('gst'))],
+  $('pKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Product cost', inr(s('cogs'))], ['Packing', inr(s('pack'))],
     ['Profit', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`], ['Profit %', bank ? (profit / bank * 100).toFixed(1) + '%' : '—'], ['Delivered units', s('units')]]
     .map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const top = [...missing.entries()].sort((a, b) => b[1] - a[1]);
