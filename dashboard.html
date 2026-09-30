@@ -1,75 +1,151 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flipkart Accounts Dashboard</title>
+<title>Flipkart Seller Business</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>document.write('<script src="data.js?v=' + Date.now() + '"><\/script>')</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+// Chart text/grid colours to match the page
+Chart.defaults.color = '#57606a'; Chart.defaults.borderColor = '#e5e7eb';
+Chart.defaults.font.family = "'Space Grotesk', system-ui, sans-serif";
+</script>
 <style>
-:root{--bg:#f4f6fb;--card:#fff;--ink:#1c2233;--mut:#6b7385;--line:#e3e7ef;--pri:#2874f0;--acc:#f7b500;--bad:#d64545;--ok:#1f9d55}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10131a;--card:#191e28;--ink:#e8ebf2;--mut:#98a0b3;--line:#2a3140;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#10131a;--card:#191e28;--ink:#e8ebf2;--mut:#98a0b3;--line:#2a3140;color-scheme:dark}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
-header{background:var(--pri);color:#fff;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-header h1{margin:0;font-size:20px}header small{opacity:.85}
-.bar{display:flex;flex-wrap:wrap;gap:8px}select,input{padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
-.bar button{padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.6);background:transparent;color:#fff;font:600 13px system-ui,Segoe UI,sans-serif;cursor:pointer}.bar button[aria-pressed="true"]{background:#fff;color:var(--pri)}.bar button:focus-visible{outline:2px solid #fff;outline-offset:2px}
-main{padding:16px;max-width:1300px;margin:auto}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-.chips button{padding:10px 18px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 14px system-ui,Segoe UI,sans-serif;cursor:pointer}
-.chips button:hover{border-color:var(--pri)}
-.chips button[aria-pressed="true"]{background:var(--pri);border-color:var(--pri);color:#fff}
-.chips button:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
-.k,.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
-.k b{display:block;font-size:22px;margin-top:4px}.k span{color:var(--mut);font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-bottom:16px}
-.card h3{margin:0 0 10px;font-size:15px}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:6px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
-th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
-.range{background:var(--card);border:1px solid var(--line);padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:14px}.range span{color:var(--mut);font-size:13px}
-.warn{background:#fff4d6;color:#6b4e00;padding:10px;border-radius:8px;margin-bottom:12px}.bad{color:var(--bad)}.ok{color:var(--ok)}
-@media(max-width:500px){.grid{grid-template-columns:1fr}}
+/* Same look as the Sandip Amazon dashboard (light): white page, segmented tabs, coloured account pills,
+   tinted KPI tiles with an icon chip, Space Grotesk text and IBM Plex Mono numbers */
+:root{--bg:#ffffff;--card:#ffffff;--panel2:#f6f8fa;--line:#e5e7eb;--ink:#1f2328;--mut:#57606a;--pri:#1a7f37;--pri-soft:#e9f7ee;
+  --acc:#bf8700;--bad:#cf222e;--ok:#1a7f37;--blue:#0969da;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;--sans:'Space Grotesk',system-ui,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);font-size:14px;background:var(--bg);color:var(--ink)}
+header{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+  background:#fff;position:sticky;top:env(safe-area-inset-top,0px);z-index:10}
+header h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.3px}header h1 span{color:var(--pri)}
+header small{display:block;color:var(--mut);font-size:12px;margin-top:2px;font-family:var(--mono)}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+select,input{padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit}
+.bar button{padding:7px 14px;border-radius:10px;border:1px solid var(--line);background:#f6f8fa;color:var(--mut);font:600 13px var(--sans);cursor:pointer}
+.bar button:hover{color:var(--ink)}
+.bar button[aria-pressed="true"]{background:#fff;border-color:var(--pri);color:var(--pri);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+main{padding:18px 20px;max-width:1500px;margin:auto}
+/* segmented tabs */
+nav.tabs{display:inline-flex;gap:4px;padding:5px;background:#f3f4f6;border:1px solid var(--line);border-radius:16px;margin:0 0 14px;max-width:100%;overflow-x:auto}
+nav.tabs button{background:none;border:0;border-radius:12px;color:var(--mut);padding:10px 20px;font:600 14.5px var(--sans);cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button[aria-selected="true"]{background:#fff;color:var(--pri);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.tab{display:block}.tab[hidden]{display:none}
+/* account pills, one colour each like the Amazon dashboard */
+.accbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:22px}
+.accbar .lbl{color:var(--mut);font-size:12.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{--c:#475569;padding:4px 12px;border-radius:20px;border:2px solid transparent;background:var(--c);color:#fff;font:700 11.5px var(--sans);letter-spacing:.3px;cursor:pointer;opacity:.9}
+.chips button:hover{opacity:1}
+.chips button[aria-pressed="true"]{opacity:1;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--c)}
+.chips button[data-acc=""]{--c:#57606a}
+.chips button[data-acc$="AVEDIA"]{--c:#2563eb}.chips button[data-acc$="BRAINLE"]{--c:#9333ea}.chips button[data-acc$="ZOTIMO"]{--c:#ea580c}
+.chips button[data-acc$="ARKZO"]{--c:#0e7490}.chips button[data-acc$="Pivdo"]{--c:#ca8a04}.chips button[data-acc$="Kidoca"]{--c:#475569}
+.chips button[data-acc$="Wiska"]{--c:#92400e}.chips button[data-acc$="TAUDI"]{--c:#dc2626}.chips button[data-acc$="VUSTICA"]{--c:#15803d}
+h2.sec{font-size:12.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;margin:4px 0 10px}
+.note{color:var(--mut);margin:-4px 0 12px;font-size:12.5px}
+/* KPI tiles */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.k{--t:#1a7f37;background:linear-gradient(135deg,#fff 55%,color-mix(in srgb,var(--t) 7%,#fff));border:1px solid color-mix(in srgb,var(--t) 22%,var(--line));
+  border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.k>span{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.k>span::before{content:"";width:26px;height:26px;border-radius:8px;flex:none;background:color-mix(in srgb,var(--t) 16%,#fff);border:1px solid color-mix(in srgb,var(--t) 30%,#fff)}
+.k b{display:block;font-size:26px;font-weight:600;font-family:var(--mono);letter-spacing:-1px;color:var(--ink)}
+#sKpis .k{--t:#0969da}#pKpis .k{--t:#bf8700}
+/* cards with a tinted, collapsible header */
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:18px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card>h3{margin:0;padding:13px 40px 13px 18px;border-bottom:1px solid var(--line);font-size:15.5px;font-weight:700;color:var(--pri);cursor:pointer;position:relative;
+  background:linear-gradient(90deg,var(--pri-soft),#fff 70%);border-left:4px solid var(--pri)}
+.card>h3::after{content:"▴";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--mut);font-size:13px}
+.card.closed>h3{border-bottom:0}.card.closed>h3::after{content:"▾"}.card.closed>:not(h3){display:none!important}
+.card>:not(h3){margin:14px 18px}.card>canvas{max-width:calc(100% - 36px)}.card>.tw{margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:18px}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:11px 16px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--panel2);color:var(--ink);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0;z-index:1}
+td{font-family:var(--mono);font-size:13px;font-weight:500}td:first-child{font-family:var(--sans);font-weight:600;color:var(--pri)}
+tr:hover td{background:#f8fafc}
+.tw{overflow:auto;max-height:600px}
+.range{background:#fff;border:1px solid var(--line);padding:9px 14px;border-radius:10px;margin-bottom:14px;font-size:13.5px}.range span{color:var(--mut);font-size:12.5px}
+.warn{background:#fff8e6;border:1px solid #f0d58a;color:#7a5200;padding:10px 14px;border-radius:10px;margin-bottom:14px}
+.bad{color:var(--bad)}.ok{color:var(--ok)}
+.ceSave{padding:6px 14px;border-radius:8px;border:0;background:var(--pri);color:#fff;font:700 12px var(--sans);cursor:pointer}
+@media(max-width:768px){header{padding:10px 12px}main{padding:12px}.grid{grid-template-columns:1fr}.k b{font-size:21px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}nav.tabs button{padding:9px 12px;font-size:13px}}
+@media(prefers-reduced-motion:no-preference){.tab{animation:fade .18s ease}}@keyframes fade{from{opacity:.4}to{opacity:1}}
 </style></head><body>
-<header><div><h1>Flipkart Accounts Dashboard</h1><small id="gen"></small></div>
+<header><div><h1>FLIPKART · <span>Seller Business</span></h1><small id="gen"></small></div>
 <div class="bar" id="period" role="group" aria-label="Period"><button type="button" data-d="30">30 Days</button><button type="button" data-d="60">60 Days</button><button type="button" data-d="90">90 Days</button><button type="button" data-d="180">180 Days</button><select id="fAcc" hidden></select><input type="hidden" id="fFrom"><input type="hidden" id="fTo"></div></header>
 <main>
+<nav class="tabs" role="tablist" aria-label="Sections">
+<button role="tab" data-tab="overview" aria-selected="true">🏠 Overview</button>
+<button role="tab" data-tab="paisa" aria-selected="false">💰 Paisa</button>
+<button role="tab" data-tab="sales" aria-selected="false">📈 Sales</button>
+<button role="tab" data-tab="returns" aria-selected="false">🔙 Returns</button>
+<button role="tab" data-tab="products" aria-selected="false">📦 Products</button>
+<button role="tab" data-tab="settings" aria-selected="false">⚙️ Settings</button>
+</nav>
 <div id="note"></div>
-<nav class="chips" id="chips" aria-label="Account"></nav>
+<div class="accbar"><span class="lbl">Accounts:</span><div class="chips" id="chips" aria-label="Account"></div></div>
+
+<section class="tab" data-tab="overview">
+<h2 class="sec">Sales</h2>
 <div class="kpis" id="kpis"></div>
 <div id="settleTop" hidden>
-<h2 style="font-size:18px;margin:8px 0 4px">Bank Settlement &amp; Return Charges</h2>
-<p style="color:var(--mut);margin:0 0 12px;font-size:13px" id="sNote"></p>
+<h2 class="sec">Bank Settlement &amp; Return Charges</h2>
+<p class="note" id="sNote"></p>
 <div class="kpis" id="sKpis"></div>
 </div>
 <div id="profitTop" hidden>
-<h2 style="font-size:18px;margin:8px 0 4px">Profit</h2>
-<p style="color:var(--mut);margin:0 0 12px;font-size:13px">Profit = Bank me aaya − Product cost (delivered units × aapki cost) − Packing (₹15/order). GST sirf jaankari ke liye dikhaya hai, profit me nahi ghataya.</p>
+<h2 class="sec">Profit</h2>
+<p class="note">Profit = Bank me aaya − Product cost (delivered units × aapki cost) − Packing (₹15/order). GST sirf jaankari ke liye dikhaya hai, profit me nahi ghataya.</p>
 <div id="pWarn"></div>
 <div class="kpis" id="pKpis"></div>
-<div class="card" style="margin-bottom:16px"><h3>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
 </div>
 <div class="grid"><div class="card"><h3>Daily Sales (₹)</h3><canvas id="cTrend"></canvas></div>
 <div class="card"><h3>Account-wise Sales (₹)</h3><canvas id="cAcc"></canvas></div></div>
-<div class="grid"><div class="card"><h3>Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
-<div class="card"><h3>Order Status</h3><div style="position:relative;height:240px"><canvas id="cStatus"></canvas></div></div></div>
-<div class="card" style="margin-bottom:16px"><h3>Returns ka hisaab: Refund, Sale se zyada kyun dikhta hai?</h3>
-<div id="rExplain" style="font-size:14px;line-height:1.6"></div>
-<div class="tw"><table id="tRefund"></table></div></div>
-<div class="grid"><div class="card"><h3>Top Selling SKUs</h3><div class="tw"><table id="tTop"></table></div></div>
-<div class="card"><h3>Most Returned SKUs</h3><div class="tw"><table id="tRet"></table></div></div></div>
+<div class="card"><h3>Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
+</section>
+
+<section class="tab" data-tab="paisa" hidden>
+<div class="card"><h3>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
 <section id="settle" hidden>
-<h2 style="font-size:18px;margin:24px 0 12px">Settlement Details</h2>
 <div class="grid"><div class="card"><h3>Bank Credits by Date (₹)</h3><canvas id="cBank"></canvas></div>
 <div class="card"><h3>Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
-<div class="grid"><div class="card"><h3>SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div></div>
 </section>
-<section class="card" id="costEditor" style="margin-bottom:16px">
+<div class="card"><h3>Returns ka hisaab: Refund, Sale se zyada kyun dikhta hai?</h3>
+<div id="rExplain" style="font-size:14px;line-height:1.6"></div>
+<div class="tw"><table id="tRefund"></table></div></div>
+</section>
+
+<section class="tab" data-tab="sales" hidden>
+<div class="grid"><div class="card"><h3>Top Selling SKUs</h3><div class="tw"><table id="tTop"></table></div></div>
+<div class="card"><h3>Order Status</h3><div style="position:relative;height:260px"><canvas id="cStatus"></canvas></div></div></div>
+</section>
+
+<section class="tab" data-tab="returns" hidden>
+<div class="card"><h3>SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div>
+<div class="grid"><div class="card"><h3>Most Returned SKUs</h3><div class="tw"><table id="tRet"></table></div></div>
+<div class="card"><h3>Return Reasons</h3><canvas id="cReason"></canvas></div></div>
+</section>
+
+<section class="tab" data-tab="products" hidden>
+<section class="card" id="costEditor">
 <h3>Products &amp; Cost</h3>
-<p style="color:var(--mut);font-size:13px;margin:0 0 10px">Naam aur kharid keemat (₹/unit) badal kar <b>Save</b> dabaiye. Naye products (jinki cost nahi bhari) sabse upar peele rang me aate hain. Pehli baar jo PIN daalenge wahi aage ke liye set ho jayega.</p>
-<div class="bar" style="margin-bottom:10px"><label for="cePin">PIN</label><input type="password" id="cePin" inputmode="numeric" autocomplete="off" style="width:110px"><input type="search" id="ceFind" placeholder="Product dhoondhiye" style="flex:1;min-width:160px"><span id="ceMsg" style="font-size:13px"></span></div>
-<div class="tw" style="max-height:420px;overflow:auto"><table id="tCost"></table></div>
+<p class="note" style="margin:14px 20px 0">Naam aur kharid keemat (₹/unit) badal kar <b>Save</b> dabaiye. Naye products (jinki cost nahi bhari) sabse upar peele rang me aate hain. Pehli baar jo PIN daalenge wahi aage ke liye set ho jayega.</p>
+<div class="bar"><label for="cePin">PIN</label><input type="password" id="cePin" inputmode="numeric" autocomplete="off" style="width:110px"><input type="search" id="ceFind" placeholder="Product dhoondhiye" style="flex:1;min-width:160px"><span id="ceMsg" style="font-size:13px"></span></div>
+<div class="tw" style="max-height:600px"><table id="tCost"></table></div>
 </section>
-<div class="grid"><div class="card"><h3>Return Reasons</h3><canvas id="cReason"></canvas></div>
-<div class="card"><h3>API Status</h3><div class="tw"><table id="tApi"></table></div></div></div>
+</section>
+
+<section class="tab" data-tab="settings" hidden>
+<div class="card"><h3>API Status</h3><div class="tw"><table id="tApi"></table></div></div>
+</section>
 </main>
 <script>document.write('<script src="settle.js?v=' + Date.now() + '"><\/script>')</script>
 <script>document.write('<script src="cost.js?v=' + Date.now() + '"><\/script>')</script>
@@ -141,7 +217,7 @@ function render() {
   k.push(['Customer Return Rate', rate(custM)], ['RTO Rate', rate(rtoM)], ['Total Return Rate', rate(custM + rtoM)]);
   $('kpis').innerHTML = k.map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const byDay = grp(live, 'date', o => o.amount), days = Object.keys(byDay).sort();
-  chart('cTrend', { type: 'line', data: { labels: days.map(dmy), datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: '#2874f0', backgroundColor: '#2874f022', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
+  chart('cTrend', { type: 'line', data: { labels: days.map(dmy), datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: '#1a7f37', backgroundColor: '#1a7f3722', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
   const allO = D.orders.filter(o => (!f || o.date >= f) && (!t || o.date <= t)), allR = D.returns.filter(r => (!f || r.date >= f) && (!t || r.date <= t));
   const rows = accs.filter(ac => !a || ac === a).map(ac => { const o = allO.filter(x => x.acc === ac), l = o.filter(x => !isLost(x)), r = allR.filter(x => x.acc === ac), u = l.reduce((s, x) => s + x.qty, 0);
     // Return % is over shipped units (everything not cancelled, incl. items later returned)
@@ -151,7 +227,7 @@ function render() {
     const cuM = rm.filter(x => x.type === 'customer_return').length, rtoM = rm.filter(x => x.type === 'courier_return').length;
     return { ac, s: l.reduce((s, x) => s + x.amount, 0), n: new Set(o.map(x => x.orderId)).size, c: o.filter(isCancel).length,
       cu, rto, r: r.length, cuP: pct(cuM), rtoP: pct(rtoM), rr: pct(cuM + rtoM), api: o.length > 0 }; }).sort((x, y) => y.s - x.s);
-  chart('cAcc', { type: 'bar', data: { labels: rows.map(r => short(r.ac)), datasets: [{ data: rows.map(r => r.s), backgroundColor: '#2874f0' }] },
+  chart('cAcc', { type: 'bar', data: { labels: rows.map(r => short(r.ac)), datasets: [{ data: rows.map(r => r.s), backgroundColor: '#1a7f37' }] },
     options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: { size: 11, weight: 'bold' } } } } } });
   const pc = (v, lim) => `<td class="${v > lim ? 'bad' : ''}">${v.toFixed(1)}%</td>`;
   $('tAcc').innerHTML = '<tr><th>Account</th><th>Sales</th><th>Orders</th><th>Cancel</th><th>Customer Ret</th><th>RTO</th><th>Total Ret</th><th>Cust %</th><th>RTO %</th><th>Total %</th></tr>' +
@@ -159,7 +235,7 @@ function render() {
       ? `<tr><td>${short(r.ac)}</td><td>${inr(r.s)}</td><td>${r.n}</td><td>${r.c}</td><td>${r.cu}</td><td>${r.rto}</td><td><b>${r.r}</b></td>${pc(r.cuP, 10)}${pc(r.rtoP, 10)}${pc(r.rr, 20)}</tr>`
       : `<tr><td>${short(r.ac)}</td><td colspan="9" style="text-align:left;color:var(--mut)">API approval baaki hai</td></tr>`).join('');
   const st = grp(O, 'status');
-  chart('cStatus', { type: 'doughnut', data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: ['#2874f0','#1f9d55','#f7b500','#d64545','#8a5cf6','#14b8a6','#f97316'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } } });
+  chart('cStatus', { type: 'doughnut', data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: ['#1a7f37','#1f9d55','#f7b500','#d64545','#8a5cf6','#14b8a6','#f97316'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } } });
   const top = grp(live, o => o.sku, o => o.qty), topS = grp(live, o => o.sku, o => o.amount);
   $('tTop').innerHTML = '<tr><th>SKU</th><th>Units</th><th>Sales</th></tr>' + Object.entries(top).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s, u]) => `<tr><td>${s}</td><td>${u}</td><td>${inr(topS[s])}</td></tr>`).join('');
   const skuOf = {}; D.orders.forEach(o => skuOf[o.itemId] = o.sku);
@@ -392,4 +468,21 @@ $('chips').onclick = e => { const b = e.target.closest('button'); if (!b) return
   $('fAcc').value = b.dataset.acc; render(); renderSettle(); drawChips(); };
 $('fAcc').addEventListener('change', drawChips);
 drawChips();
-</script></body></html>
+</script><script>
+// Tabs (remembered per browser) and collapsible cards
+(function () {
+  const btns = [...document.querySelectorAll('nav.tabs button')];
+  function show(name) {
+    btns.forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
+    document.querySelectorAll('section.tab').forEach(s => s.hidden = s.dataset.tab !== name);
+    // charts drawn while their tab was hidden have no size yet
+    setTimeout(() => { try { Object.values(charts).forEach(c => c </body></body> c.resize()); } catch (e) {} }, 30);
+    try { localStorage.fkTab = name; } catch (e) {}
+  }
+  btns.forEach(b => b.onclick = () => show(b.dataset.tab));
+  let start = 'overview'; try { if (localStorage.fkTab) start = localStorage.fkTab; } catch (e) {}
+  show(btns.some(b => b.dataset.tab === start) ? start : 'overview');
+  document.addEventListener('click', e => { const h = e.target.closest('.card > h3'); if (h) h.parentElement.classList.toggle('closed'); });
+})();
+</script>
+</body></html>
