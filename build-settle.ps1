@@ -5,6 +5,9 @@ $parts = Get-ChildItem (Join-Path $root 'settlements') -Filter *.json | ForEach-
     $body = (Get-Content $_.FullName -Raw).Trim()
     $daily = Join-Path $root "settlements\daily\$($_.Name)"
     if (Test-Path $daily) { $body = $body.Substring(0, $body.LastIndexOf('}')) + ',"dd":' + (Get-Content $daily -Raw).Trim() + '}' }
+    # settlements\charged\<acc>.json: [[MM-DD, order item id, charge]] for returns Flipkart charged
+    $cr = Join-Path $root "settlements\charged\$($_.Name)"
+    if (Test-Path $cr) { $body = $body.Substring(0, $body.LastIndexOf('}')) + ',"cr":' + (Get-Content $cr -Raw).Trim() + '}' }
     '"' + $_.BaseName + '":' + $body
 }
 $stamp = (Get-Date).ToString('yyyy-MM-dd HH:mm')

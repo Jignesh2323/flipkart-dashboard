@@ -112,7 +112,7 @@ function render() {
   const orderCount = new Set(O.map(o => o.orderId)).size, canc = O.filter(isCancel).length;
   const cust = R.filter(r => r.type === 'customer_return').length, rto = R.filter(r => r.type === 'courier_return').length;
   const k = [['Total Sales', inr(sales)], ['Orders', orderCount], ['Units Sold', units], ['Avg Order Value', inr(live.length ? sales / new Set(live.map(o => o.orderId)).size : 0)],
-    ['Cancelled', canc], ['Customer Returns', cust], ['RTO (Courier)', rto]];
+    ['Delivered Orders', new Set(O.filter(o => o.status === 'DELIVERED').map(o => o.orderId)).size], ['Cancelled', canc], ['Customer Returns', cust], ['RTO (Courier)', rto]];
   // Rates: returns of orders placed in this period ÷ shipped units of those orders. Returns whose order is
   // outside the period (or older than the API's order history) would otherwise inflate the rate.
   const shipped = O.filter(o => !isCancel(o)).reduce((s, o) => s + o.qty, 0), rate = n => (shipped ? n / shipped * 100 : 0).toFixed(1) + '%';
@@ -248,9 +248,26 @@ function renderSettle() {
   $('tRefund').innerHTML = '<tr><th>Account</th><th>Delivered</th><th>Returns</th><th>Total orders</th><th>Return charges</th><th>Charge / order</th><th>Packing (₹' + PACK + '/order)</th><th>Kul kharcha / order</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th></tr>' +
     keys.map(k => { const s = T(k, 'Return', 'sale'), r = -T(k, 'Return', 'refund'), c = chgOf(k), d = T(k, 'Sale', 'n'), n = T(k, 'Return', 'n');
       return `<tr><td>${short(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n)).toFixed(1) : '—'}</b></td><td class="bad">${inr((d + n) * PACK)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n) + PACK).toFixed(1) : '—'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
-  const sk = keys.flatMap(k => S[k].s.map(s => [k, ...s])).filter(s => s[9] < 0).sort((x, y) => x[9] - y[9]).slice(0, 15);
-  $('tLoss').innerHTML = '<tr><th>SKU</th><th>Account</th><th>Sold</th><th>Returns</th><th>Return chg</th><th>Net settle</th></tr>' +
-    sk.map(s => `<tr><td>${s[1]}</td><td>${short(s[0])}</td><td>${s[7]}</td><td>${s[8]}</td><td class="bad">${inr(-s[9])}</td><td class="${s[6] < 0 ? 'bad' : ''}">${inr(s[6])}</td></tr>`).join('');
+  renderSkuCharges(keys, sf, $('fTo').value);
+}
+// Per SKU: customer / RTO returns (API, cleaned) and the returns Flipkart actually charged
+// (settlement "cr" rows [MM-DD payment date, order item id, charge ₹], joined to the API return type).
+function renderSkuCharges(keys, from, to) {
+  const retOf = new Map(D.returns.map(r => [r.acc + '|' + r.itemId, r])), skuOf = new Map(D.orders.map(o => [o.acc + '|' + o.itemId, o.sku]));
+  const rows = new Map(), row = (acc, sku) => { const k = acc + '|' + sku; if (!rows.has(k)) rows.set(k, { acc, sku, sold: 0, cu: 0, rto: 0, cCu: 0, cRto: 0, cNa: 0, chg: 0 }); return rows.get(k); };
+  const inP = d => d >= from && d <= to;
+  for (const o of D.orders) if (keys.includes(o.acc) && inP(o.date) && !isLost(o)) row(o.acc, o.sku).sold += o.qty;
+  for (const r of D.returns) if (keys.includes(r.acc) && inP(r.date)) { const x = row(r.acc, r.sku || skuOf.get(r.acc + '|' + r.itemId) || '—'); r.type === 'courier_return' ? x.rto++ : x.cu++; }
+  let hasCr = false;
+  for (const k of keys) for (const [md, item, amt] of (window.FK_SETTLE[k].cr || [])) {
+    hasCr = true; const dt = '2026-' + md; if (!inP(dt)) continue;
+    const r = retOf.get(k + '|' + item), x = row(k, (r && r.sku) || skuOf.get(k + '|' + item) || '—');
+    x.chg += amt; if (!r) x.cNa++; else if (r.type === 'courier_return') x.cRto++; else x.cCu++;
+  }
+  const list = [...rows.values()].filter(x => x.chg > 0 || x.cu + x.rto > 0).sort((a, b) => b.chg - a.chg || (b.cu + b.rto) - (a.cu + a.rto)).slice(0, 20);
+  $('tLoss').innerHTML = '<tr><th>SKU</th><th>Account</th><th>Sold</th><th>Customer Ret</th><th>RTO</th><th>Charge laga: Customer</th><th>Charge laga: RTO</th><th>Return charge</th><th>Charge / charged return</th></tr>' +
+    list.map(x => { const n = x.cCu + x.cRto + x.cNa;
+      return `<tr><td>${x.sku}</td><td>${short(x.acc)}</td><td>${x.sold}</td><td>${x.cu}</td><td>${x.rto}</td><td>${hasCr ? x.cCu : '—'}</td><td>${hasCr ? x.cRto + (x.cNa ? ` <span title="order ka return type data me nahi">(+${x.cNa}?)</span>` : '') : '—'}</td><td class="bad">${hasCr ? inr(x.chg) : '—'}</td><td>${n ? inr(x.chg / n) : '—'}</td></tr>`; }).join('');
 }
 function makeDemo() {
   const o = [], r = [], st = ['DELIVERED','SHIPPED','READY_TO_DISPATCH','CANCELLED'], rs = ['Size issue','Damaged','Not as described','Changed mind'];
