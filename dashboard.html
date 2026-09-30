@@ -42,7 +42,7 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 </div>
 <div id="profitTop" hidden>
 <h2 style="font-size:18px;margin:8px 0 4px">Profit</h2>
-<p style="color:var(--mut);margin:0 0 12px;font-size:13px">Profit = Bank me aaya − Product cost (delivered units × aapki cost) − Packing (₹15/order)</p>
+<p style="color:var(--mut);margin:0 0 12px;font-size:13px">Profit = Bank me aaya − Product cost (delivered units × aapki cost) − Packing (₹15/order) − GST (bike maal ki keemat me shamil GST; rate Flipkart invoice se, input credit nahi)</p>
 <div id="pWarn"></div>
 <div class="kpis" id="pKpis"></div>
 <div class="card" style="margin-bottom:16px"><h3>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
@@ -73,6 +73,7 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 </main>
 <script>document.write('<script src="settle.js?v=' + Date.now() + '"><\/script>')</script>
 <script>document.write('<script src="cost.js?v=' + Date.now() + '"><\/script>')</script>
+<script>document.write('<script src="gst.js?v=' + Date.now() + '"><\/script>')</script>
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
@@ -320,6 +321,15 @@ $('tCost').onclick = async e => {
     else { $('ceMsg').textContent = typeof msg === 'string' ? msg : 'Save nahi hua, dobara try kariye.'; b.disabled = false; b.textContent = 'Save'; }
   } catch (err) { $('ceMsg').textContent = 'Internet check kariye, save nahi hua.'; b.disabled = false; b.textContent = 'Save'; }
 };
+// GST rate for a SKU: from its Flipkart invoice (gst.js); else another SKU of the same product; else 5%
+// (5% is what nearly every product here is invoiced at).
+let gstByProduct = null;
+function gstOf(sku) {
+  const G = window.FK_GST || {};
+  if (G[sku] != null) return G[sku];
+  if (!gstByProduct) { gstByProduct = {}; for (const [s, r] of Object.entries(G)) gstByProduct[productOf(s)] = r; }
+  return gstByProduct[productOf(sku)] ?? 5;
+}
 function renderProfit(keys, S, from, to) {
   const C = window.FK_COST || {}, inP = d => d >= from && d <= to;
   $('profitTop').hidden = false;
@@ -328,22 +338,22 @@ function renderProfit(keys, S, from, to) {
   const T = (k, ty, f) => (S[k].t[ty] || {})[f] || 0, missing = new Map();
   const rows = keys.map(k => {
     const bank = S[k].p.reduce((s, p) => s + p[1], 0);
-    let cogs = 0, units = 0, miss = 0;
+    let cogs = 0, units = 0, miss = 0, gst = 0;
     for (const o of D.orders) if (o.acc === k && o.status === 'DELIVERED' && inP(o.date)) {
       const p = productOf(o.sku), c = C[p]; units += o.qty;
-      if (c) cogs += c * o.qty; else { miss += o.qty; missing.set(p, (missing.get(p) || 0) + o.qty); }
+      gst += o.amount * gstOf(o.sku) / (100 + gstOf(o.sku)); if (c) cogs += c * o.qty; else { miss += o.qty; missing.set(p, (missing.get(p) || 0) + o.qty); }
     }
     const pack = (T(k, 'Sale', 'n') + T(k, 'Return', 'n')) * PACK;
-    return { k, bank, cogs, pack, units, miss, profit: bank - cogs - pack };
+    return { k, bank, cogs, pack, gst, units, miss, profit: bank - cogs - pack - gst };
   });
   const s = f => rows.reduce((a, r) => a + r[f], 0), bank = s('bank'), profit = s('profit');
-  $('pKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Product cost', inr(s('cogs'))], ['Packing', inr(s('pack'))],
+  $('pKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Product cost', inr(s('cogs'))], ['Packing', inr(s('pack'))], ['GST (sale par)', inr(s('gst'))],
     ['Profit', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`], ['Profit %', bank ? (profit / bank * 100).toFixed(1) + '%' : '—'], ['Delivered units', s('units')]]
     .map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const top = [...missing.entries()].sort((a, b) => b[1] - a[1]);
   $('pWarn').innerHTML = top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? '…' : ''}</div>` : '';
-  $('tProfit').innerHTML = '<tr><th>Account</th><th>Bank me aaya</th><th>Delivered units</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
-    rows.sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+  $('tProfit').innerHTML = '<tr><th>Account</th><th>Bank me aaya</th><th>Delivered units</th><th>Product cost</th><th>Packing</th><th>GST</th><th>Profit</th><th>Profit %</th></tr>' +
+    rows.sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td>${inr(r.gst)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
 }
 // Per SKU: customer / RTO returns (API, cleaned) and the returns Flipkart actually charged
 // (settlement "cr" rows [MM-DD payment date, order item id, charge ₹], joined to the API return type).
