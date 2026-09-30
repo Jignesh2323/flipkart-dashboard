@@ -228,15 +228,15 @@ function render() {
     const cu = r.filter(x => x.type === 'customer_return').length, rto = r.filter(x => x.type === 'courier_return').length;
     const ids = new Set(o.map(x => x.itemId)), rm = D.returns.filter(x => x.acc === ac && ids.has(x.itemId));
     const cuM = rm.filter(x => x.type === 'customer_return').length, rtoM = rm.filter(x => x.type === 'courier_return').length;
-    return { ac, s: l.reduce((s, x) => s + x.amount, 0), n: new Set(o.map(x => x.orderId)).size, c: o.filter(isCancel).length,
+    return { ac, s: l.reduce((s, x) => s + x.amount, 0), n: new Set(o.map(x => x.orderId)).size, c: o.filter(isCancel).length, d: new Set(o.filter(x => x.status === 'DELIVERED').map(x => x.orderId)).size,
       cu, rto, r: r.length, cuP: pct(cuM), rtoP: pct(rtoM), rr: pct(cuM + rtoM), api: o.length > 0 }; }).sort((x, y) => y.s - x.s);
   chart('cAcc', { type: 'bar', data: { labels: rows.map(r => short(r.ac)), datasets: [{ data: rows.map(r => r.s), backgroundColor: '#1a7f37' }] },
     options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: { size: 11, weight: 'bold' } } } } } });
   const pc = (v, lim) => `<td class="${v > lim ? 'bad' : ''}">${v.toFixed(1)}%</td>`;
-  $('tAcc').innerHTML = '<tr><th>Account</th><th>Sales</th><th>Orders</th><th>Cancel</th><th>Customer Ret</th><th>RTO</th><th>Total Ret</th><th>Cust %</th><th>RTO %</th><th>Total %</th></tr>' +
+  $('tAcc').innerHTML = '<tr><th>Account</th><th>Sales</th><th>Orders</th><th>Delivered</th><th>Cancel</th><th>Customer Ret</th><th>RTO</th><th>Total Ret</th><th>Cust %</th><th>RTO %</th><th>Total %</th></tr>' +
     rows.map(r => r.api
-      ? `<tr><td>${short(r.ac)}</td><td>${inr(r.s)}</td><td>${r.n}</td><td>${r.c}</td><td>${r.cu}</td><td>${r.rto}</td><td><b>${r.r}</b></td>${pc(r.cuP, 10)}${pc(r.rtoP, 10)}${pc(r.rr, 20)}</tr>`
-      : `<tr><td>${short(r.ac)}</td><td colspan="9" style="text-align:left;color:var(--mut)">API approval baaki hai</td></tr>`).join('');
+      ? `<tr><td>${short(r.ac)}</td><td>${inr(r.s)}</td><td>${r.n}</td><td>${r.d}</td><td>${r.c}</td><td>${r.cu}</td><td>${r.rto}</td><td><b>${r.r}</b></td>${pc(r.cuP, 10)}${pc(r.rtoP, 10)}${pc(r.rr, 20)}</tr>`
+      : `<tr><td>${short(r.ac)}</td><td colspan="10" style="text-align:left;color:var(--mut)">API approval baaki hai</td></tr>`).join('');
   const st = grp(O, 'status');
   chart('cStatus', { type: 'doughnut', data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: ['#1a7f37','#1f9d55','#f7b500','#d64545','#8a5cf6','#14b8a6','#f97316'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } } });
   const top = grp(live, o => o.sku, o => o.qty), topS = grp(live, o => o.sku, o => o.amount);
