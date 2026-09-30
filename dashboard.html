@@ -213,14 +213,14 @@ function render() {
   const sales = live.reduce((s, o) => s + o.amount, 0), units = live.reduce((s, o) => s + o.qty, 0);
   const orderCount = new Set(O.map(o => o.orderId)).size, canc = O.filter(isCancel).length;
   const cust = R.filter(r => r.type === 'customer_return').length, rto = R.filter(r => r.type === 'courier_return').length;
-  const k = [['Total Sales', inr(sales)], ['Orders', orderCount], ['Units Sold', units], ['Avg Order Value', inr(live.length ? sales / new Set(live.map(o => o.orderId)).size : 0)],
-    ['Delivered Orders', new Set(O.filter(o => o.status === 'DELIVERED').map(o => o.orderId)).size], ['Cancelled', canc], ['Customer Returns', cust], ['RTO (Courier)', rto]];
+  const k = [['Kul Sale (₹)', inr(sales)], ['Kul orders aaye', orderCount], ['Kul units bike', units], ['Ek order ki average keemat', inr(live.length ? sales / new Set(live.map(o => o.orderId)).size : 0)],
+    ['Customer tak pahunche (Delivered)', new Set(O.filter(o => o.status === 'DELIVERED').map(o => o.orderId)).size], ['Cancel hue orders', canc], ['Customer ne wapas kiye', cust], ['RTO (customer ne parcel liya nahi)', rto]];
   // Rates: returns of orders placed in this period ÷ shipped units of those orders. Returns whose order is
   // outside the period (or older than the API's order history) would otherwise inflate the rate.
   const shipped = O.filter(o => !isCancel(o)).reduce((s, o) => s + o.qty, 0), rate = n => (shipped ? n / shipped * 100 : 0).toFixed(1) + '%';
   const inO = new Set(O.map(o => o.acc + '|' + o.itemId)), RM = D.returns.filter(r => (!a || r.acc === a) && inO.has(r.acc + '|' + r.itemId));
   const custM = RM.filter(r => r.type === 'customer_return').length, rtoM = RM.filter(r => r.type === 'courier_return').length;
-  k.push(['Customer Return Rate', rate(custM)], ['RTO Rate', rate(rtoM)], ['Total Return Rate', rate(custM + rtoM)]);
+  k.push(['Customer return %', rate(custM)], ['RTO %', rate(rtoM)], ['Kul return % (customer + RTO)', rate(custM + rtoM)]);
   $('kpis').innerHTML = k.map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const byDay = grp(live, 'date', o => o.amount), days = Object.keys(byDay).sort();
   chart('cTrend', { type: 'line', data: { labels: days.map(dmy), datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: '#1a7f37', backgroundColor: '#1a7f3722', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
@@ -305,8 +305,8 @@ function renderSettle() {
   const retChg = -sum(k => hasAmt(k) ? T(k, 'Return', 'chargedAmt') : -(T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')));
   const retLoss = sum(k => T(k, 'Return', 'settle'));
   const retN = sum(k => T(k, 'Return', 'n'));
-  $('sKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Flipkart Fees', inr(-fees)], ['Taxes (TCS/TDS/GST)', inr(-taxes)],
-    ['Return Charges', inr(-retChg)], ['Returns settled', retN]]
+  $('sKpis').innerHTML = [['Bank me aaya (sab katne ke baad)', inr(bank)], ['Flipkart ki fees kati', inr(-fees)], ['Tax kata (TCS/TDS/GST)', inr(-taxes)],
+    ['Return charge kata (sirf customer return par)', inr(-retChg)], ['Wapas aaye parcels (customer + RTO)', retN]]
     .map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const byDay = {}; keys.forEach(k => S[k].p.forEach(p => byDay[p[0]] = (byDay[p[0]] || 0) + p[1]));
   const d = Object.keys(byDay).sort();
@@ -332,20 +332,20 @@ function renderSettle() {
       <li><b>Pehle (pichhle mahine) bike, ab return hue orders</b>: sale ka paisa <b>pichhle payment me mil chuka tha</b>, isliye yahan sale ₹0 dikhti hai, lekin refund yahan kata.</li>
     </ul>
     <div class="kpis" style="margin:12px 0">
-      <div class="k"><span>Refund kata (sab returns)</span><b class="bad">${inr(rf)}</b></div>
-      <div class="k"><span>In returns ki sale jo isi period me mili</span><b>${inr(rs)}</b></div>
-      <div class="k"><span>Pehle mila paisa, ab wapas kata</span><b>${inr(gap)}</b></div>
-      <div class="k"><span>Asli nuksaan (Flipkart return charges)</span><b class="bad">${inr(chgAll)}</b></div>
+      <div class="k"><span>Wapas aaye parcels ka refund kata</span><b class="bad">${inr(rf)}</b></div>
+      <div class="k"><span>Inme se jinki sale isi mahine mili</span><b>${inr(rs)}</b></div>
+      <div class="k"><span>Pichhle mahine mila paisa, ab kata (nuksaan nahi)</span><b>${inr(gap)}</b></div>
+      <div class="k"><span>Asli nuksaan: return charge</span><b class="bad">${inr(chgAll)}</b></div>
     </div>
     <div class="kpis" style="margin:0 0 12px">
-      <div class="k"><span>Payment mile orders (Seller Hub)</span><b>${ordAll}</b></div>
-      <div class="k"><span>Return settle hue (Customer + RTO)</span><b>${retAll}</b></div>
-      <div class="k"><span>Total settle hue (payment + return)</span><b>${ordAll + retAll}</b></div>
-      <div class="k"><span>Har order par return charge</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll)).toFixed(1) : '—'}</b></div>
-      <div class="k"><span>Packing (box + bag, ₹${PACK}/order)</span><b class="bad">${inr((ordAll + retAll) * PACK)}</b></div>
-      <div class="k"><span>Har order ka kul kharcha (return + packing)</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll) + PACK).toFixed(1) : '—'}</b></div>
-      <div class="k"><span>Kitne returns par charge laga</span><b>${chargedAll == null ? '—' : chargedAll + ' / ' + retAll}</b></div>
-      <div class="k"><span>${chargedAll ? "Ek charged return ka average charge" : "Average charge (sab returns par bant kar)"}</span><b class="bad">${chargedAll ? inr(chargedAmt / chargedAll) : retAll ? inr(chgAll / retAll) : "—"}</b></div>
+      <div class="k"><span>Parcels jinka paisa mila</span><b>${ordAll}</b></div>
+      <div class="k"><span>Parcels jo wapas aaye (customer + RTO)</span><b>${retAll}</b></div>
+      <div class="k"><span>Kul parcels bheje</span><b>${ordAll + retAll}</b></div>
+      <div class="k"><span>Har parcel par average return charge</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll)).toFixed(1) : '—'}</b></div>
+      <div class="k"><span>Packing kharcha (₹${PACK} har parcel)</span><b class="bad">${inr((ordAll + retAll) * PACK)}</b></div>
+      <div class="k"><span>Har parcel ka kharcha (return + packing)</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll) + PACK).toFixed(1) : '—'}</b></div>
+      <div class="k"><span>Charge lage returns (customer) / kul wapas</span><b>${chargedAll == null ? '—' : chargedAll + ' / ' + retAll}</b></div>
+      <div class="k"><span>${chargedAll ? "Ek customer return ka charge" : "Ek return ka average charge"}</span><b class="bad">${chargedAll ? inr(chargedAmt / chargedAll) : retAll ? inr(chgAll / retAll) : "—"}</b></div>
     </div>
     <p style="margin:0 0 8px;color:var(--mut)">"Pehle mila paisa, ab wapas kata" nuksaan nahi hai: wo paisa aapko pehle mil gaya tha aur product bhi wapas aa gaya. Asli nuksaan sirf Flipkart ke return charges hain.</p>`;
   $('tRefund').innerHTML = '<tr><th>Account</th><th>Payment mile</th><th>Return settle</th><th>Total settle</th><th>Return charges</th><th>Charge / order</th><th>Packing (₹' + PACK + '/order)</th><th>Kul kharcha / order</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th></tr>' +
@@ -430,8 +430,8 @@ function renderProfit(keys, S, from, to) {
     return { k, bank, cogs, pack, gst, units, miss, profit: bank - cogs - pack };
   });
   const s = f => rows.reduce((a, r) => a + r[f], 0), bank = s('bank'), profit = s('profit');
-  $('pKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Product cost', inr(s('cogs'))], ['Packing', inr(s('pack'))],
-    ['Profit', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`], ['Profit %', bank ? (profit / bank * 100).toFixed(1) + '%' : '—'], ['Delivered units', s('units')]]
+  $('pKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Maal ki kharid (product cost)', inr(s('cogs'))], ['Packing kharcha', inr(s('pack'))],
+    ['Munafa (Profit)', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`], ['Munafa %', bank ? (profit / bank * 100).toFixed(1) + '%' : '—'], ['Delivered units (jinki cost gini)', s('units')]]
     .map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const top = [...missing.entries()].sort((a, b) => b[1] - a[1]);
   $('pWarn').innerHTML = top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? '…' : ''}</div>` : '';
@@ -523,9 +523,9 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
 <script>
 // Icon in each KPI tile's chip, picked from its title
 (function () {
-  const I = [[/cancel/i, '❌'], [/refund|wapas/i, '💸'], [/kitne returns|charged return|average charge/i, '⚠️'], [/payment mile/i, '🏦'], [/total settle/i, '🧮'], [/rto/i, '🚚'], [/return rate|rate/i, '📉'], [/customer return|returns settled|return charge/i, '↩️'], [/delivered/i, '📦'],
-    [/units/i, '🧮'], [/avg/i, '🏷️'], [/orders/i, '🛒'], [/total sales|sale/i, '💰'], [/bank/i, '🏦'], [/fees/i, '💸'], [/tax|gst/i, '🧾'],
-    [/product cost/i, '🏭'], [/packing/i, '📦'], [/profit %/i, '📊'], [/profit/i, '📈']];
+  const I = [[/cancel/i, '❌'], [/refund|pichhle/i, '💸'], [/charge lage|return ka charge|average charge/i, '⚠️'], [/munafa %/i, '📊'], [/return %|rto %/i, '📉'], [/rto/i, '🚚'], [/wapas/i, '↩️'],
+    [/delivered/i, '📦'], [/units/i, '🧮'], [/average keemat/i, '🏷️'], [/orders aaye/i, '🛒'], [/sale/i, '💰'], [/bank|paisa mila/i, '🏦'], [/fees/i, '💸'], [/tax/i, '🧾'],
+    [/kharid/i, '🏭'], [/packing|kharcha/i, '📦'], [/return charge|nuksaan/i, '⚠️'], [/munafa/i, '📈'], [/parcels bheje/i, '🧮']];
   const put = () => document.querySelectorAll('.k>span:not([data-i])').forEach(s => { const m = I.find(([r]) => r.test(s.textContent)); s.dataset.i = m ? m[1] : '•'; });
   put(); new MutationObserver(put).observe(document.querySelector('main'), { childList: true, subtree: true });
 })();
