@@ -81,7 +81,27 @@ tr:hover td{background:#f8fafc}
 @media(max-width:768px){header{padding:10px 12px}main{padding:12px}.grid{grid-template-columns:1fr}.k b{font-size:21px}
   .kpis{grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}nav.tabs button{padding:9px 12px;font-size:13px}}
 @media(prefers-reduced-motion:no-preference){.tab{animation:fade .18s ease}}@keyframes fade{from{opacity:.4}to{opacity:1}}
-</style></head><body>
+/* dark mode */
+[data-theme="dark"]{--bg:#0f141a;--card:#161c24;--panel2:#1c2430;--line:#2b3542;--ink:#e6edf3;--mut:#9aa6b2;--pri-soft:color-mix(in srgb,var(--pri) 18%,#161c24);color-scheme:dark}
+[data-theme="dark"] header,[data-theme="dark"] .card,[data-theme="dark"] .range,[data-theme="dark"] select,[data-theme="dark"] input{background:var(--card)}
+[data-theme="dark"] nav.tabs{background:#1c2430}[data-theme="dark"] nav.tabs button[aria-selected="true"],[data-theme="dark"] .bar button[aria-pressed="true"]{background:#0f141a}
+[data-theme="dark"] .bar button{background:#1c2430}
+[data-theme="dark"] .k{background:linear-gradient(135deg,var(--card) 55%,color-mix(in srgb,var(--t) 14%,var(--card)))}
+[data-theme="dark"] .k>span::before{background:color-mix(in srgb,var(--t) 25%,var(--card));border-color:color-mix(in srgb,var(--t) 40%,var(--card))}
+[data-theme="dark"] .card>h3{background:linear-gradient(90deg,var(--pri-soft),var(--card) 70%)}
+[data-theme="dark"] tr:hover td{background:#1c2430}[data-theme="dark"] .warn{background:#2b2410;border-color:#5c4a14;color:#f0c75e}
+[data-theme="dark"] .chips button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--c)}
+.swatch{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer;background:var(--s)}
+.accbar[hidden]{display:none}.swatch{box-shadow:0 0 0 1px var(--line)}
+.swatch[aria-pressed="true"]{border-color:var(--ink)}
+.setrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}.setrow>label{min-width:170px;color:var(--mut);font-size:13px}
+.info td{font-family:var(--sans)}
+</style>
+<script>
+// Saved theme (per browser) applied before anything draws
+try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark") document.documentElement.dataset.theme = "dark";
+  if (th.pri) { document.documentElement.style.setProperty("--pri", th.pri); document.documentElement.style.setProperty("--pri-soft", th.pri + "18"); } } catch (e) {}
+</script></head><body>
 <header><div><h1>FLIPKART · <span>Seller Business</span></h1><small id="gen"></small></div>
 <div class="bar" id="period" role="group" aria-label="Period"><button type="button" data-d="30">30 Days</button><button type="button" data-d="60">60 Days</button><button type="button" data-d="90">90 Days</button><button type="button" data-d="180">180 Days</button><select id="fAcc" hidden></select><input type="hidden" id="fFrom"><input type="hidden" id="fTo"></div></header>
 <main>
@@ -152,6 +172,14 @@ tr:hover td{background:#f8fafc}
 </section>
 
 <section class="tab" data-tab="settings" hidden>
+<div class="card"><h3>🎨 Rang aur Theme</h3>
+<div class="setrow"><label>Mode</label><div class="bar" id="setMode"><button type="button" data-m="light">☀️ Light</button><button type="button" data-m="dark">🌙 Dark</button></div></div>
+<div class="setrow"><label>Main rang</label><div id="setPri" style="display:flex;gap:10px;flex-wrap:wrap"></div></div>
+<p class="note" style="margin:0 18px 14px">Ye pasand sirf is browser/PC me yaad rehti hai.</p></div>
+<div class="card"><h3>🚀 Dashboard kholne par</h3>
+<div class="setrow"><label>Pehle se chuna period</label><div class="bar" id="setPeriod"><button type="button" data-p="30">30 Days</button><button type="button" data-p="60">60 Days</button><button type="button" data-p="90">90 Days</button><button type="button" data-p="max">Sabse zyada din</button></div></div>
+<div class="setrow"><label>Sab pasand hatayein</label><button type="button" class="ceSave" id="setReset">Reset (default par wapas)</button></div></div>
+<div class="card"><h3>📊 Data ki jaankari</h3><div class="tw"><table id="tInfo" class="info"></table></div></div>
 <div class="card"><h3>API Status</h3><div class="tw"><table id="tApi"></table></div></div>
 </section>
 </main>
@@ -197,10 +225,12 @@ if (!demo && ORD_MIN) {
   if (avail < 180) { big.dataset.d = avail; big.textContent = avail + ' Days'; }
   document.querySelectorAll('#period button').forEach(b => { if (b !== big && +b.dataset.d >= avail) b.hidden = true; });
 }
-setPeriod(30);
+let startP = 30; try { startP = localStorage.fkPeriod || 30; } catch (e) {}
+{ const bs = [...document.querySelectorAll('#period button')].filter(b => !b.hidden), b = startP === 'max' ? bs.at(-1) : bs.find(x => x.dataset.d == startP) || bs[0]; setPeriod(+b.dataset.d); }
 $('period').onclick = e => { const b = e.target.closest('button'); if (!b) return; setPeriod(+b.dataset.d); render(); renderSettle(); };
 ['fAcc','fFrom','fTo'].forEach(i => $(i).onchange = () => { render(); renderSettle(); });
 const charts = {};
+const PRI = () => getComputedStyle(document.documentElement).getPropertyValue('--pri').trim() || '#1a7f37';
 function chart(id, cfg) { charts[id]?.destroy(); charts[id] = new Chart($(id), cfg); }
 const isCancel = o => /CANCEL/i.test(o.status || "");
 const isLost = o => /CANCEL|^RETURNED$/i.test(o.status || "");
@@ -229,7 +259,7 @@ function render() {
     ['Kul return % (customer + RTO)', rate(custM + rtoM), `(${custM} + ${rtoM}) ÷ ${shipped} bheje units`]);
   $('kpis').innerHTML = k.map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const byDay = grp(live, 'date', o => o.amount), days = Object.keys(byDay).sort();
-  chart('cTrend', { type: 'line', data: { labels: days.map(dmy), datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: '#1a7f37', backgroundColor: '#1a7f3722', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
+  chart('cTrend', { type: 'line', data: { labels: days.map(dmy), datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: PRI(), backgroundColor: PRI() + '22', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
   const allO = D.orders.filter(o => (!f || o.date >= f) && (!t || o.date <= t)), allR = D.returns.filter(r => (!f || r.date >= f) && (!t || r.date <= t));
   const rows = accs.filter(ac => !a || ac === a).map(ac => { const o = allO.filter(x => x.acc === ac), l = o.filter(x => !isLost(x)), r = allR.filter(x => x.acc === ac), u = l.reduce((s, x) => s + x.qty, 0);
     // Return % is over shipped units (everything not cancelled, incl. items later returned)
@@ -239,7 +269,7 @@ function render() {
     const cuM = rm.filter(x => x.type === 'customer_return').length, rtoM = rm.filter(x => x.type === 'courier_return').length;
     return { ac, s: l.reduce((s, x) => s + x.amount, 0), n: new Set(o.map(x => x.orderId)).size, c: o.filter(isCancel).length, d: new Set(o.filter(x => x.status === 'DELIVERED').map(x => x.orderId)).size,
       cu, rto, r: r.length, cuP: pct(cuM), rtoP: pct(rtoM), rr: pct(cuM + rtoM), api: o.length > 0 }; }).sort((x, y) => y.s - x.s);
-  chart('cAcc', { type: 'bar', data: { labels: rows.map(r => short(r.ac)), datasets: [{ data: rows.map(r => r.s), backgroundColor: '#1a7f37' }] },
+  chart('cAcc', { type: 'bar', data: { labels: rows.map(r => short(r.ac)), datasets: [{ data: rows.map(r => r.s), backgroundColor: PRI() }] },
     options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: { size: 11, weight: 'bold' } } } } } });
   const pc = (v, lim) => `<td class="${v > lim ? 'bad' : ''}">${v.toFixed(1)}%</td>`;
   $('tAcc').innerHTML = '<tr><th>Account</th><th>Sales</th><th>Orders</th><th>Delivered</th><th>Cancel</th><th>Customer Ret</th><th>RTO</th><th>Total Ret</th><th>Cust %</th><th>RTO %</th><th>Total %</th></tr>' +
@@ -247,7 +277,7 @@ function render() {
       ? `<tr><td>${short(r.ac)}</td><td>${inr(r.s)}</td><td>${r.n}</td><td>${r.d}</td><td>${r.c}</td><td>${r.cu}</td><td>${r.rto}</td><td><b>${r.r}</b></td>${pc(r.cuP, 10)}${pc(r.rtoP, 10)}${pc(r.rr, 20)}</tr>`
       : `<tr><td>${short(r.ac)}</td><td colspan="10" style="text-align:left;color:var(--mut)">API approval baaki hai</td></tr>`).join('');
   const st = grp(O, 'status');
-  chart('cStatus', { type: 'doughnut', data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: ['#1a7f37','#1f9d55','#f7b500','#d64545','#8a5cf6','#14b8a6','#f97316'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } } });
+  chart('cStatus', { type: 'doughnut', data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: [PRI(),'#1f9d55','#f7b500','#d64545','#8a5cf6','#14b8a6','#f97316'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } } });
   const top = grp(live, o => o.sku, o => o.qty), topS = grp(live, o => o.sku, o => o.amount);
   const by = window.topBy || 'u'; document.querySelectorAll('#topBy button').forEach(b => b.setAttribute('aria-pressed', b.dataset.by === by));
   $('tTop').innerHTML = '<tr><th>SKU</th><th>Units</th><th>Sales</th></tr>' + Object.entries(top).sort((a, b) => by === 's' ? topS[b[0]] - topS[a[0]] : b[1] - a[1] || topS[b[0]] - topS[a[0]]).slice(0, 20).map(([s, u]) => `<tr><td>${s}</td><td>${u}</td><td>${inr(topS[s])}</td></tr>`).join('');
@@ -317,7 +347,7 @@ function renderSettle() {
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const byDay = {}; keys.forEach(k => S[k].p.forEach(p => byDay[p[0]] = (byDay[p[0]] || 0) + p[1]));
   const d = Object.keys(byDay).sort();
-  chart('cBank', { type: 'bar', data: { labels: d.map(dmy), datasets: [{ data: d.map(x => byDay[x]), backgroundColor: '#1f9d55' }] }, options: { plugins: { legend: { display: false } } } });
+  chart('cBank', { type: 'bar', data: { labels: d.map(dmy), datasets: [{ data: d.map(x => byDay[x]), backgroundColor: PRI() }] }, options: { plugins: { legend: { display: false } } } });
   $('tSet').innerHTML = '<tr><th>Account</th><th>Bank me</th><th>Fees</th><th>Return chg</th><th>Return loss</th></tr>' +
     keys.map(k => ({ k, b: S[k].p.reduce((s, p) => s + p[1], 0), f: Object.values(S[k].t).reduce((s, t) => s + t.fees + t.taxes, 0), rc: T(k, 'Return', 'fees') + T(k, 'Return', 'taxes'), rl: T(k, 'Return', 'settle') }))
       .sort((x, y) => y.b - x.b).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.b)}</td><td class="bad">${inr(-r.f)}</td><td class="bad">${inr(-r.rc)}</td><td class="bad">${inr(-r.rl)}</td></tr>`).join('');
@@ -509,6 +539,35 @@ drawChips();
 function filterItems() { const q = ($('itemFind').value || '').trim().toLowerCase(), rs = [...document.querySelectorAll('#tItem tr')].slice(1); let n = 0;
   rs.forEach(r => { const ok = !q || r.textContent.toLowerCase().includes(q); r.hidden = !ok; if (ok) n++; }); $('itemCnt').textContent = q ? n + ' / ' + rs.length + ' items' : rs.length + ' items'; }
 $('itemFind').oninput = filterItems; new MutationObserver(filterItems).observe($('tItem'), { childList: true }); filterItems();
+// Settings tab: theme, start period, data info
+(function () {
+  const root = document.documentElement, get = () => { try { return JSON.parse(localStorage.fkTheme || '{}'); } catch (e) { return {}; } };
+  const save = th => { try { localStorage.fkTheme = JSON.stringify(th); } catch (e) {} };
+  const COLORS = [['#1a7f37', 'Hara'], ['#0969da', 'Neela'], ['#8250df', 'Baingani'], ['#d1242f', 'Laal'], ['#e36209', 'Narangi'], ['#0e7490', 'Teal'], ['#bf3989', 'Gulabi'], ['#24292f', 'Kaala']];
+  function paint() { const th = get(), pri = th.pri || '#1a7f37';
+    $('setPri').innerHTML = COLORS.map(([c, n]) => `<button type="button" class="swatch" style="--s:${c}" title="${n}" aria-label="${n}" data-c="${c}" aria-pressed="${c === pri}"></button>`).join('');
+    document.querySelectorAll('#setMode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === (th.mode || 'light')));
+    let p = 30; try { p = localStorage.fkPeriod || 30; } catch (e) {}
+    document.querySelectorAll('#setPeriod button').forEach(b => b.setAttribute('aria-pressed', b.dataset.p == p)); }
+  function apply() { const th = get();
+    if (th.mode === 'dark') root.dataset.theme = 'dark'; else delete root.dataset.theme;
+    if (th.pri) { root.style.setProperty('--pri', th.pri); root.style.setProperty('--pri-soft', th.pri + '18'); } else { root.style.removeProperty('--pri'); root.style.removeProperty('--pri-soft'); }
+    Chart.defaults.color = th.mode === 'dark' ? '#9aa6b2' : '#57606a'; Chart.defaults.borderColor = th.mode === 'dark' ? '#2b3542' : '#e5e7eb';
+    render(); renderSettle(); paint(); }
+  $('setPri').onclick = e => { const b = e.target.closest('button'); if (b) { save({ ...get(), pri: b.dataset.c }); apply(); } };
+  $('setMode').onclick = e => { const b = e.target.closest('button'); if (b) { save({ ...get(), mode: b.dataset.m }); apply(); } };
+  $('setPeriod').onclick = e => { const b = e.target.closest('button'); if (b) { try { localStorage.fkPeriod = b.dataset.p; } catch (x) {} paint(); } };
+  $('setReset').onclick = () => { try { ['fkTheme', 'fkPeriod', 'fkTab'].forEach(k => localStorage.removeItem(k)); } catch (e) {} apply(); };
+  if (get().mode === 'dark') { Chart.defaults.color = '#9aa6b2'; Chart.defaults.borderColor = '#2b3542'; render(); renderSettle(); }
+  paint();
+  const S = window.FK_SETTLE || {}, ok = (D.status || []).filter(s => s.ok).length;
+  $('tInfo').innerHTML = [['Orders data update hua', dmy(D.generated)], ['Bank settlement Seller Hub se liya', window.FK_SETTLE_AT ? dmy(window.FK_SETTLE_AT) : '—'],
+    ['Auto update', 'Roz subah 9:00 baje (dusre PC par update.bat)'], ['Orders kab se hain', dmy(ORD_MIN_ALL) + ' se ' + dmy(lastDate)],
+    ['Kul orders (data me)', D.orders.length.toLocaleString('en-IN')], ['Kul returns (data me)', D.returns.length.toLocaleString('en-IN')],
+    ['Accounts (API chalu)', accs.length + ' : ' + accs.map(short).join(', ')], ['Accounts ka API status', ok + ' / ' + (D.status || []).length + ' OK (neeche table dekhiye)'],
+    ['Product cost', 'Products tab me (online save, PIN se)'], ['Packing kharcha', '₹' + PACK + ' har parcel']]
+    .map(([a, b]) => `<tr><td>${a}</td><td style="text-align:left">${b}</td></tr>`).join('');
+})();
 $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { window.topBy = b.dataset.by; render(); } };
 </script><script>
 // Tabs (remembered per browser) and collapsible cards
@@ -517,6 +576,7 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
   function show(name) {
     btns.forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
     document.querySelectorAll('section.tab').forEach(s => s.hidden = s.dataset.tab !== name);
+    const noFilter = name === 'settings' || name === 'products'; $('note').hidden = noFilter; document.querySelector('.accbar').hidden = noFilter;
     // charts drawn while their tab was hidden have no size yet
     setTimeout(() => { try { Object.values(charts).forEach(c => c && c.resize()); } catch (e) {} }, 30);
     try { localStorage.fkTab = name; } catch (e) {}
