@@ -168,7 +168,7 @@ function renderSettle() {
       <div class="k"><span>Packing (box + bag, ₹${PACK}/order)</span><b class="bad">${inr((ordAll + retAll) * PACK)}</b></div>
       <div class="k"><span>Har order ka kul kharcha (return + packing)</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll) + PACK).toFixed(1) : '—'}</b></div>
       <div class="k"><span>Kitne returns par charge laga</span><b>${chargedAll == null ? '—' : chargedAll + ' / ' + retAll}</b></div>
-      <div class="k"><span>Ek return ka average charge</span><b class="bad">${chargedAll ? inr(chgAll / chargedAll) : retAll ? inr(chgAll / retAll) : '—'}</b></div>
+      <div class="k"><span>${chargedAll ? "Ek charged return ka average charge" : "Average charge (sab returns par bant kar)"}</span><b class="bad">${chargedAll ? inr(chgAll / chargedAll) : retAll ? inr(chgAll / retAll) : "—"}</b></div>
     </div>
     <p style="margin:0 0 8px;color:var(--mut)">"Pehle mila paisa, ab wapas kata" nuksaan nahi hai: wo paisa aapko pehle mil gaya tha aur product bhi wapas aa gaya. Asli nuksaan sirf Flipkart ke return charges hain.</p>`;
   $('tRefund').innerHTML = '<tr><th>Account</th><th>Delivered</th><th>Returns</th><th>Total orders</th><th>Return charges</th><th>Charge / order</th><th>Packing (₹' + PACK + '/order)</th><th>Kul kharcha / order</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th></tr>' +
