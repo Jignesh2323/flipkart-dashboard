@@ -115,7 +115,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
   if (th.pri) { document.documentElement.style.setProperty("--pri", th.pri); document.documentElement.style.setProperty("--pri-soft", th.pri + "18"); } } catch (e) {}
 </script></head><body>
 <header><div><h1>FLIPKART · <span>Seller Business</span></h1><small id="gen"></small></div>
-<div class="bar" id="period" role="group" aria-label="Period"><button type="button" data-m="cur">Is mahina</button><button type="button" data-m="last">Pichhla mahina</button><button type="button" data-d="30">30 Days</button><button type="button" data-d="60">60 Days</button><button type="button" data-d="90">90 Days</button><button type="button" data-d="180">180 Days</button><select id="fAcc" hidden></select><input type="hidden" id="fFrom"><input type="hidden" id="fTo"></div></header>
+<div class="bar" id="period" role="group" aria-label="Period"><button type="button" data-d="30">30 Days</button><button type="button" data-d="60">60 Days</button><button type="button" data-d="90">90 Days</button><button type="button" data-d="180">180 Days</button><select id="fAcc" hidden></select><input type="hidden" id="fFrom"><input type="hidden" id="fTo"></div></header>
 <main>
 <nav class="tabs" role="tablist" aria-label="Sections">
 <button role="tab" data-tab="overview" aria-selected="true">🏠 Overview</button>
@@ -148,6 +148,9 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 </section>
 
 <section class="tab" data-tab="paisa" hidden>
+<div class="card"><h3>ðŸ“… Month-wise Hisaab</h3>
+<p class="note" style="margin:14px 18px 0">Har mahine ki sale (us mahine aaye orders) aur bank me aaya paisa (us mahine mile payments). Upar ke 30/60/90 Days is table par asar nahi karte; account button se account chun sakte hain. Pehla mahina adhoora hai (orders API se wahi se milte hain), isliye usme bank ka paisa pichhle orders ka bhi hai aur profit zyada dikhega.</p>
+<div class="tw"><table id="tMonth"></table></div></div>
 <div class="card"><h3>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
 <div class="card"><h3>Item-wise Profit (zyada profit sabse upar)</h3>
 <p class="note" style="margin:14px 18px 0">Flipkart bank payout SKU-wise nahi deta, isliye har account ka "Bank me aaya" us account ke items me unki delivered sale ke hisaab se baanta gaya hai; return charge har item ka asli (Seller Hub se) ghataya gaya hai. Packing ₹15 har dispatch order par.</p>
@@ -189,7 +192,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <div class="setrow"><label>Main rang</label><div id="setPri" style="display:flex;gap:10px;flex-wrap:wrap"></div></div>
 <p class="note" style="margin:0 18px 14px">Ye pasand sirf is browser/PC me yaad rehti hai.</p></div>
 <div class="card"><h3>🚀 Dashboard kholne par</h3>
-<div class="setrow"><label>Pehle se chuna period</label><div class="bar" id="setPeriod"><button type="button" data-p="cur">Is mahina</button><button type="button" data-p="last">Pichhla mahina</button><button type="button" data-p="30">30 Days</button><button type="button" data-p="60">60 Days</button><button type="button" data-p="90">90 Days</button><button type="button" data-p="max">Sabse zyada din</button></div></div>
+<div class="setrow"><label>Pehle se chuna period</label><div class="bar" id="setPeriod"><button type="button" data-p="30">30 Days</button><button type="button" data-p="60">60 Days</button><button type="button" data-p="90">90 Days</button><button type="button" data-p="max">Sabse zyada din</button></div></div>
 <div class="setrow"><label>Sab pasand hatayein</label><button type="button" class="ceSave" id="setReset">Reset (default par wapas)</button></div></div>
 <div class="card"><h3>📊 Data ki jaankari</h3><div class="tw"><table id="tInfo" class="info"></table></div></div>
 <div class="card"><h3>API Status</h3><div class="tw"><table id="tApi"></table></div></div>
@@ -233,13 +236,6 @@ function setPeriod(days) {
   $('fFrom').value = d.toISOString().slice(0, 10); $('fTo').value = lastDate;
   document.querySelectorAll('#period button').forEach(b => b.setAttribute('aria-pressed', b.dataset.d == days));
 }
-// Calendar month of the latest data date: 'cur' = this month so far, 'last' = the whole previous month
-function setMonth(which) {
-  const [y, m] = lastDate.split('-').map(Number), iso = d => d.toISOString().slice(0, 10);
-  if (which === 'cur') { $('fFrom').value = lastDate.slice(0, 8) + '01'; $('fTo').value = lastDate; }
-  else { $('fFrom').value = iso(new Date(Date.UTC(y, m - 2, 1))); $('fTo').value = iso(new Date(Date.UTC(y, m - 1, 0))); }
-  document.querySelectorAll('#period button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === which));
-}
 // The API only has orders from ORD_MIN: the widest button shows exactly the days available
 if (!demo && ORD_MIN) {
   const avail = Math.round((new Date(lastDate) - new Date(ORD_MIN)) / 864e5) + 1;
@@ -248,8 +244,8 @@ if (!demo && ORD_MIN) {
   document.querySelectorAll('#period button').forEach(b => { if (b !== big && +b.dataset.d >= avail) b.hidden = true; });
 }
 let startP = 30; try { startP = localStorage.fkPeriod || 30; } catch (e) {}
-if (startP === 'cur' || startP === 'last') setMonth(startP); else { const bs = [...document.querySelectorAll('#period button[data-d]')].filter(b => !b.hidden), b = startP === 'max' ? bs.at(-1) : bs.find(x => x.dataset.d == startP) || bs[0]; setPeriod(+b.dataset.d); }
-$('period').onclick = e => { const b = e.target.closest('button'); if (!b) return; b.dataset.m ? setMonth(b.dataset.m) : setPeriod(+b.dataset.d); render(); renderSettle(); };
+{ const bs = [...document.querySelectorAll('#period button')].filter(b => !b.hidden), b = startP === 'max' ? bs.at(-1) : bs.find(x => x.dataset.d == startP) || bs[0]; setPeriod(+b.dataset.d); }
+$('period').onclick = e => { const b = e.target.closest('button'); if (!b) return; setPeriod(+b.dataset.d); render(); renderSettle(); };
 ['fAcc','fFrom','fTo'].forEach(i => $(i).onchange = () => { render(); renderSettle(); });
 const charts = {};
 const PRI = () => getComputedStyle(document.documentElement).getPropertyValue('--pri').trim() || '#1a7f37';
@@ -406,6 +402,27 @@ function renderSettle() {
       return `<tr><td>${tag(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n)).toFixed(1) : '—'}</b></td><td class="bad">${inr((d + n) * PACK)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n) + PACK).toFixed(1) : '—'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
   renderSkuCharges(keys, sf, $('fTo').value);
   renderProfit(keys, S, sf, $('fTo').value);
+  renderMonthly(keys);
+}
+// One row per calendar month: orders by order date, money by payment date
+function renderMonthly(keys) {
+  const C = window.FK_COST || {}, MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], rows = [];
+  for (let ym = ORD_MIN.slice(0, 7); ym <= lastDate.slice(0, 7); ym = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 1)).toISOString().slice(0, 7)) {
+    const from = ym + '-01', end = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).toISOString().slice(0, 10);
+    const f = from < ORD_MIN ? ORD_MIN : from, to = end > lastDate ? lastDate : end;
+    const O = D.orders.filter(o => keys.includes(o.acc) && o.date >= f && o.date <= to), live = O.filter(o => !isLost(o)), del = O.filter(o => o.status === 'DELIVERED');
+    const R = D.returns.filter(r => keys.includes(r.acc) && r.date >= f && r.date <= to);
+    const S = settleView(window.FK_SETTLE, f, to), T = (k, ty, x) => ((S[k] && S[k].t[ty]) || {})[x] || 0, sum = g => keys.reduce((s, k) => s + (S[k] ? g(k) : 0), 0);
+    const bank = sum(k => S[k].p.reduce((s, p) => s + p[1], 0)), chg = sum(k => T(k, 'Return', 'chargedAmt') || -(T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')));
+    const pack = sum(k => T(k, 'Sale', 'n') + T(k, 'Return', 'n')) * PACK, cogs = del.reduce((s, o) => s + (C[productOf(o.sku)] || 0) * o.qty, 0);
+    rows.push({ lbl: MN[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4) + (f > from || to < end ? `<br><small style="color:var(--mut)">${dmy(f).slice(0, 5)} se ${dmy(to).slice(0, 5)}</small>` : ''),
+      n: new Set(O.map(o => o.orderId)).size, sale: live.reduce((s, o) => s + o.amount, 0), del: new Set(del.map(o => o.orderId)).size,
+      cu: R.filter(r => r.type === 'customer_return').length, rto: R.filter(r => r.type === 'courier_return').length, bank, chg, cogs, pack, profit: bank - cogs - pack });
+  }
+  const tot = x => rows.reduce((s, r) => s + r[x], 0);
+  const row = (r, cls = '') => `<tr class="${cls}"><td>${r.lbl}</td><td>${r.n}</td><td>${inr(r.sale)}</td><td>${r.del}</td><td>${r.cu}</td><td>${r.rto}</td><td><b>${inr(r.bank)}</b></td><td class="bad">${inr(r.chg)}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td></tr>`;
+  $('tMonth').innerHTML = '<tr><th>Mahina</th><th>Orders</th><th>Sale</th><th>Delivered</th><th>Customer return</th><th>RTO</th><th>Bank me aaya</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th></tr>' +
+    rows.map(r => row(r)).join('') + row({ lbl: 'TOTAL', ...Object.fromEntries(['n', 'sale', 'del', 'cu', 'rto', 'bank', 'chg', 'cogs', 'pack', 'profit'].map(x => [x, tot(x)])) }, 'total');
 }
 // Same rule as sku-key.ps1: drop account prefix and trailing listing number -> product name
 const productOf = sku => String(sku || '').trim()
