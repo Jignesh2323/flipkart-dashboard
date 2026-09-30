@@ -87,6 +87,13 @@ function setPeriod(days) {
   $('fFrom').value = d.toISOString().slice(0, 10); $('fTo').value = lastDate;
   document.querySelectorAll('#period button').forEach(b => b.setAttribute('aria-pressed', b.dataset.d == days));
 }
+// The API only has orders from ORD_MIN: the widest button shows exactly the days available
+if (!demo && ORD_MIN) {
+  const avail = Math.round((new Date(lastDate) - new Date(ORD_MIN)) / 864e5) + 1;
+  const big = document.querySelector('#period button[data-d="180"]');
+  if (avail < 180) { big.dataset.d = avail; big.textContent = avail + ' Days'; }
+  document.querySelectorAll('#period button').forEach(b => { if (b !== big && +b.dataset.d >= avail) b.hidden = true; });
+}
 setPeriod(30);
 $('period').onclick = e => { const b = e.target.closest('button'); if (!b) return; setPeriod(+b.dataset.d); render(); renderSettle(); };
 ['fAcc','fFrom','fTo'].forEach(i => $(i).onchange = () => { render(); renderSettle(); });
@@ -145,16 +152,31 @@ function render() {
 // Settlement files hold per-month buckets (m: {"YYYY-MM": {t, s}}); older files have one flat {t, s}.
 // Build the view for whole payment months: a month counts when it starts no more than 5 days
 // before the period start (so "30 days" = the latest month, "180 days" = six months).
+// Newer files also hold per-payment-date totals (d: {"YYYY-MM-DD": {Sale|Return|...}}): then payments,
+// fees and return charges are counted for exactly the chosen dates; SKU lists stay per month.
+// dd rows (compact, from build-settle.ps1) -> d objects:
+// [S.n,S.sale,S.fees,S.taxes,S.settle, R.n,R.sale,R.refund,R.fees,R.taxes,R.settle,R.charged,R.chargedAmt, P.n,P.fees,P.taxes,P.settle]
+for (const a of Object.values(window.FK_SETTLE || {})) {
+  if (!a.dd || a.d) continue;
+  a.d = {};
+  for (const [dt, v] of Object.entries(a.dd)) a.d[dt] = {
+    Sale: { n: v[0], sale: v[1], refund: 0, fees: v[2], taxes: v[3], settle: v[4] },
+    Return: { n: v[5], sale: v[6], refund: v[7], fees: v[8], taxes: v[9], settle: v[10], charged: v[11], chargedAmt: v[12] },
+    Promotions: { n: v[13], sale: 0, refund: 0, fees: v[14], taxes: v[15], settle: v[16] } };
+}
 function settleView(raw, from, to) {
   const s0 = new Date(from || '2000-01-01'); s0.setDate(s0.getDate() - 5);
   const f = s0.toISOString().slice(0, 10), t = (to || '9999-12-31').slice(0, 7), inc = ym => ym + '-01' >= f && ym <= t, V = {};
+  const fd = from || '0000-00-00', td = to || '9999-12-31', inD = d => d >= fd && d <= td;
+  const add = (tt, v) => { for (const [ty, o] of Object.entries(v)) { const d = tt[ty] || (tt[ty] = {}); for (const [x, y] of Object.entries(o)) d[x] = (d[x] || 0) + y; } };
   for (const [k, a] of Object.entries(raw)) {
-    const p = a.p.filter(x => inc(x[0].slice(0, 7)));
+    const p = a.p.filter(x => a.d ? inD(x[0]) : inc(x[0].slice(0, 7)));
     if (!a.m) { V[k] = { p, t: a.t, s: a.s }; continue; }
     const tt = {}, sk = {};
+    if (a.d) for (const [dt, v] of Object.entries(a.d)) { if (inD(dt)) add(tt, v); }
     for (const [ym, b] of Object.entries(a.m)) {
-      if (!inc(ym)) continue;
-      for (const [ty, v] of Object.entries(b.t)) { const d = tt[ty] || (tt[ty] = {}); for (const [x, y] of Object.entries(v)) d[x] = (d[x] || 0) + y; }
+      if (!(a.d ? ym >= fd.slice(0, 7) && ym <= td.slice(0, 7) : inc(ym))) continue;
+      if (!a.d) add(tt, b.t);
       for (const r of b.s) { const s = sk[r[0]] || (sk[r[0]] = [0, 0, 0, 0, 0, 0, 0, 0]); for (let i = 0; i < 8; i++) s[i] += r[i + 1]; }
     }
     V[k] = { p, t: tt, s: Object.entries(sk).map(([n, v]) => [n, ...v]) };
@@ -164,12 +186,12 @@ function settleView(raw, from, to) {
 function renderSettle() {
   if (!window.FK_SETTLE) return;
   // Settlement starts no earlier than the orders' first month, so every box covers the same time
-  const sf0 = $('fFrom').value, sf = sf0 < ORD_MIN ? ORD_MIN.slice(0, 8) + '01' : sf0;
+  const sf0 = $('fFrom').value, sf = sf0 < ORD_MIN ? ORD_MIN : sf0;
   const S = settleView(window.FK_SETTLE, sf, $('fTo').value);
   $('settle').hidden = false; $('settleTop').hidden = false;
   const a = $('fAcc').value, keys = Object.keys(S).filter(k => accs.includes(k) && (!a || k === a)).sort();
   const dates = keys.flatMap(k => S[k].p.map(p => p[0])).sort();
-  $('sNote').innerHTML = `📅 Payments: <b>${dmy(dates[0])}</b> se <b>${dmy(dates.at(-1))}</b> tak (poore mahine) · Seller Hub se liya: ${dmy(window.FK_SETTLE_AT)}`;
+  $('sNote').innerHTML = `📅 Payments: <b>${dmy(dates[0])}</b> se <b>${dmy(dates.at(-1))}</b> tak · Seller Hub se liya: ${dmy(window.FK_SETTLE_AT)}`;
   const T = (k, typ, f) => (S[k].t[typ] || {})[f] || 0, sum = f => keys.reduce((s, k) => s + f(k), 0);
   const bank = sum(k => S[k].p.reduce((s, p) => s + p[1], 0));
   const fees = sum(k => Object.values(S[k].t).reduce((s, t) => s + t.fees, 0));
