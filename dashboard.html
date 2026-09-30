@@ -21,9 +21,12 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:6px;borde
 th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 .warn{background:#fff4d6;color:#6b4e00;padding:10px;border-radius:8px;margin-bottom:12px}.bad{color:var(--bad)}.ok{color:var(--ok)}
 @media(max-width:500px){.grid{grid-template-columns:1fr}}
+.load{padding:6px 10px;border-radius:6px;background:#fff;color:var(--pri);font-weight:600;cursor:pointer;font-size:13px}
+.load:hover{background:#e8f0fe}
 </style></head><body>
 <header><div><h1>Flipkart Accounts Dashboard</h1><small id="gen"></small></div>
-<div class="bar"><select id="fAcc"></select><input type="date" id="fFrom"><input type="date" id="fTo"></div></header>
+<div class="bar"><select id="fAcc"></select><input type="date" id="fFrom"><input type="date" id="fTo">
+<label class="load" for="fLoad">📂 Data load karo</label><input type="file" id="fLoad" accept=".js" multiple hidden></div></header>
 <main>
 <div id="note"></div>
 <div class="kpis" id="kpis"></div>
@@ -46,12 +49,32 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 </main>
 <script src="settle.js"></script>
 <script>
+// On another PC (e.g. GitHub Pages) data.js/settle.js are absent: use files the viewer loaded
+// earlier, kept only in this browser's localStorage. Nothing is uploaded anywhere.
+try {
+  if (!window.FK_DATA && localStorage.fk_data) window.FK_DATA = JSON.parse(localStorage.fk_data);
+  if (!window.FK_SETTLE && localStorage.fk_settle) { window.FK_SETTLE = JSON.parse(localStorage.fk_settle); window.FK_SETTLE_AT = localStorage.fk_settle_at || ''; }
+} catch (e) {}
+document.getElementById('fLoad').onchange = async e => {
+  let n = 0;
+  for (const f of e.target.files) {
+    const t = await f.text(), m = t.match(/window\.(FK_DATA|FK_SETTLE)\s*=\s*([\s\S]*?\});/);
+    if (!m) continue;
+    try {
+      JSON.parse(m[2]);
+      if (m[1] === 'FK_DATA') localStorage.fk_data = m[2];
+      else { localStorage.fk_settle = m[2]; localStorage.fk_settle_at = (t.match(/FK_SETTLE_AT\s*=\s*'([^']*)'/) || [])[1] || ''; }
+      n++;
+    } catch (err) {}
+  }
+  if (n) location.reload(); else document.getElementById('note').innerHTML = '<div class="warn">Ye file sahi nahi hai. Flipkart folder se data.js aur settle.js chuniye.</div>';
+};
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
 const short = a => String(a).replace(/^Acc\d+_/, '').toUpperCase();
 const $ = id => document.getElementById(id), inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
 $('gen').textContent = (demo ? 'DEMO DATA — ' : 'Updated: ') + D.generated;
-if (demo) $('note').innerHTML = '<div class="warn">Abhi demo data dikh raha hai. accounts.csv bhar ke RUN.bat chalaiye.</div>';
+if (demo) $('note').innerHTML = '<div class="warn">Abhi demo data dikh raha hai. Upar "📂 Data load karo" dabakar Flipkart folder ki data.js aur settle.js chuniye.</div>';
 const accs = [...new Set(D.orders.map(o => o.acc).concat(D.status.map(s => s.acc), Object.keys(window.FK_SETTLE || {})))].sort();
 $('fAcc').innerHTML = '<option value="">All Accounts</option>' + accs.map(a => `<option value="${a}">${short(a)}</option>`).join('');
 const dates = D.orders.map(o => o.date).sort(); $('fFrom').value = dates[0] || ''; $('fTo').value = dates.at(-1) || '';
