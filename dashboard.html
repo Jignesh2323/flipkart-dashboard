@@ -11,6 +11,7 @@
 header{background:var(--pri);color:#fff;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 header h1{margin:0;font-size:20px}header small{opacity:.85}
 .bar{display:flex;flex-wrap:wrap;gap:8px}select,input{padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.bar button{padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.6);background:transparent;color:#fff;font:600 13px system-ui,Segoe UI,sans-serif;cursor:pointer}.bar button[aria-pressed="true"]{background:#fff;color:var(--pri)}.bar button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 main{padding:16px;max-width:1300px;margin:auto}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .chips button{padding:10px 18px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 14px system-ui,Segoe UI,sans-serif;cursor:pointer}
@@ -28,7 +29,7 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 @media(max-width:500px){.grid{grid-template-columns:1fr}}
 </style></head><body>
 <header><div><h1>Flipkart Accounts Dashboard</h1><small id="gen"></small></div>
-<div class="bar"><select id="fAcc"></select><input type="date" id="fFrom"><input type="date" id="fTo"></div></header>
+<div class="bar" id="period" role="group" aria-label="Period"><button type="button" data-d="30">30 Days</button><button type="button" data-d="60">60 Days</button><button type="button" data-d="90">90 Days</button><button type="button" data-d="180">180 Days</button><select id="fAcc" hidden></select><input type="hidden" id="fFrom"><input type="hidden" id="fTo"></div></header>
 <main>
 <div id="note"></div>
 <nav class="chips" id="chips" aria-label="Account"></nav>
@@ -68,7 +69,15 @@ if (demo) $('note').innerHTML = '<div class="warn">Abhi demo data dikh raha hai.
 // Only accounts whose API works; pending ones (settlement data only) join automatically once approved
 const accs = [...new Set(D.orders.map(o => o.acc))].sort();
 $('fAcc').innerHTML = '<option value="">All Accounts</option>' + accs.map(a => `<option value="${a}">${short(a)}</option>`).join('');
-const dates = D.orders.map(o => o.date).concat(Object.values(window.FK_SETTLE || {}).flatMap(a => a.p.map(p => p[0]))).sort(); $('fFrom').value = dates[0] || ''; $('fTo').value = dates.at(-1) || '';
+// Period buttons (30/60/90/180 days back from the latest data date) drive the hidden fFrom/fTo
+const lastDate = D.orders.map(o => o.date).concat(Object.values(window.FK_SETTLE || {}).flatMap(a => a.p.map(p => p[0]))).sort().at(-1) || new Date().toISOString().slice(0, 10);
+function setPeriod(days) {
+  const d = new Date(lastDate); d.setDate(d.getDate() - days + 1);
+  $('fFrom').value = d.toISOString().slice(0, 10); $('fTo').value = lastDate;
+  document.querySelectorAll('#period button').forEach(b => b.setAttribute('aria-pressed', b.dataset.d == days));
+}
+setPeriod(30);
+$('period').onclick = e => { const b = e.target.closest('button'); if (!b) return; setPeriod(+b.dataset.d); render(); renderSettle(); };
 ['fAcc','fFrom','fTo'].forEach(i => $(i).onchange = () => { render(); renderSettle(); });
 const charts = {};
 function chart(id, cfg) { charts[id]?.destroy(); charts[id] = new Chart($(id), cfg); }
@@ -116,15 +125,17 @@ function render() {
   $('tApi').innerHTML = '<tr><th>Account</th><th>Status</th></tr>' + D.status.map(s => `<tr><td>${short(s.acc)}</td><td class="${s.ok ? 'ok' : 'bad'}">${s.ok ? '✔ ' : '✖ '}${s.msg}</td></tr>`).join('');
 }
 // Settlement files hold per-month buckets (m: {"YYYY-MM": {t, s}}); older files have one flat {t, s}.
-// Build the view for the months the date filter touches (by payment date).
+// Build the view for whole payment months: a month counts when it starts no more than 5 days
+// before the period start (so "30 days" = the latest month, "180 days" = six months).
 function settleView(raw, from, to) {
-  const f = (from || '0000-00-00'), t = (to || '9999-12-31'), V = {};
+  const s0 = new Date(from || '2000-01-01'); s0.setDate(s0.getDate() - 5);
+  const f = s0.toISOString().slice(0, 10), t = (to || '9999-12-31').slice(0, 7), inc = ym => ym + '-01' >= f && ym <= t, V = {};
   for (const [k, a] of Object.entries(raw)) {
-    const p = a.p.filter(x => x[0] >= f && x[0] <= t);
+    const p = a.p.filter(x => inc(x[0].slice(0, 7)));
     if (!a.m) { V[k] = { p, t: a.t, s: a.s }; continue; }
     const tt = {}, sk = {};
     for (const [ym, b] of Object.entries(a.m)) {
-      if (ym < f.slice(0, 7) || ym > t.slice(0, 7)) continue;
+      if (!inc(ym)) continue;
       for (const [ty, v] of Object.entries(b.t)) { const d = tt[ty] || (tt[ty] = {}); for (const [x, y] of Object.entries(v)) d[x] = (d[x] || 0) + y; }
       for (const r of b.s) { const s = sk[r[0]] || (sk[r[0]] = [0, 0, 0, 0, 0, 0, 0, 0]); for (let i = 0; i < 8; i++) s[i] += r[i + 1]; }
     }
@@ -138,7 +149,7 @@ function renderSettle() {
   $('settle').hidden = false; $('settleTop').hidden = false;
   const a = $('fAcc').value, keys = Object.keys(S).filter(k => accs.includes(k) && (!a || k === a)).sort();
   const dates = keys.flatMap(k => S[k].p.map(p => p[0])).sort();
-  $('sNote').textContent = `Seller Hub se liya gaya (${window.FK_SETTLE_AT}) · payment dates ${dates[0] || ''} → ${dates.at(-1) || ''} · upar ki date filter payment date par lagti hai (poore mahine ke hisaab se)`;
+  $('sNote').textContent = `Seller Hub se liya gaya (${window.FK_SETTLE_AT}) · payment dates ${dates[0] || ''} → ${dates.at(-1) || ''} · chune gaye period ke poore mahine (payment date se)`;
   const T = (k, typ, f) => (S[k].t[typ] || {})[f] || 0, sum = f => keys.reduce((s, k) => s + f(k), 0);
   const bank = sum(k => S[k].p.reduce((s, p) => s + p[1], 0));
   const fees = sum(k => Object.values(S[k].t).reduce((s, t) => s + t.fees, 0));
