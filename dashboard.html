@@ -73,7 +73,7 @@ td{font-family:var(--mono);font-size:13px;font-weight:500}td:first-child{font-fa
 tr:hover td{background:#f8fafc}
 .tw{overflow:auto;max-height:600px}
 #tItem th,#tItem td{padding:9px 8px}#tItem th{white-space:normal;vertical-align:bottom}#tItem td:first-child{white-space:normal;min-width:130px}
-#tItem td.accs{white-space:normal;font-size:11px;min-width:120px;max-width:190px;text-align:left}
+#tItem td.accs .acct{font-size:10px;padding:2px 7px}#tItem td.accs{white-space:normal;font-size:11px;min-width:120px;max-width:190px;text-align:left}
 .range{background:#fff;border:1px solid var(--line);padding:9px 14px;border-radius:10px;margin-bottom:14px;font-size:13.5px}.range span{color:var(--mut);font-size:12.5px}
 .warn{background:#fff8e6;border:1px solid #f0d58a;color:#7a5200;padding:10px 14px;border-radius:10px;margin-bottom:14px}
 .bad{color:var(--bad)}.ok{color:var(--ok)}
@@ -91,6 +91,7 @@ tr:hover td{background:#f8fafc}
 [data-theme="dark"] .card>h3{background:linear-gradient(90deg,var(--pri-soft),var(--card) 70%)}
 [data-theme="dark"] tr:hover td{background:#1c2430}[data-theme="dark"] .warn{background:#2b2410;border-color:#5c4a14;color:#f0c75e}
 [data-theme="dark"] .chips button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--c)}
+.acct{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--c);color:#fff;font:700 11px var(--sans);letter-spacing:.3px;margin:1px 0}
 .swatch{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer;background:var(--s)}
 .accbar[hidden]{display:none}.swatch{box-shadow:0 0 0 1px var(--line)}
 .swatch[aria-pressed="true"]{border-color:var(--ink)}
@@ -213,6 +214,9 @@ const ORD_MIN_ALL = Object.values(accMin).sort().at(-1) || '';
 let ORD_MIN = ORD_MIN_ALL;
 const PACK = 15; // packing cost per dispatched order: box + authorised plastic bag (₹)
 const short = a => String(a).replace(/^Acc\d+_/, '').toUpperCase();
+// Same colour per account everywhere (matches the account buttons)
+const ACC_C = { AVEDIA: '#2563eb', BRAINLE: '#9333ea', ZOTIMO: '#ea580c', ARKZO: '#0e7490', PIVDO: '#ca8a04', KIDOCA: '#475569', WISKA: '#92400e', TAUDI: '#dc2626', VUSTICA: '#15803d' };
+const accColor = a => ACC_C[short(a)] || '#57606a', tag = a => `<span class="acct" style="--c:${accColor(a)}">${short(a)}</span>`;
 const $ = id => document.getElementById(id), inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
 // Dates are stored as yyyy-mm-dd; show them as dd-mm-yyyy everywhere
 const dmy = s => String(s || '').replace(/(\d{4})-(\d{2})-(\d{2})/g, '$3-$2-$1');
@@ -279,13 +283,13 @@ function render() {
     const cuM = rm.filter(x => x.type === 'customer_return').length, rtoM = rm.filter(x => x.type === 'courier_return').length;
     return { ac, s: l.reduce((s, x) => s + x.amount, 0), n: new Set(o.map(x => x.orderId)).size, c: o.filter(isCancel).length, d: new Set(o.filter(x => x.status === 'DELIVERED').map(x => x.orderId)).size,
       cu, rto, r: r.length, cuP: pct(cuM), rtoP: pct(rtoM), rr: pct(cuM + rtoM), api: o.length > 0 }; }).sort((x, y) => y.s - x.s);
-  chart('cAcc', { type: 'bar', data: { labels: rows.map(r => short(r.ac)), datasets: [{ data: rows.map(r => r.s), backgroundColor: PRI() }] },
+  chart('cAcc', { type: 'bar', data: { labels: rows.map(r => short(r.ac)), datasets: [{ data: rows.map(r => r.s), backgroundColor: rows.map(r => accColor(r.ac)) }] },
     options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: { size: 11, weight: 'bold' } } } } } });
   const pc = (v, lim) => `<td class="${v > lim ? 'bad' : ''}">${v.toFixed(1)}%</td>`;
   $('tAcc').innerHTML = '<tr><th>Account</th><th>Sales</th><th>Orders</th><th>Delivered</th><th>Cancel</th><th>Customer Ret</th><th>RTO</th><th>Total Ret</th><th>Cust %</th><th>RTO %</th><th>Total %</th></tr>' +
     rows.map(r => r.api
-      ? `<tr><td>${short(r.ac)}</td><td>${inr(r.s)}</td><td>${r.n}</td><td>${r.d}</td><td>${r.c}</td><td>${r.cu}</td><td>${r.rto}</td><td><b>${r.r}</b></td>${pc(r.cuP, 10)}${pc(r.rtoP, 10)}${pc(r.rr, 20)}</tr>`
-      : `<tr><td>${short(r.ac)}</td><td colspan="10" style="text-align:left;color:var(--mut)">API approval baaki hai</td></tr>`).join('');
+      ? `<tr><td>${tag(r.ac)}</td><td>${inr(r.s)}</td><td>${r.n}</td><td>${r.d}</td><td>${r.c}</td><td>${r.cu}</td><td>${r.rto}</td><td><b>${r.r}</b></td>${pc(r.cuP, 10)}${pc(r.rtoP, 10)}${pc(r.rr, 20)}</tr>`
+      : `<tr><td>${tag(r.ac)}</td><td colspan="10" style="text-align:left;color:var(--mut)">API approval baaki hai</td></tr>`).join('');
   const st = grp(O, 'status');
   chart('cStatus', { type: 'doughnut', data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: [PRI(),'#1f9d55','#f7b500','#d64545','#8a5cf6','#14b8a6','#f97316'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } } });
   const top = grp(live, o => o.sku, o => o.qty), topS = grp(live, o => o.sku, o => o.amount);
@@ -296,7 +300,7 @@ function render() {
   $('tRet').innerHTML = '<tr><th>SKU</th><th>Returns</th><th>Sold</th></tr>' + Object.entries(ret).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s, n]) => `<tr><td>${s}</td><td>${n}</td><td>${top[s] || 0}</td></tr>`).join('');
   const rs = Object.entries(grp(R, 'reason')).sort((a, b) => b[1] - a[1]).slice(0, 8);
   chart('cReason', { type: 'bar', data: { labels: rs.map(r => r[0]), datasets: [{ data: rs.map(r => r[1]), backgroundColor: '#f7b500' }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } } } });
-  $('tApi').innerHTML = '<tr><th>Account</th><th>Status</th></tr>' + D.status.map(s => `<tr><td>${short(s.acc)}</td><td class="${s.ok ? 'ok' : 'bad'}">${s.ok ? '✔ ' : '✖ '}${s.msg}</td></tr>`).join('');
+  $('tApi').innerHTML = '<tr><th>Account</th><th>Status</th></tr>' + D.status.map(s => `<tr><td>${tag(s.acc)}</td><td class="${s.ok ? 'ok' : 'bad'}">${s.ok ? '✔ ' : '✖ '}${s.msg}</td></tr>`).join('');
 }
 // Settlement files hold per-month buckets (m: {"YYYY-MM": {t, s}}); older files have one flat {t, s}.
 // Build the view for whole payment months: a month counts when it starts no more than 5 days
@@ -360,7 +364,7 @@ function renderSettle() {
   chart('cBank', { type: 'bar', data: { labels: d.map(dmy), datasets: [{ data: d.map(x => byDay[x]), backgroundColor: PRI() }] }, options: { plugins: { legend: { display: false } } } });
   $('tSet').innerHTML = '<tr><th>Account</th><th>Bank me</th><th>Fees</th><th>Return chg</th><th>Return loss</th></tr>' +
     keys.map(k => ({ k, b: S[k].p.reduce((s, p) => s + p[1], 0), f: Object.values(S[k].t).reduce((s, t) => s + t.fees + t.taxes, 0), rc: T(k, 'Return', 'fees') + T(k, 'Return', 'taxes'), rl: T(k, 'Return', 'settle') }))
-      .sort((x, y) => y.b - x.b).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.b)}</td><td class="bad">${inr(-r.f)}</td><td class="bad">${inr(-r.rc)}</td><td class="bad">${inr(-r.rl)}</td></tr>`).join('');
+      .sort((x, y) => y.b - x.b).map(r => `<tr><td>${tag(r.k)}</td><td>${inr(r.b)}</td><td class="bad">${inr(-r.f)}</td><td class="bad">${inr(-r.rc)}</td><td class="bad">${inr(-r.rl)}</td></tr>`).join('');
   // Returns in this payment window: refund covers every returned order, but "sale" only those whose
   // sale was ALSO paid in this window; the gap is sale money already received in an earlier cycle.
   const rs = sum(k => T(k, 'Return', 'sale')), rf = -sum(k => T(k, 'Return', 'refund')), gap = rf - rs;
@@ -391,7 +395,7 @@ function renderSettle() {
     <p class="note" style="margin:0 0 8px">📝 <b>Note:</b> "Har parcel par average return charge" abhi thoda zyada dikhega. Is mahine bheje kai parcels abhi raste (transit) me hain, unka pata nahi ki deliver honge, RTO honge ya customer return. Wo parcels abhi ginti me nahi hain, jabki pichhle mahine ke parcels ke return charge is mahine kat gaye.</p>`;
   $('tRefund').innerHTML = '<tr><th>Account</th><th>Payment mile</th><th>Return settle</th><th>Total settle</th><th>Return charges</th><th>Charge / order</th><th>Packing (₹' + PACK + '/order)</th><th>Kul kharcha / order</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th></tr>' +
     keys.map(k => { const s = T(k, 'Return', 'sale'), r = -T(k, 'Return', 'refund'), c = chgOf(k), d = T(k, 'Sale', 'n'), n = T(k, 'Return', 'n');
-      return `<tr><td>${short(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n)).toFixed(1) : '—'}</b></td><td class="bad">${inr((d + n) * PACK)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n) + PACK).toFixed(1) : '—'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
+      return `<tr><td>${tag(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n)).toFixed(1) : '—'}</b></td><td class="bad">${inr((d + n) * PACK)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n) + PACK).toFixed(1) : '—'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
   renderSkuCharges(keys, sf, $('fTo').value);
   renderProfit(keys, S, sf, $('fTo').value);
 }
@@ -480,7 +484,7 @@ function renderProfit(keys, S, from, to) {
   $('pWarn').innerHTML = top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? '…' : ''}</div>` : '';
   renderItemProfit(keys, rows, from, to);
   $('tProfit').innerHTML = '<tr><th>Account</th><th>Bank me aaya</th><th>Delivered units</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
-    [...rows].sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+    [...rows].sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${tag(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
 }
 // Item-wise profit: account payout shared by delivered sale, minus the item's own return charges, cost and packing
 function renderItemProfit(keys, rows, from, to) {
@@ -507,7 +511,7 @@ function renderItemProfit(keys, rows, from, to) {
   const list = [...it.values()].filter(x => x.units || x.chg || x.cr).map(x => ({ ...x, bank: x.bank - x.chg, profit: x.bank - x.chg - x.cogs - x.pack }))
     .sort((a, b) => b.profit - a.profit);
   $('tItem').innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Delivered units</th><th>Customer return</th><th>Delivered sale</th><th>Bank me aaya (anumaan)</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
-    list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].map(short).join(', ') || '—'}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(${x.miss} bina cost)</span>` : ''}</td><td>${x.cr}</td><td>${inr(x.sale)}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+    list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].map(tag).join(' ') || '—'}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(${x.miss} bina cost)</span>` : ''}</td><td>${x.cr}</td><td>${inr(x.sale)}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
 }
 // Per SKU: customer / RTO returns (API, cleaned) and the returns Flipkart actually charged
 // (settlement "cr" rows [MM-DD payment date, order item id, charge ₹], joined to the API return type).
@@ -526,7 +530,7 @@ function renderSkuCharges(keys, from, to) {
   const list = [...rows.values()].filter(x => x.chg > 0 || x.cu + x.rto > 0).sort((a, b) => b.chg - a.chg || (b.cu + b.rto) - (a.cu + a.rto)).slice(0, 20);
   $('tLoss').innerHTML = '<tr><th>SKU</th><th>Account</th><th>Sold</th><th>Customer Ret</th><th>RTO</th><th>Delivered</th><th>Charge laga: Customer</th><th>Charge laga: RTO</th><th>Return charge</th><th>Charge / charged return</th></tr>' +
     list.map(x => { const n = x.cCu + x.cRto + x.cNa;
-      return `<tr><td>${x.sku}</td><td>${short(x.acc)}</td><td>${x.sold}</td><td>${x.cu}</td><td>${x.rto}</td><td>${x.del}</td><td>${hasCr ? x.cCu : '—'}</td><td>${hasCr ? x.cRto + (x.cNa ? ` <span title="order ka return type data me nahi">(+${x.cNa}?)</span>` : '') : '—'}</td><td class="bad">${hasCr ? inr(x.chg) : '—'}</td><td>${n ? inr(x.chg / n) : '—'}</td></tr>`; }).join('');
+      return `<tr><td>${x.sku}</td><td>${tag(x.acc)}</td><td>${x.sold}</td><td>${x.cu}</td><td>${x.rto}</td><td>${x.del}</td><td>${hasCr ? x.cCu : '—'}</td><td>${hasCr ? x.cRto + (x.cNa ? ` <span title="order ka return type data me nahi">(+${x.cNa}?)</span>` : '') : '—'}</td><td class="bad">${hasCr ? inr(x.chg) : '—'}</td><td>${n ? inr(x.chg / n) : '—'}</td></tr>`; }).join('');
 }
 function makeDemo() {
   const o = [], r = [], st = ['DELIVERED','SHIPPED','READY_TO_DISPATCH','CANCELLED'], rs = ['Size issue','Damaged','Not as described','Changed mind'];
