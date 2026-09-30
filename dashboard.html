@@ -62,6 +62,12 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 <div class="card"><h3>Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
 <div class="grid"><div class="card"><h3>SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div></div>
 </section>
+<section class="card" id="costEditor" style="margin-bottom:16px">
+<h3>Products &amp; Cost</h3>
+<p style="color:var(--mut);font-size:13px;margin:0 0 10px">Naam aur kharid keemat (₹/unit) badal kar <b>Save</b> dabaiye. Naye products (jinki cost nahi bhari) sabse upar peele rang me aate hain. Pehli baar jo PIN daalenge wahi aage ke liye set ho jayega.</p>
+<div class="bar" style="margin-bottom:10px"><label for="cePin">PIN</label><input type="password" id="cePin" inputmode="numeric" autocomplete="off" style="width:110px"><input type="search" id="ceFind" placeholder="Product dhoondhiye" style="flex:1;min-width:160px"><span id="ceMsg" style="font-size:13px"></span></div>
+<div class="tw" style="max-height:420px;overflow:auto"><table id="tCost"></table></div>
+</section>
 <div class="grid"><div class="card"><h3>Return Reasons</h3><canvas id="cReason"></canvas></div>
 <div class="card"><h3>API Status</h3><div class="tw"><table id="tApi"></table></div></div></div>
 </main>
@@ -269,6 +275,51 @@ const productOf = sku => String(sku || '').trim()
   .replace(/^(ARZ|ARKZ|AVD|AVSP|AV|KDCSP|KDC|PVDSP|PVD|TD|WSKSP|WSK|ZTSP|ZT|ZO|FO|VU|BRL|BR)\s*-\s*(SP-)?/i, '')
   .replace(/[\s_-]+0*\d{1,2}[a-zA-Z]?$/, '').replace(/\s+/g, ' ').trim().toUpperCase();
 // Profit per account: bank payouts in the period − cost of units delivered in the period − packing
+// Product costs live in Supabase (fk_product_cost), readable by anyone with the page, writable only
+// through fk_save_cost() with the PIN. cost.js (from product-cost.csv) is the offline fallback.
+const SB_URL = 'https://begblflwhxbbipsmxytd.supabase.co', SB_KEY = 'sb_publishable_HO0wPEI58Ia5k7CFOIyOhA_A6dtCsuL';
+const sbHead = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
+window.FK_NAME = {};
+async function loadCosts() {
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/fk_product_cost?select=product,item_name,cost&limit=5000', { headers: sbHead });
+    if (!r.ok) throw new Error(r.status);
+    const C = {}, N = {};
+    for (const x of await r.json()) { if (x.cost != null) C[x.product] = +x.cost; if (x.item_name) N[x.product] = x.item_name; }
+    window.FK_COST = C; window.FK_NAME = N;
+  } catch (e) { $('ceMsg').textContent = 'Online cost load nahi hui, file wali cost use ho rahi hai.'; }
+  renderSettle(); renderCostEditor();
+}
+function renderCostEditor() {
+  const C = window.FK_COST || {}, N = window.FK_NAME || {}, units = {};
+  for (const o of D.orders) if (!/CANCEL/i.test(o.status || '')) { const p = productOf(o.sku); units[p] = (units[p] || 0) + o.qty; }
+  const all = [...new Set([...Object.keys(units), ...Object.keys(C)])];
+  const q = ($('ceFind').value || '').toUpperCase();
+  const list = all.filter(p => !q || p.includes(q) || (N[p] || '').toUpperCase().includes(q))
+    .sort((a, b) => (C[a] == null) - (C[b] == null) || (units[b] || 0) - (units[a] || 0));
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  $('tCost').innerHTML = '<tr><th>Product (SKU se)</th><th>Item naam</th><th>Cost ₹</th><th>Bike (6 mahine)</th><th></th></tr>' +
+    list.map(p => `<tr${C[p] == null ? ' style="background:#fff4d6;color:#6b4e00"' : ''} data-p="${esc(p)}"><td>${esc(p)}${C[p] == null ? ' <b>(naya)</b>' : ''}</td>` +
+      `<td><input value="${esc(N[p] || '')}" placeholder="${esc(p)}" style="width:100%;min-width:140px"></td>` +
+      `<td><input type="number" min="0" step="0.01" value="${C[p] ?? ''}" style="width:90px"></td><td>${units[p] || 0}</td>` +
+      `<td><button type="button" class="ceSave">Save</button></td></tr>`).join('');
+}
+$('ceFind').oninput = renderCostEditor;
+$('tCost').onclick = async e => {
+  const b = e.target.closest('.ceSave'); if (!b) return;
+  const tr = b.closest('tr'), [nameIn, costIn] = tr.querySelectorAll('input'), p = tr.dataset.p, pin = $('cePin').value;
+  if (!pin) { $('ceMsg').textContent = 'Pehle PIN daaliye.'; $('cePin').focus(); return; }
+  if (costIn.value === '') { $('ceMsg').textContent = 'Cost bhariye.'; costIn.focus(); return; }
+  b.disabled = true; b.textContent = 'Saving…';
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/rpc/fk_save_cost', { method: 'POST', headers: sbHead,
+      body: JSON.stringify({ p_pin: pin, p_product: p, p_item_name: nameIn.value, p_cost: +costIn.value }) });
+    const msg = await r.json();
+    if (msg === 'ok') { window.FK_COST[p] = +costIn.value; if (nameIn.value.trim()) window.FK_NAME[p] = nameIn.value.trim(); else delete window.FK_NAME[p];
+      $('ceMsg').textContent = `Saved: ${p}`; renderSettle(); renderCostEditor(); }
+    else { $('ceMsg').textContent = typeof msg === 'string' ? msg : 'Save nahi hua, dobara try kariye.'; b.disabled = false; b.textContent = 'Save'; }
+  } catch (err) { $('ceMsg').textContent = 'Internet check kariye, save nahi hua.'; b.disabled = false; b.textContent = 'Save'; }
+};
 function renderProfit(keys, S, from, to) {
   const C = window.FK_COST || {}, inP = d => d >= from && d <= to;
   $('profitTop').hidden = false;
@@ -320,7 +371,7 @@ function makeDemo() {
     if (Math.random() < .1) r.push({ acc, itemId: 'I' + i, date: d, sku, type: Math.random() < .6 ? 'customer_return' : 'courier_return', reason: rs[Math.floor(Math.random() * 4)] }); }
   return { generated: new Date().toISOString().slice(0, 16).replace('T', ' '), orders: o, returns: r, status: Array.from({ length: 9 }, (_, i) => ({ acc: 'Account' + (i + 1), ok: true, msg: 'demo' })) };
 }
-render(); renderSettle();
+render(); renderSettle(); renderCostEditor(); loadCosts();
 // Account boxes on top: same effect as the dropdown
 function drawChips() {
   const cur = $('fAcc').value;
