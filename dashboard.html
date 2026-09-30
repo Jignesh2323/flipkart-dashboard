@@ -133,7 +133,7 @@ tr:hover td{background:#f8fafc}
 </section>
 
 <section class="tab" data-tab="returns" hidden>
-<div class="card"><h3>Returns ka hisaab: Refund, Sale se zyada kyun dikhta hai?</h3>
+<div class="card"><h3>Returns ka hisaab</h3>
 <div id="rExplain" style="font-size:14px;line-height:1.6"></div>
 <div class="tw"><table id="tRefund"></table></div></div>
 <div class="card"><h3>SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div>
@@ -330,14 +330,8 @@ function renderSettle() {
   const hasCharged = keys.length && keys.every(k => S[k].t.Return && S[k].t.Return.charged != null);
   const chargedAll = hasCharged ? sum(k => T(k, "Return", "charged")) : null, chargedAmt = hasCharged ? sum(k => T(k, "Return", "chargedAmt")) : 0;
   $('rExplain').innerHTML = `
-    <p style="margin:0 0 8px">Customer ko order price se <b>zyada paisa nahi</b> diya gaya. Har return me refund utna hi hota hai jitne ka order tha.</p>
-    <p style="margin:0 0 8px">Farak <b>timing</b> ka hai. Flipkart order ka paisa aur return ka paisa alag alag din deta/kaatta hai.
-      Is hisaab me sirf <b>${dmy(dates[0])} se ${dmy(dates.at(-1))}</b> ke payments hain:</p>
-    <ul style="margin:0 0 8px;padding-left:20px">
-      <li><b>Isi period me bike aur return hue orders</b>: sale bhi yahan hai, refund bhi → dono barabar cancel.</li>
-      <li><b>Pehle (pichhle mahine) bike, ab return hue orders</b>: sale ka paisa <b>pichhle payment me mil chuka tha</b>, isliye yahan sale ₹0 dikhti hai, lekin refund yahan kata.</li>
-    </ul>
-    <div class="kpis" style="margin:12px 0">
+    
+    <div class="kpis" style="margin:0 0 12px">
       <div class="k"><span>Wapas aaye parcels ka refund kata</span><b class="bad">${inr(rf)}</b><small class="how">Is period me jitne returns settle hue, un sab ka refund</small></div>
       <div class="k"><span>Inme se jinki sale isi mahine mili</span><b>${inr(rs)}</b><small class="how">Un returns ki sale jiska paisa bhi isi period me mila</small></div>
       <div class="k"><span>Pichhle mahine mila paisa, ab kata (nuksaan nahi)</span><b>${inr(gap)}</b><small class="how">Refund ${inr(rf)} − sale ${inr(rs)}. Ye paisa pehle mil chuka tha, isliye nuksaan nahi</small></div>
@@ -353,7 +347,7 @@ function renderSettle() {
       <div class="k"><span>Charge lage returns (customer) / kul wapas</span><b>${chargedAll == null ? '—' : chargedAll + ' / ' + retAll}</b><small class="how">${retAll} wapas me se sirf customer returns par charge lagta hai, RTO par nahi</small></div>
       <div class="k"><span>${chargedAll ? "Ek customer return ka charge" : "Ek return ka average charge"}</span><b class="bad">${chargedAll ? inr(chargedAmt / chargedAll) : retAll ? inr(chgAll / retAll) : "—"}</b><small class="how">${chargedAll ? `Return charge ${inr(chargedAmt)} ÷ ${chargedAll} charge lage returns` : `Return charge ÷ ${retAll} returns`}</small></div>
     </div>
-    <p style="margin:0 0 8px;color:var(--mut)">"Pehle mila paisa, ab wapas kata" nuksaan nahi hai: wo paisa aapko pehle mil gaya tha aur product bhi wapas aa gaya. Asli nuksaan sirf Flipkart ke return charges hain.</p>`;
+    `;
   $('tRefund').innerHTML = '<tr><th>Account</th><th>Payment mile</th><th>Return settle</th><th>Total settle</th><th>Return charges</th><th>Charge / order</th><th>Packing (₹' + PACK + '/order)</th><th>Kul kharcha / order</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th></tr>' +
     keys.map(k => { const s = T(k, 'Return', 'sale'), r = -T(k, 'Return', 'refund'), c = chgOf(k), d = T(k, 'Sale', 'n'), n = T(k, 'Return', 'n');
       return `<tr><td>${short(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n)).toFixed(1) : '—'}</b></td><td class="bad">${inr((d + n) * PACK)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n) + PACK).toFixed(1) : '—'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
