@@ -125,6 +125,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <button role="tab" data-tab="sales" aria-selected="false">📈 Sales</button>
 <button role="tab" data-tab="returns" aria-selected="false">🔙 Returns</button>
 <button role="tab" data-tab="products" aria-selected="false">📦 Products</button>
+<button role="tab" data-tab="mapping" aria-selected="false">🔗 Mapping</button>
 <button role="tab" data-tab="settings" aria-selected="false">⚙️ Settings</button>
 </nav>
 <div id="note"></div>
@@ -188,6 +189,16 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 </section>
 </section>
 
+<section class="tab" data-tab="mapping" hidden>
+<div class="kpis" id="mapKpis"></div>
+<div class="card"><h3>🔗 Listing Mapping: kis listing par doosra seller baitha hai</h3>
+<p class="note" style="margin:14px 18px 0">Har listing ke saamne <b>Sellers dekhiye</b> dabaiye: flipkart.com par us product ke saare sellers khulenge. Agar aapke alawa koi aur seller dikhe to status <b>⚠️ Doosra seller</b> chuniye, kitne seller hain likhiye aur <b>Save</b> dabaiye (PIN wahi jo Products tab ka hai). Sabse zyada bikne wali listing upar hain.</p>
+<div class="bar"><label for="mapPin">PIN</label><input type="password" id="mapPin" inputmode="numeric" autocomplete="off" style="width:110px">
+<select id="mapShow"><option value="">Sab listing</option><option value="none">Abhi check nahi hui</option><option value="other">⚠️ Doosra seller</option><option value="case">📨 Case raise kiya</option><option value="ok">✅ Sirf aap</option></select>
+<input type="search" id="mapFind" placeholder="🔍 SKU / product dhoondhiye" style="flex:1;min-width:160px"><span id="mapMsg" style="font-size:13px"></span></div>
+<div class="tw"><table id="tMap"></table></div></div>
+</section>
+
 <section class="tab" data-tab="settings" hidden>
 <div class="card"><h3>🎨 Rang aur Theme</h3>
 <div class="setrow"><label>Mode</label><div class="bar" id="setMode"><button type="button" data-m="light">☀️ Light</button><button type="button" data-m="dark">🌙 Dark</button></div></div>
@@ -203,6 +214,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <script>document.write('<script src="settle.js?v=' + Date.now() + '"><\/script>')</script>
 <script>document.write('<script src="cost.js?v=' + Date.now() + '"><\/script>')</script>
 <script>document.write('<script src="gst.js?v=' + Date.now() + '"><\/script>')</script>
+<script>document.write('<script src="fsn.js?v=' + Date.now() + '"><\/script>')</script>
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
@@ -568,6 +580,56 @@ function makeDemo() {
   return { generated: new Date().toISOString().slice(0, 16).replace('T', ' '), orders: o, returns: r, status: Array.from({ length: 9 }, (_, i) => ({ acc: 'Account' + (i + 1), ok: true, msg: 'demo' })) };
 }
 render(); renderSettle(); renderCostEditor(); loadCosts();
+// Mapping tab: one row per account + SKU, status of other sellers saved online (fk_mapping)
+let MAP = {};
+const MAP_ST = { ok: '✅ Sirf aap', other: '⚠️ Doosra seller', case: '📨 Case raise kiya' };
+async function loadMapping() {
+  try { const r = await fetch(SB_URL + '/rest/v1/fk_mapping?select=acc,sku,status,sellers,note,checked_at&limit=10000', { headers: sbHead });
+    if (r.ok) { MAP = {}; for (const x of await r.json()) MAP[x.acc + '|' + x.sku] = x; } } catch (e) {}
+  renderMapping();
+}
+function renderMapping() {
+  const F = window.FK_FSN || {}, a = $('fAcc').value, since = new Date(lastDate); since.setDate(since.getDate() - 29);
+  const s30 = since.toISOString().slice(0, 10), rows = new Map();
+  for (const o of D.orders) { if (a && o.acc !== a) continue; const k = o.acc + '|' + o.sku;
+    if (!rows.has(k)) rows.set(k, { k, acc: o.acc, sku: o.sku, title: o.title || '', u30: 0, last: '' });
+    const x = rows.get(k); if (o.date >= s30 && !isLost(o)) x.u30 += o.qty; if (o.date > x.last) x.last = o.date; }
+  const list = [...rows.values()].sort((p, q) => q.u30 - p.u30 || (q.last > p.last ? 1 : -1));
+  const cnt = st => list.filter(x => (MAP[x.k] || {}).status === st).length, none = list.filter(x => !MAP[x.k]).length;
+  $('mapKpis').innerHTML = [['Kul listing (jinme order aaya)', list.length, a ? short(a) + ' account' : 'Sabhi chalu accounts'], ['Abhi check nahi hui', none, 'Inhe ek-ek karke dekhna baaki hai'],
+    ['⚠️ Doosra seller mila', cnt('other'), 'Inpar case raise karna hai'], ['📨 Case raise kiya', cnt('case'), 'Flipkart ke jawab ka intezaar'], ['✅ Sirf aap', cnt('ok'), 'Koi doosra seller nahi mila']]
+    .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
+  const opt = cur => '<option value="">— chuniye —</option>' + Object.entries(MAP_ST).map(([v, l]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`).join('');
+  const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  $('tMap').innerHTML = '<tr><th>Account</th><th>SKU / Product</th><th>30 din me bike</th><th>Flipkart par</th><th>Status</th><th>Kitne seller</th><th>Note</th><th>Last check</th><th></th></tr>' +
+    list.map(x => { const m = MAP[x.k] || {}, fsn = F[x.k];
+      return `<tr data-k="${esc(x.k)}" data-st="${m.status || 'none'}" data-fsn="${fsn || ''}"><td>${tag(x.acc)}</td><td style="white-space:normal;min-width:220px">${esc(x.sku)}<br><small style="color:var(--mut);font-weight:400">${esc(x.title).slice(0, 70)}</small></td><td>${x.u30}</td>
+        <td>${fsn ? `<a href="https://www.flipkart.com/sellers?pid=${fsn}" target="_blank" rel="noopener">Sellers dekhiye ↗</a>` : '<span style="color:var(--mut)">FSN nahi mila</span>'}</td>
+        <td><select>${opt(m.status)}</select></td><td><input type="number" min="1" style="width:64px" value="${m.sellers ?? ''}"></td><td><input style="width:150px" value="${esc(m.note)}"></td>
+        <td style="color:var(--mut)">${m.checked_at ? dmy(m.checked_at.slice(0, 10)) : '—'}</td><td><button type="button" class="ceSave">Save</button></td></tr>`; }).join('');
+  filterMap();
+}
+function filterMap() {
+  const q = $('mapFind').value.trim().toLowerCase(), st = $('mapShow').value;
+  document.querySelectorAll('#tMap tr[data-k]').forEach(r => r.hidden = !((!q || r.textContent.toLowerCase().includes(q) || r.dataset.k.toLowerCase().includes(q)) && (!st || r.dataset.st === st)));
+}
+$('mapFind').oninput = filterMap; $('mapShow').onchange = filterMap;
+$('tMap').onclick = async e => {
+  const b = e.target.closest('button.ceSave'); if (!b) return;
+  const tr = b.closest('tr'), [sel] = tr.querySelectorAll('select'), [nIn, noteIn] = tr.querySelectorAll('input'), pin = $('mapPin').value, [acc, ...sk] = tr.dataset.k.split('|');
+  if (!pin) { $('mapMsg').textContent = 'Pehle PIN daaliye.'; $('mapPin').focus(); return; }
+  if (!sel.value) { $('mapMsg').textContent = 'Status chuniye.'; sel.focus(); return; }
+  b.disabled = true; $('mapMsg').textContent = 'Save ho raha hai…';
+  try { const r = await fetch(SB_URL + '/rest/v1/rpc/fk_save_mapping', { method: 'POST', headers: sbHead,
+      body: JSON.stringify({ p_pin: pin, p_acc: acc, p_sku: sk.join('|'), p_fsn: tr.dataset.fsn || null, p_status: sel.value, p_sellers: nIn.value ? +nIn.value : null, p_note: noteIn.value }) });
+    const msg = await r.json();
+    if (msg === 'ok') { MAP[tr.dataset.k] = { status: sel.value, sellers: nIn.value ? +nIn.value : null, note: noteIn.value, checked_at: new Date().toISOString() }; $('mapMsg').textContent = '✔ Saved: ' + sk.join('|'); renderMapping(); }
+    else $('mapMsg').textContent = msg.message || msg; }
+  catch (err) { $('mapMsg').textContent = 'Save nahi hua: ' + err.message; }
+  b.disabled = false;
+};
+loadMapping();
+$('chips').addEventListener('click', () => setTimeout(renderMapping, 0));
 // Account boxes on top: same effect as the dropdown
 function drawChips() {
   const cur = $('fAcc').value;
