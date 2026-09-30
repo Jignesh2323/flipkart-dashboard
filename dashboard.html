@@ -30,6 +30,11 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 <main>
 <div id="note"></div>
 <div class="kpis" id="kpis"></div>
+<div id="settleTop" hidden>
+<h2 style="font-size:18px;margin:8px 0 4px">Bank Settlement &amp; Return Charges</h2>
+<p style="color:var(--mut);margin:0 0 12px;font-size:13px" id="sNote"></p>
+<div class="kpis" id="sKpis"></div>
+</div>
 <div class="grid"><div class="card"><h3>Daily Sales (₹)</h3><canvas id="cTrend"></canvas></div>
 <div class="card"><h3>Account-wise Sales (₹)</h3><canvas id="cAcc"></canvas></div></div>
 <div class="grid"><div class="card"><h3>Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
@@ -39,9 +44,7 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 <div class="grid"><div class="card"><h3>Return Reasons</h3><canvas id="cReason"></canvas></div>
 <div class="card"><h3>API Status</h3><div class="tw"><table id="tApi"></table></div></div></div>
 <section id="settle" hidden>
-<h2 style="font-size:18px;margin:24px 0 4px">Bank Settlement &amp; Return Charges</h2>
-<p style="color:var(--mut);margin:0 0 12px;font-size:13px" id="sNote"></p>
-<div class="kpis" id="sKpis"></div>
+<h2 style="font-size:18px;margin:24px 0 12px">Settlement Details</h2>
 <div class="grid"><div class="card"><h3>Bank Credits by Date (₹)</h3><canvas id="cBank"></canvas></div>
 <div class="card"><h3>Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
 <div class="grid"><div class="card"><h3>SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div></div>
@@ -123,7 +126,7 @@ function render() {
 }
 function renderSettle() {
   const S = window.FK_SETTLE; if (!S) return;
-  $('settle').hidden = false;
+  $('settle').hidden = false; $('settleTop').hidden = false;
   const a = $('fAcc').value, keys = Object.keys(S).filter(k => !a || k === a).sort();
   const dates = keys.flatMap(k => S[k].p.map(p => p[0])).sort();
   $('sNote').textContent = `Seller Hub se liya gaya (${window.FK_SETTLE_AT}) · payment dates ${dates[0] || ''} → ${dates.at(-1) || ''} · date filter yahan lagu nahi hota`;

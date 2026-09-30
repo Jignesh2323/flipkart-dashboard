@@ -106,6 +106,17 @@ foreach ($a in $accounts) {
                 }
             } catch { Write-Host "  returns $src : $($_.Exception.Message)" -ForegroundColor Yellow }
         }
+        # Returns API has no SKU; returns of orders older than the window need a lookup by item id
+        $skuOf = @{}; $orders | Where-Object { $_.acc -eq $a.Name } | ForEach-Object { $skuOf[$_.itemId] = $_.sku }
+        $need = @($returns | Where-Object { $_.acc -eq $a.Name -and -not $_.sku -and -not $skuOf[$_.itemId] } | ForEach-Object { $_.itemId } | Select-Object -Unique)
+        for ($i = 0; $i -lt $need.Count; $i += 25) {
+            $ids = ($need[$i..([Math]::Min($i + 24, $need.Count - 1))]) -join ','
+            try {
+                $r = Invoke-Retry { Invoke-RestMethod -Headers @{ Authorization = "Bearer $t" } -Uri "$api/sellers/v3/shipments?orderItemIds=$ids" }
+                foreach ($s in $r.shipments) { foreach ($i2 in $s.orderItems) { $skuOf[$i2.orderItemId] = $i2.sku } }
+            } catch { Write-Host "  sku lookup: $($_.Exception.Message)" -ForegroundColor Yellow }
+        }
+        $returns | Where-Object { $_.acc -eq $a.Name -and -not $_.sku } | ForEach-Object { $_.sku = $skuOf[$_.itemId] }
         $status += [pscustomobject]@{ acc = $a.Name; ok = $true; msg = "$($ships.Count) shipments" }
         Write-Host "  OK: $($ships.Count) shipments" -ForegroundColor Green
     } catch {
