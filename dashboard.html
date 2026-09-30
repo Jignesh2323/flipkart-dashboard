@@ -69,7 +69,11 @@ if (!D) { demo = true; D = makeDemo(); }
   D.returns = [...m.values()]; }
 // Order history from the API starts later than returns/settlement; orders & returns are only
 // compared from this date so counts and rates cover the same days.
-const ORD_MIN = D.orders.map(o => o.date).sort()[0] || '';
+// Each account's order history starts on a different day; use the latest first day so every
+// account is complete from that date (per account view uses its own start, see accMin).
+const accMin = {}; for (const o of D.orders) if (!accMin[o.acc] || o.date < accMin[o.acc]) accMin[o.acc] = o.date;
+const ORD_MIN_ALL = Object.values(accMin).sort().at(-1) || '';
+let ORD_MIN = ORD_MIN_ALL;
 const PACK = 15; // packing cost per dispatched order: box + authorised plastic bag (₹)
 const short = a => String(a).replace(/^Acc\d+_/, '').toUpperCase();
 const $ = id => document.getElementById(id), inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
@@ -103,9 +107,10 @@ const isCancel = o => /CANCEL/i.test(o.status || "");
 const isLost = o => /CANCEL|^RETURNED$/i.test(o.status || "");
 function grp(arr, key, val) { const m = {}; arr.forEach(x => { const k = typeof key == 'function' ? key(x) : x[key] || '—'; m[k] = (m[k] || 0) + (val ? val(x) : 1); }); return m; }
 function render() {
+  ORD_MIN = $('fAcc').value ? (accMin[$('fAcc').value] || ORD_MIN_ALL) : ORD_MIN_ALL;
   const a = $('fAcc').value, t = $('fTo').value, f0 = $('fFrom').value, f = f0 < ORD_MIN ? ORD_MIN : f0;
   if (!demo) $('note').innerHTML = `<div class="range">📅 Orders &amp; Returns: <b>${dmy(f)}</b> se <b>${dmy(t)}</b> tak`
-    + (f0 < ORD_MIN ? ` <span>(Flipkart API se orders ${dmy(ORD_MIN)} se hi milte hain)</span>` : '') + '</div>';
+    + (f0 < ORD_MIN ? ` <span>(${a ? 'Is account ke' : 'Saare accounts ke'} orders Flipkart API se ${dmy(ORD_MIN)} se hi poore milte hain)</span>` : '') + '</div>';
   const inR = x => (!a || x.acc === a) && (!f || x.date >= f) && (!t || x.date <= t);
   const O = D.orders.filter(inR), R = D.returns.filter(inR), live = O.filter(o => !isLost(o));
   const sales = live.reduce((s, o) => s + o.amount, 0), units = live.reduce((s, o) => s + o.qty, 0);
