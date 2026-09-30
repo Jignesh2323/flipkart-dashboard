@@ -60,6 +60,7 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
+const PACK = 15; // packing cost per dispatched order: box + authorised plastic bag (₹)
 const short = a => String(a).replace(/^Acc\d+_/, '').toUpperCase();
 const $ = id => document.getElementById(id), inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
 $('gen').textContent = (demo ? 'DEMO DATA — ' : 'Updated: ') + D.generated;
@@ -164,13 +165,15 @@ function renderSettle() {
       <div class="k"><span>Return orders</span><b>${retAll}</b></div>
       <div class="k"><span>Total orders (delivered + return)</span><b>${ordAll + retAll}</b></div>
       <div class="k"><span>Har order par return charge</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll)).toFixed(1) : '—'}</b></div>
+      <div class="k"><span>Packing (box + bag, ₹${PACK}/order)</span><b class="bad">${inr((ordAll + retAll) * PACK)}</b></div>
+      <div class="k"><span>Har order ka kul kharcha (return + packing)</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll) + PACK).toFixed(1) : '—'}</b></div>
       <div class="k"><span>Kitne returns par charge laga</span><b>${chargedAll == null ? '—' : chargedAll + ' / ' + retAll}</b></div>
       <div class="k"><span>Ek return ka average charge</span><b class="bad">${chargedAll ? inr(chgAll / chargedAll) : retAll ? inr(chgAll / retAll) : '—'}</b></div>
     </div>
     <p style="margin:0 0 8px;color:var(--mut)">"Pehle mila paisa, ab wapas kata" nuksaan nahi hai: wo paisa aapko pehle mil gaya tha aur product bhi wapas aa gaya. Asli nuksaan sirf Flipkart ke return charges hain.</p>`;
-  $('tRefund').innerHTML = '<tr><th>Account</th><th>Delivered</th><th>Returns</th><th>Total orders</th><th>Return charges</th><th>Charge / order</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th></tr>' +
+  $('tRefund').innerHTML = '<tr><th>Account</th><th>Delivered</th><th>Returns</th><th>Total orders</th><th>Return charges</th><th>Charge / order</th><th>Packing (₹' + PACK + '/order)</th><th>Kul kharcha / order</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th></tr>' +
     keys.map(k => { const s = T(k, 'Return', 'sale'), r = -T(k, 'Return', 'refund'), c = chgOf(k), d = T(k, 'Sale', 'n'), n = T(k, 'Return', 'n');
-      return `<tr><td>${short(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n)).toFixed(1) : '—'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
+      return `<tr><td>${short(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n)).toFixed(1) : '—'}</b></td><td class="bad">${inr((d + n) * PACK)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n) + PACK).toFixed(1) : '—'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
   const sk = keys.flatMap(k => S[k].s.map(s => [k, ...s])).filter(s => s[9] < 0).sort((x, y) => x[9] - y[9]).slice(0, 15);
   $('tLoss').innerHTML = '<tr><th>SKU</th><th>Account</th><th>Sold</th><th>Returns</th><th>Return chg</th><th>Net settle</th></tr>' +
     sk.map(s => `<tr><td>${s[1]}</td><td>${short(s[0])}</td><td>${s[7]}</td><td>${s[8]}</td><td class="bad">${inr(-s[9])}</td><td class="${s[6] < 0 ? 'bad' : ''}">${inr(s[6])}</td></tr>`).join('');
