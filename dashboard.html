@@ -95,7 +95,10 @@ function render() {
   const orderCount = new Set(O.map(o => o.orderId)).size, canc = O.filter(isCancel).length;
   const cust = R.filter(r => r.type === 'customer_return').length, rto = R.filter(r => r.type === 'courier_return').length;
   const k = [['Total Sales', inr(sales)], ['Orders', orderCount], ['Units Sold', units], ['Avg Order Value', inr(live.length ? sales / new Set(live.map(o => o.orderId)).size : 0)],
-    ['Cancelled', canc], ['Customer Returns', cust], ['RTO (Courier)', rto], ['Return Rate', (units ? ((cust + rto) / units * 100).toFixed(1) : 0) + '%']];
+    ['Cancelled', canc], ['Customer Returns', cust], ['RTO (Courier)', rto]];
+  // Rates over shipped units (not cancelled), same basis as the Account Comparison table
+  const shipped = O.filter(o => !isCancel(o)).reduce((s, o) => s + o.qty, 0), rate = n => (shipped ? n / shipped * 100 : 0).toFixed(1) + '%';
+  k.push(['Customer Return Rate', rate(cust)], ['RTO Rate', rate(rto)], ['Total Return Rate', rate(cust + rto)]);
   $('kpis').innerHTML = k.map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
   const byDay = grp(live, 'date', o => o.amount), days = Object.keys(byDay).sort();
   chart('cTrend', { type: 'line', data: { labels: days, datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: '#2874f0', backgroundColor: '#2874f022', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
