@@ -92,6 +92,7 @@ tr:hover td{background:#f8fafc}
 [data-theme="dark"] tr:hover td{background:#1c2430}[data-theme="dark"] .warn{background:#2b2410;border-color:#5c4a14;color:#f0c75e}
 [data-theme="dark"] .chips button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--c)}
 .acct{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--c);color:#fff;font:700 11px var(--sans);letter-spacing:.3px;margin:1px 0}
+tr.total td{background:var(--panel2);font-weight:700;border-top:2px solid var(--line)}tr.total td:first-child{color:var(--ink)}
 .swatch{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer;background:var(--s)}
 .accbar[hidden]{display:none}.swatch{box-shadow:0 0 0 1px var(--line)}
 .swatch[aria-pressed="true"]{border-color:var(--ink)}
@@ -484,7 +485,8 @@ function renderProfit(keys, S, from, to) {
   $('pWarn').innerHTML = top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? '…' : ''}</div>` : '';
   renderItemProfit(keys, rows, from, to);
   $('tProfit').innerHTML = '<tr><th>Account</th><th>Bank me aaya</th><th>Delivered units</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
-    [...rows].sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${tag(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+    [...rows].sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${tag(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('') +
+    `<tr class="total"><td>TOTAL</td><td>${inr(bank)}</td><td>${s('units')}${s('miss') ? ` <span style="color:var(--mut)">(${s('miss')} bina cost)</span>` : ''}</td><td>${inr(s('cogs'))}</td><td>${inr(s('pack'))}</td><td class="${profit < 0 ? 'bad' : 'ok'}"><b>${inr(profit)}</b></td><td>${bank ? (profit / bank * 100).toFixed(1) + '%' : '—'}</td></tr>`;
 }
 // Item-wise profit: account payout shared by delivered sale, minus the item's own return charges, cost and packing
 function renderItemProfit(keys, rows, from, to) {
