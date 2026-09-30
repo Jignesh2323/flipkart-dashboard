@@ -446,7 +446,7 @@ function renderProfit(keys, S, from, to) {
 function renderItemProfit(keys, rows, from, to) {
   const C = window.FK_COST || {}, N = window.FK_NAME || {}, inP = d => d >= from && d <= to;
   const retOf = new Map(D.returns.map(r => [r.acc + '|' + r.itemId, r])), skuOf = new Map(D.orders.map(o => [o.acc + '|' + o.itemId, o.sku]));
-  const it = new Map(), acc = {}, get = p => { if (!it.has(p)) it.set(p, { p, accs: new Set(), units: 0, sale: 0, bank: 0, chg: 0, cogs: 0, pack: 0, miss: 0 }); return it.get(p); };
+  const it = new Map(), acc = {}, get = p => { if (!it.has(p)) it.set(p, { p, accs: new Set(), units: 0, sale: 0, bank: 0, chg: 0, cogs: 0, pack: 0, miss: 0, cr: 0 }); return it.get(p); };
   for (const k of keys) acc[k] = { sale: 0, disp: 0, chg: 0, items: new Map() };
   const share = (k, p) => { const m = acc[k].items; if (!m.has(p)) m.set(p, { sale: 0, disp: 0 }); return m.get(p); };
   for (const o of D.orders) if (acc[o.acc] && inP(o.date)) {
@@ -455,6 +455,7 @@ function renderItemProfit(keys, rows, from, to) {
       if (C[p]) x.cogs += C[p] * o.qty; else x.miss += o.qty; }
     if (!isLost(o)) { a.disp++; s.disp++; }
   }
+  for (const r of D.returns) if (acc[r.acc] && inP(r.date) && r.type === 'customer_return') { const sku = r.sku || skuOf.get(r.acc + '|' + r.itemId); if (sku) get(productOf(sku)).cr++; }
   for (const k of keys) for (const [md, item, amt] of (window.FK_SETTLE[k].cr || [])) {
     if (!inP('2026-' + md)) continue; const r = retOf.get(k + '|' + item), sku = (r && r.sku) || skuOf.get(k + '|' + item);
     if (!sku) continue; get(productOf(sku)).chg += amt; acc[k].chg += amt;
@@ -463,10 +464,10 @@ function renderItemProfit(keys, rows, from, to) {
     for (const [p, s] of a.items) { const x = get(p);
       if (a.sale) x.bank += (r.bank + a.chg) * s.sale / a.sale;
       if (a.disp) x.pack += r.pack * s.disp / a.disp; } }
-  const list = [...it.values()].filter(x => x.units || x.chg).map(x => ({ ...x, bank: x.bank - x.chg, profit: x.bank - x.chg - x.cogs - x.pack }))
+  const list = [...it.values()].filter(x => x.units || x.chg || x.cr).map(x => ({ ...x, bank: x.bank - x.chg, profit: x.bank - x.chg - x.cogs - x.pack }))
     .sort((a, b) => b.profit - a.profit);
-  $('tItem').innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Delivered units</th><th>Sale</th><th>Bank me aaya (anumaan)</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
-    list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].map(short).join(', ') || '—'}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(${x.miss} bina cost)</span>` : ''}</td><td>${inr(x.sale)}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+  $('tItem').innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Delivered units</th><th>Customer return</th><th>Delivered sale</th><th>Bank me aaya (anumaan)</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
+    list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].map(short).join(', ') || '—'}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(${x.miss} bina cost)</span>` : ''}</td><td>${x.cr}</td><td>${inr(x.sale)}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
 }
 // Per SKU: customer / RTO returns (API, cleaned) and the returns Flipkart actually charged
 // (settlement "cr" rows [MM-DD payment date, order item id, charge ₹], joined to the API return type).
