@@ -1,9 +1,14 @@
 @echo off
-rem Daily auto-update (Task Scheduler, 9:00 AM): fetch API data, rebuild settle.js; log to update.log
+rem Daily auto-update (Task Scheduler, 9:00 AM): fetch API data, rebuild settle.js, push to GitHub.
+rem Progress shows in this window and is also appended to update.log
 cd /d "%~dp0"
 echo ==== %date% %time% ==== >> update.log
-powershell -NoProfile -ExecutionPolicy Bypass -File fetch.ps1 -Days 30 >> update.log 2>&1
-powershell -NoProfile -ExecutionPolicy Bypass -File build-settle.ps1 >> update.log 2>&1
+echo Flipkart data update chal raha hai... (5-10 minute, window band mat kijiye)
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& .\fetch.ps1 -Days 30 *>&1 | Tee-Object -FilePath update.log -Append"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& .\build-settle.ps1 *>&1 | Tee-Object -FilePath update.log -Append"
+echo GitHub par upload ho raha hai...
 git add data.js settle.js >> update.log 2>&1
 git commit -m "daily data update" >> update.log 2>&1
 git push >> update.log 2>&1
+if errorlevel 1 (echo GitHub upload FAIL - update.log dekhiye) else (echo Done! Data GitHub par upload ho gaya.)
+timeout /t 10

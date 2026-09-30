@@ -42,6 +42,9 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 <h2 style="font-size:18px;margin:24px 0 12px">Settlement Details</h2>
 <div class="grid"><div class="card"><h3>Bank Credits by Date (₹)</h3><canvas id="cBank"></canvas></div>
 <div class="card"><h3>Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
+<div class="card" style="margin-bottom:16px"><h3>Returns ka hisaab: Refund, Sale se zyada kyun dikhta hai?</h3>
+<div id="rExplain" style="font-size:14px;line-height:1.6"></div>
+<div class="tw"><table id="tRefund"></table></div></div>
 <div class="grid"><div class="card"><h3>SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div></div>
 </section>
 <div class="grid"><div class="card"><h3>Return Reasons</h3><canvas id="cReason"></canvas></div>
@@ -55,7 +58,8 @@ const short = a => String(a).replace(/^Acc\d+_/, '').toUpperCase();
 const $ = id => document.getElementById(id), inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
 $('gen').textContent = (demo ? 'DEMO DATA — ' : 'Updated: ') + D.generated;
 if (demo) $('note').innerHTML = '<div class="warn">Abhi demo data dikh raha hai. RUN.bat chalaiye.</div>';
-const accs = [...new Set(D.orders.map(o => o.acc).concat(D.status.map(s => s.acc), Object.keys(window.FK_SETTLE || {})))].sort();
+// Only accounts whose API works; pending ones (settlement data only) join automatically once approved
+const accs = [...new Set(D.orders.map(o => o.acc))].sort();
 $('fAcc').innerHTML = '<option value="">All Accounts</option>' + accs.map(a => `<option value="${a}">${short(a)}</option>`).join('');
 const dates = D.orders.map(o => o.date).sort(); $('fFrom').value = dates[0] || ''; $('fTo').value = dates.at(-1) || '';
 ['fAcc','fFrom','fTo'].forEach(i => $(i).onchange = render);
@@ -107,7 +111,7 @@ function render() {
 function renderSettle() {
   const S = window.FK_SETTLE; if (!S) return;
   $('settle').hidden = false; $('settleTop').hidden = false;
-  const a = $('fAcc').value, keys = Object.keys(S).filter(k => !a || k === a).sort();
+  const a = $('fAcc').value, keys = Object.keys(S).filter(k => accs.includes(k) && (!a || k === a)).sort();
   const dates = keys.flatMap(k => S[k].p.map(p => p[0])).sort();
   $('sNote').textContent = `Seller Hub se liya gaya (${window.FK_SETTLE_AT}) · payment dates ${dates[0] || ''} → ${dates.at(-1) || ''} · date filter yahan lagu nahi hota`;
   const T = (k, typ, f) => (S[k].t[typ] || {})[f] || 0, sum = f => keys.reduce((s, k) => s + f(k), 0);
@@ -126,6 +130,27 @@ function renderSettle() {
   $('tSet').innerHTML = '<tr><th>Account</th><th>Bank me</th><th>Fees</th><th>Return chg</th><th>Return loss</th></tr>' +
     keys.map(k => ({ k, b: S[k].p.reduce((s, p) => s + p[1], 0), f: Object.values(S[k].t).reduce((s, t) => s + t.fees + t.taxes, 0), rc: T(k, 'Return', 'fees') + T(k, 'Return', 'taxes'), rl: T(k, 'Return', 'settle') }))
       .sort((x, y) => y.b - x.b).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.b)}</td><td class="bad">${inr(-r.f)}</td><td class="bad">${inr(-r.rc)}</td><td class="bad">${inr(-r.rl)}</td></tr>`).join('');
+  // Returns in this payment window: refund covers every returned order, but "sale" only those whose
+  // sale was ALSO paid in this window; the gap is sale money already received in an earlier cycle.
+  const rs = sum(k => T(k, 'Return', 'sale')), rf = -sum(k => T(k, 'Return', 'refund')), gap = rf - rs;
+  $('rExplain').innerHTML = `
+    <p style="margin:0 0 8px">Customer ko order price se <b>zyada paisa nahi</b> diya gaya. Har return me refund utna hi hota hai jitne ka order tha.</p>
+    <p style="margin:0 0 8px">Farak <b>timing</b> ka hai. Flipkart order ka paisa aur return ka paisa alag alag din deta/kaatta hai.
+      Is hisaab me sirf <b>${dates[0] || ''} se ${dates.at(-1) || ''}</b> ke payments hain:</p>
+    <ul style="margin:0 0 8px;padding-left:20px">
+      <li><b>Isi period me bike aur return hue orders</b>: sale bhi yahan hai, refund bhi → dono barabar cancel.</li>
+      <li><b>Pehle (pichhle mahine) bike, ab return hue orders</b>: sale ka paisa <b>pichhle payment me mil chuka tha</b>, isliye yahan sale ₹0 dikhti hai, lekin refund yahan kata.</li>
+    </ul>
+    <div class="kpis" style="margin:12px 0">
+      <div class="k"><span>Refund kata (sab returns)</span><b class="bad">${inr(rf)}</b></div>
+      <div class="k"><span>In returns ki sale jo isi period me mili</span><b>${inr(rs)}</b></div>
+      <div class="k"><span>Pehle mila paisa, ab wapas kata</span><b>${inr(gap)}</b></div>
+      <div class="k"><span>Asli nuksaan (Flipkart return charges)</span><b class="bad">${inr(-sum(k => T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')))}</b></div>
+    </div>
+    <p style="margin:0 0 8px;color:var(--mut)">"Pehle mila paisa, ab wapas kata" nuksaan nahi hai: wo paisa aapko pehle mil gaya tha aur product bhi wapas aa gaya. Asli nuksaan sirf Flipkart ke return charges hain.</p>`;
+  $('tRefund').innerHTML = '<tr><th>Account</th><th>Returns</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th><th>Return charges</th></tr>' +
+    keys.map(k => { const s = T(k, 'Return', 'sale'), r = -T(k, 'Return', 'refund');
+      return `<tr><td>${short(k)}</td><td>${T(k, 'Return', 'n')}</td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td><td class="bad">${inr(-(T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')))}</td></tr>`; }).join('');
   const sk = keys.flatMap(k => S[k].s.map(s => [k, ...s])).filter(s => s[9] < 0).sort((x, y) => x[9] - y[9]).slice(0, 15);
   $('tLoss').innerHTML = '<tr><th>SKU</th><th>Account</th><th>Sold</th><th>Returns</th><th>Return chg</th><th>Net settle</th></tr>' +
     sk.map(s => `<tr><td>${s[1]}</td><td>${short(s[0])}</td><td>${s[7]}</td><td>${s[8]}</td><td class="bad">${inr(-s[9])}</td><td class="${s[6] < 0 ? 'bad' : ''}">${inr(s[6])}</td></tr>`).join('');
