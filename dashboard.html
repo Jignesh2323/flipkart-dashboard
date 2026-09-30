@@ -339,7 +339,7 @@ function renderSettle() {
     </div>
     <div class="kpis" style="margin:0 0 12px">
       <div class="k"><span>Parcels jinka paisa mila</span><b>${ordAll}</b></div>
-      <div class="k"><span>Parcels jo wapas aaye (customer + RTO)</span><b>${retAll}</b></div>
+      <div class="k"><span>Parcels jo wapas aaye (customer + RTO)</span><b>${retAll}</b>${chargedAll == null ? '' : `<small style="display:block;margin-top:6px;font:600 12.5px var(--sans);color:var(--mut)"><span class="bad">${chargedAll} Customer</span> + ${retAll - chargedAll} RTO</small>`}</div>
       <div class="k"><span>Kul parcels bheje</span><b>${ordAll + retAll}</b></div>
       <div class="k"><span>Har parcel par average return charge</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll)).toFixed(1) : '—'}</b></div>
       <div class="k"><span>Packing kharcha (₹${PACK} har parcel)</span><b class="bad">${inr((ordAll + retAll) * PACK)}</b></div>
