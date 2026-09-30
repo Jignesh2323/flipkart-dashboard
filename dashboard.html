@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Flipkart Seller Business</title>
+<link rel="icon" type="image/png" href="logo.png"><link rel="apple-touch-icon" href="logo.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>document.write('<script src="data.js?v=' + Date.now() + '"><\/script>')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -107,14 +108,15 @@ header .bar button:hover{background:rgba(255,255,255,.25);color:#fff}
 header .bar button[aria-pressed="true"]{background:#fff;color:var(--pri);border-color:#fff}
 [data-theme="dark"] header{background:linear-gradient(135deg,var(--pri),color-mix(in srgb,var(--pri) 45%,#000))}
 [data-theme="dark"] header .bar button{background:rgba(255,255,255,.1)}[data-theme="dark"] header .bar button[aria-pressed="true"]{background:#fff}
-@media(max-width:768px){header h1{font-size:22px}}
+.logo{position:absolute;left:20px;top:50%;transform:translateY(-50%);height:96px;background:#fff;border-radius:14px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+@media(max-width:768px){header h1{font-size:22px}.logo{position:static;transform:none;height:56px}}
 </style>
 <script>
 // Saved theme (per browser) applied before anything draws
 try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark") document.documentElement.dataset.theme = "dark";
   if (th.pri) { document.documentElement.style.setProperty("--pri", th.pri); document.documentElement.style.setProperty("--pri-soft", th.pri + "18"); } } catch (e) {}
 </script></head><body>
-<header><div><h1>FLIPKART · <span>Seller Business</span></h1><small id="gen"></small></div>
+<header><img src="logo.png" alt="Ecom24x7 · Flipkart Seller Hub" class="logo"><div><h1>FLIPKART · <span>Seller Business</span></h1><small id="gen"></small></div>
 <div class="bar" id="period" role="group" aria-label="Period"><button type="button" data-d="30">30 Days</button><button type="button" data-d="60">60 Days</button><button type="button" data-d="90">90 Days</button><button type="button" data-d="180">180 Days</button><select id="fAcc" hidden></select><input type="hidden" id="fFrom"><input type="hidden" id="fTo"></div></header>
 <main>
 <nav class="tabs" role="tablist" aria-label="Sections">
