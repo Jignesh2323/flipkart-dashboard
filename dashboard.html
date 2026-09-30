@@ -40,6 +40,13 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 <p style="color:var(--mut);margin:0 0 12px;font-size:13px" id="sNote"></p>
 <div class="kpis" id="sKpis"></div>
 </div>
+<div id="profitTop" hidden>
+<h2 style="font-size:18px;margin:8px 0 4px">Profit</h2>
+<p style="color:var(--mut);margin:0 0 12px;font-size:13px">Profit = Bank me aaya − Product cost (delivered units × aapki cost) − Packing (₹15/order)</p>
+<div id="pWarn"></div>
+<div class="kpis" id="pKpis"></div>
+<div class="card" style="margin-bottom:16px"><h3>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
+</div>
 <div class="grid"><div class="card"><h3>Daily Sales (₹)</h3><canvas id="cTrend"></canvas></div>
 <div class="card"><h3>Account-wise Sales (₹)</h3><canvas id="cAcc"></canvas></div></div>
 <div class="grid"><div class="card"><h3>Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
@@ -59,6 +66,7 @@ th{color:var(--mut);font-weight:600}.tw{overflow-x:auto}
 <div class="card"><h3>API Status</h3><div class="tw"><table id="tApi"></table></div></div></div>
 </main>
 <script>document.write('<script src="settle.js?v=' + Date.now() + '"><\/script>')</script>
+<script>document.write('<script src="cost.js?v=' + Date.now() + '"><\/script>')</script>
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
@@ -254,6 +262,37 @@ function renderSettle() {
     keys.map(k => { const s = T(k, 'Return', 'sale'), r = -T(k, 'Return', 'refund'), c = chgOf(k), d = T(k, 'Sale', 'n'), n = T(k, 'Return', 'n');
       return `<tr><td>${short(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n)).toFixed(1) : '—'}</b></td><td class="bad">${inr((d + n) * PACK)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n) + PACK).toFixed(1) : '—'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
   renderSkuCharges(keys, sf, $('fTo').value);
+  renderProfit(keys, S, sf, $('fTo').value);
+}
+// Same rule as sku-key.ps1: drop account prefix and trailing listing number -> product name
+const productOf = sku => String(sku || '').trim()
+  .replace(/^(ARZ|ARKZ|AVD|AVSP|AV|KDCSP|KDC|PVDSP|PVD|TD|WSKSP|WSK|ZTSP|ZT|ZO|FO|VU|BRL|BR)\s*-\s*(SP-)?/i, '')
+  .replace(/[\s_-]+0*\d{1,2}[a-zA-Z]?$/, '').replace(/\s+/g, ' ').trim().toUpperCase();
+// Profit per account: bank payouts in the period − cost of units delivered in the period − packing
+function renderProfit(keys, S, from, to) {
+  const C = window.FK_COST || {}, inP = d => d >= from && d <= to;
+  $('profitTop').hidden = false;
+  if (!Object.keys(C).length) { $('pKpis').innerHTML = ''; $('tProfit').innerHTML = '';
+    $('pWarn').innerHTML = '<div class="warn">Profit dekhne ke liye products ki cost bhariye.</div>'; return; }
+  const T = (k, ty, f) => (S[k].t[ty] || {})[f] || 0, missing = new Map();
+  const rows = keys.map(k => {
+    const bank = S[k].p.reduce((s, p) => s + p[1], 0);
+    let cogs = 0, units = 0, miss = 0;
+    for (const o of D.orders) if (o.acc === k && o.status === 'DELIVERED' && inP(o.date)) {
+      const p = productOf(o.sku), c = C[p]; units += o.qty;
+      if (c) cogs += c * o.qty; else { miss += o.qty; missing.set(p, (missing.get(p) || 0) + o.qty); }
+    }
+    const pack = (T(k, 'Sale', 'n') + T(k, 'Return', 'n')) * PACK;
+    return { k, bank, cogs, pack, units, miss, profit: bank - cogs - pack };
+  });
+  const s = f => rows.reduce((a, r) => a + r[f], 0), bank = s('bank'), profit = s('profit');
+  $('pKpis').innerHTML = [['Bank me aaya', inr(bank)], ['Product cost', inr(s('cogs'))], ['Packing', inr(s('pack'))],
+    ['Profit', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`], ['Profit %', bank ? (profit / bank * 100).toFixed(1) + '%' : '—'], ['Delivered units', s('units')]]
+    .map(([l, v]) => `<div class="k"><span>${l}</span><b>${v}</b></div>`).join('');
+  const top = [...missing.entries()].sort((a, b) => b[1] - a[1]);
+  $('pWarn').innerHTML = top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? '…' : ''}</div>` : '';
+  $('tProfit').innerHTML = '<tr><th>Account</th><th>Bank me aaya</th><th>Delivered units</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
+    rows.sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${short(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
 }
 // Per SKU: customer / RTO returns (API, cleaned) and the returns Flipkart actually charged
 // (settlement "cr" rows [MM-DD payment date, order item id, charge ₹], joined to the API return type).
