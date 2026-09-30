@@ -119,6 +119,7 @@ tr:hover td{background:#f8fafc}
 <div class="card"><h3>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
 <div class="card"><h3>Item-wise Profit (zyada profit sabse upar)</h3>
 <p class="note" style="margin:14px 18px 0">Flipkart bank payout SKU-wise nahi deta, isliye har account ka "Bank me aaya" us account ke items me unki delivered sale ke hisaab se baanta gaya hai; return charge har item ka asli (Seller Hub se) ghataya gaya hai. Packing ₹15 har dispatch order par.</p>
+<div class="bar"><input type="search" id="itemFind" placeholder="🔍 Product ya item name dhoondhiye" style="flex:1;max-width:360px"><span id="itemCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw"><table id="tItem"></table></div></div>
 <section id="settle" hidden>
 <div class="grid"><div class="card"><h3>Bank Credits by Date (₹)</h3><canvas id="cBank"></canvas></div>
@@ -504,6 +505,9 @@ $('chips').onclick = e => { const b = e.target.closest('button'); if (!b) return
   $('fAcc').value = b.dataset.acc; render(); renderSettle(); drawChips(); };
 $('fAcc').addEventListener('change', drawChips);
 drawChips();
+function filterItems() { const q = ($('itemFind').value || '').trim().toLowerCase(), rs = [...document.querySelectorAll('#tItem tr')].slice(1); let n = 0;
+  rs.forEach(r => { const ok = !q || r.textContent.toLowerCase().includes(q); r.hidden = !ok; if (ok) n++; }); $('itemCnt').textContent = q ? n + ' / ' + rs.length + ' items' : rs.length + ' items'; }
+$('itemFind').oninput = filterItems; new MutationObserver(filterItems).observe($('tItem'), { childList: true }); filterItems();
 $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { window.topBy = b.dataset.by; render(); } };
 </script><script>
 // Tabs (remembered per browser) and collapsible cards
