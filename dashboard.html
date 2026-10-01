@@ -165,7 +165,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <div class="tw"><table id="tMonth"></table></div></div>
 <div class="card"><h3>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
 <div class="card"><h3>Item-wise Profit (zyada profit sabse upar)</h3>
-<p class="note" style="margin:14px 18px 0">Flipkart bank payout SKU-wise nahi deta, isliye har account ka "Bank me aaya" us account ke items me unki delivered sale ke hisaab se baanta gaya hai; return charge har item ka asli (Seller Hub se) ghataya gaya hai. Packing ₹15 har dispatch order par.</p>
+<p class="note" id="itemNote" style="margin:14px 18px 0">Flipkart bank payout SKU-wise nahi deta, isliye har account ka "Bank me aaya" us account ke items me unki delivered sale ke hisaab se baanta gaya hai; return charge har item ka asli (Seller Hub se) ghataya gaya hai. Packing ₹15 har dispatch order par.</p>
 <div class="bar"><input type="search" id="itemFind" placeholder="🔍 Product ya item name dhoondhiye" style="flex:1;max-width:360px"><span id="itemCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw"><table id="tItem"></table></div></div>
 <section id="settle" hidden>
@@ -227,6 +227,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <script>document.write('<script src="gst.js?v=' + Date.now() + '"><\/script>')</script>
 <script>document.write('<script src="fsn.js?v=' + Date.now() + '"><\/script>')</script>
 <script>document.write('<script src="hubsales.js?v=' + Date.now() + '"><\/script>')</script>
+<script>document.write('<script src="hubitems.js?v=' + Date.now() + '"><\/script>')</script>
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
@@ -550,7 +551,23 @@ function renderProfit(keys, S, from, to) {
 }
 // Item-wise profit: account payout shared by delivered sale, minus the item's own return charges, cost and packing
 function renderItemProfit(keys, rows, from, to) {
-  const C = window.FK_COST || {}, N = window.FK_NAME || {}, inP = d => d >= from && d <= to;
+  const C = window.FK_COST || {}, N = window.FK_NAME || {}, inP = d => d >= from && d <= to, HI = window.FK_HUBITEMS || {};
+  // Exact per-SKU money from Seller Hub (rows [payment date, sku, sales paid, sale settlement, returns, return settlement, charge]):
+  // bank and cost both come from the same paid orders, so the profit is not inflated by earlier orders' payouts.
+  if (keys.every(k => HI[k])) {
+    const it = new Map(), get = p => { if (!it.has(p)) it.set(p, { p, accs: new Set(), sold: 0, ret: 0, bank: 0, chg: 0, miss: 0 }); return it.get(p); };
+    for (const k of keys) for (const [d, sku, sn, ss, rn, rs, ch] of HI[k]) if (inP(d)) {
+      const x = get(productOf(sku)); x.accs.add(k); x.sold += sn; x.ret += rn; x.bank += ss + rs; x.chg += ch; x.ss = (x.ss || 0) + ss; x.rs = (x.rs || 0) + rs; }
+    // Many returns carry no money (COD orders that came back were never paid), so only the refunded value
+    // reduces the units: refunded units ≈ refund (after the return charge) ÷ average payout per unit.
+    const list = [...it.values()].map(x => { const per = x.sold ? x.ss / x.sold : 0, refunded = per > 0 ? Math.min(x.ret, Math.round(Math.max(0, -(x.rs + x.chg)) / per)) : 0;
+      const units = Math.max(0, x.sold - refunded), c = C[x.p], cogs = c ? c * units : 0, pack = (x.sold + x.ret) * PACK;
+      return { ...x, units, cogs, pack, miss: c ? 0 : units, profit: x.bank - cogs - pack }; }).filter(x => x.sold || x.ret).sort((a, b) => b.profit - a.profit);
+    $('tItem').innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Paisa mila (units)</th><th>Wapas aaye</th><th>Cost wale units</th><th>Bank me aaya</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
+      list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].sort().map(tag).join(' ')}</td><td>${x.sold}</td><td>${x.ret}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(bina cost)</span>` : ''}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+    $('itemNote').innerHTML = 'Har item ka <b>asli paisa</b> Seller Hub ke SKU-wise settlement se: is period ke payments me us item ki sale ka paisa + returns ka refund/charge (bank me jo aaya, wahi). Product cost sirf un units par jinka paisa mila aur refund nahi hua (COD ke RTO ka paisa kabhi aaya hi nahi tha, isliye wo units me nahi ghatte). Packing ₹15 har parcel (sale + return).';
+    return;
+  }
   const retOf = new Map(D.returns.map(r => [r.acc + '|' + r.itemId, r])), skuOf = new Map(D.orders.map(o => [o.acc + '|' + o.itemId, o.sku]));
   const it = new Map(), acc = {}, get = p => { if (!it.has(p)) it.set(p, { p, accs: new Set(), units: 0, sale: 0, bank: 0, chg: 0, cogs: 0, pack: 0, miss: 0, cr: 0 }); return it.get(p); };
   for (const k of keys) acc[k] = { sale: 0, disp: 0, chg: 0, items: new Map() };

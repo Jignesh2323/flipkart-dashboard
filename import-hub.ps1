@@ -9,6 +9,8 @@ $key = 'sb_publishable_HO0wPEI58Ia5k7CFOIyOhA_A6dtCsuL'
 $h = @{ apikey = $key; Authorization = "Bearer $key" }
 $utf8 = New-Object System.Text.UTF8Encoding $false
 $sales = [ordered]@{}
+# Per payment date + SKU: [date, sku, sales paid, sale settlement, returns, return settlement, return charge]
+$items = [ordered]@{}
 foreach ($acc in $Accounts) {
     $r = Invoke-RestMethod -Headers $h -Uri "https://begblflwhxbbipsmxytd.supabase.co/rest/v1/fk_blob?name=eq.settle_$acc&select=data"
     if (-not $r) { Write-Host "$acc : Supabase me data nahi"; continue }
@@ -17,6 +19,7 @@ foreach ($acc in $Accounts) {
     [IO.File]::WriteAllText((Join-Path $root "settlements\daily\$acc.json"), ($o.dd | ConvertTo-Json -Depth 4 -Compress), $utf8)
     [IO.File]::WriteAllText((Join-Path $root "settlements\charged\$acc.json"), (ConvertTo-Json @($o.cr) -Depth 4 -Compress), $utf8)
     $sales[$acc] = $o.sl
+    if ($o.it) { $items[$acc] = $o.it }
     Write-Host "$acc : $($o.main.p.Count) payment din, $($o.cr.Count) charged returns, $($o.sl.Count) sale rows"
 }
 # Keep accounts imported earlier that were not part of this run
@@ -27,3 +30,12 @@ if (Test-Path $hs) {
 }
 [IO.File]::WriteAllText($hs, "window.FK_HUBSALES = " + ($sales | ConvertTo-Json -Depth 5 -Compress) + ";", $utf8)
 Write-Host "hubsales.js: $($sales.Count) accounts"
+if ($items.Count) {
+    $hi = Join-Path $root 'hubitems.js'
+    if (Test-Path $hi) {
+        $old = (Get-Content $hi -Raw); $old = $old.Substring($old.IndexOf('{')).TrimEnd().TrimEnd(';') | ConvertFrom-Json
+        foreach ($p in $old.PSObject.Properties) { if (-not $items.Contains($p.Name)) { $items[$p.Name] = $p.Value } }
+    }
+    [IO.File]::WriteAllText($hi, "window.FK_HUBITEMS = " + ($items | ConvertTo-Json -Depth 5 -Compress) + ";", $utf8)
+    Write-Host "hubitems.js: $($items.Count) accounts"
+}
