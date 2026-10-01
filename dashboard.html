@@ -585,30 +585,37 @@ render(); renderSettle(); renderCostEditor(); loadCosts();
 let MAP = {};
 const MAP_ST = { ok: '✅ Sirf aap', other: '⚠️ Doosra seller', case: '📨 Case raise kiya' };
 async function loadMapping() {
+  // The API returns at most 1000 rows per call, so page through
+  try { const all = []; for (let off = 0; ; off += 1000) { const r = await fetch(SB_URL + `/rest/v1/fk_listing?select=acc,sku,fsn,title&order=acc,sku&limit=1000&offset=${off}`, { headers: sbHead });
+      if (!r.ok) break; const p = await r.json(); all.push(...p); if (p.length < 1000) break; } if (all.length) window.FK_LIST = all; } catch (e) {}
   try { const r = await fetch(SB_URL + '/rest/v1/fk_mapping?select=acc,sku,status,sellers,note,checked_at&limit=10000', { headers: sbHead });
     if (r.ok) { MAP = {}; for (const x of await r.json()) MAP[x.acc + '|' + x.sku] = x; } } catch (e) {}
   renderMapping();
 }
 function renderMapping() {
   const F = window.FK_FSN || {}, a = $('fAcc').value, since = new Date(lastDate); since.setDate(since.getDate() - 29);
-  const s30 = since.toISOString().slice(0, 10), rows = new Map();
+  const s30 = since.toISOString().slice(0, 10), rows = new Map(), LI = window.FK_LIST || [];
+  // All active listings from Seller Hub (fk_listing); before that loads, only SKUs that had orders
+  for (const l of LI) { if (a && l.acc !== a) continue; const k = l.acc + '|' + l.sku;
+    rows.set(k, { k, acc: l.acc, sku: l.sku, title: l.title || '', fsn: l.fsn, u30: 0, last: '' }); }
   for (const o of D.orders) { if (a && o.acc !== a) continue; const k = o.acc + '|' + o.sku;
-    if (!rows.has(k)) rows.set(k, { k, acc: o.acc, sku: o.sku, title: o.title || '', u30: 0, last: '' });
+    if (!rows.has(k)) { if (LI.length && LI.some(l => l.acc === o.acc)) continue; rows.set(k, { k, acc: o.acc, sku: o.sku, title: o.title || '', u30: 0, last: '' }); }
     const x = rows.get(k); if (o.date >= s30 && !isLost(o)) x.u30 += o.qty; if (o.date > x.last) x.last = o.date; }
-  // Grouped by account (same order as the account buttons), best sellers first inside each account
-  const list = [...rows.values()].sort((p, q) => accs.indexOf(p.acc) - accs.indexOf(q.acc) || q.u30 - p.u30 || (q.last > p.last ? 1 : -1));
-  const byAcc = accs.filter(x => !a || x === a).map(x => { const l = list.filter(r => r.acc === x), c = st => l.filter(r => (MAP[r.k] || {}).status === st).length;
+  // Grouped by account (VUSTICA/BRAINLE too, they have listings even without API orders), best sellers first inside each account
+  const accAll = [...new Set([...accs, ...LI.map(l => l.acc)])].sort();
+  const list = [...rows.values()].sort((p, q) => accAll.indexOf(p.acc) - accAll.indexOf(q.acc) || q.u30 - p.u30 || (q.last > p.last ? 1 : -1));
+  const byAcc = accAll.filter(x => !a || x === a).map(x => { const l = list.filter(r => r.acc === x), c = st => l.filter(r => (MAP[r.k] || {}).status === st).length;
     return { x, n: l.length, left: l.filter(r => !MAP[r.k]).length, other: c('other'), cs: c('case'), ok: c('ok') }; });
   $('tMapAcc').innerHTML = '<tr><th>Account</th><th>Kul listing</th><th>Baaki (check nahi hui)</th><th>⚠️ Doosra seller</th><th>📨 Case raise</th><th>✅ Sirf aap</th><th>Kitna ho gaya</th></tr>' +
     byAcc.map(r => `<tr><td>${tag(r.x)}</td><td>${r.n}</td><td class="${r.left ? 'bad' : 'ok'}"><b>${r.left}</b></td><td>${r.other}</td><td>${r.cs}</td><td>${r.ok}</td><td>${r.n ? Math.round((r.n - r.left) / r.n * 100) : 0}%</td></tr>`).join('');
   const cnt = st => list.filter(x => (MAP[x.k] || {}).status === st).length, none = list.filter(x => !MAP[x.k]).length;
-  $('mapKpis').innerHTML = [['Kul listing (jinme order aaya)', list.length, a ? short(a) + ' account' : 'Sabhi chalu accounts'], ['Abhi check nahi hui', none, 'Inhe ek-ek karke dekhna baaki hai'],
+  $('mapKpis').innerHTML = [[LI.length ? 'Kul active listing (Seller Hub)' : 'Kul listing (jinme order aaya)', list.length, a ? short(a) + ' account' : 'Sabhi chalu accounts'], ['Abhi check nahi hui', none, 'Inhe ek-ek karke dekhna baaki hai'],
     ['⚠️ Doosra seller mila', cnt('other'), 'Inpar case raise karna hai'], ['📨 Case raise kiya', cnt('case'), 'Flipkart ke jawab ka intezaar'], ['✅ Sirf aap', cnt('ok'), 'Koi doosra seller nahi mila']]
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const opt = cur => '<option value="">— chuniye —</option>' + Object.entries(MAP_ST).map(([v, l]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`).join('');
   const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   $('tMap').innerHTML = '<tr><th>Account</th><th>SKU / Product</th><th>30 din me bike</th><th>Flipkart par</th><th>Status</th><th>Kitne seller</th><th>Note</th><th>Last check</th><th></th></tr>' +
-    list.map((x, i) => { const m = MAP[x.k] || {}, fsn = F[x.k], g = byAcc.find(r => r.x === x.acc);
+    list.map((x, i) => { const m = MAP[x.k] || {}, fsn = x.fsn || F[x.k], g = byAcc.find(r => r.x === x.acc);
       return (i && list[i - 1].acc === x.acc ? '' : `<tr class="total"><td colspan="9" style="text-align:left">${tag(x.acc)} &nbsp; ${g.n} listing · <span class="bad">${g.left} baaki</span></td></tr>`) + `<tr data-k="${esc(x.k)}" data-st="${m.status || 'none'}" data-fsn="${fsn || ''}"><td>${tag(x.acc)}</td><td style="white-space:normal;min-width:220px">${esc(x.sku)}<br><small style="color:var(--mut);font-weight:400">${esc(x.title).slice(0, 70)}</small></td><td>${x.u30}</td>
         <td>${fsn ? `<a href="https://www.flipkart.com/sellers?pid=${fsn}" target="_blank" rel="noopener">Sellers dekhiye ↗</a>` : '<span style="color:var(--mut)">FSN nahi mila</span>'}</td>
         <td><select>${opt(m.status)}</select></td><td><input type="number" min="1" style="width:64px" value="${m.sellers ?? ''}"></td><td><input style="width:150px" value="${esc(m.note)}"></td>
