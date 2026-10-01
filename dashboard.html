@@ -93,7 +93,7 @@ tr:hover td{background:#f8fafc}
 [data-theme="dark"] tr:hover td{background:#1c2430}[data-theme="dark"] .warn{background:#2b2410;border-color:#5c4a14;color:#f0c75e}
 [data-theme="dark"] .chips button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--c)}
 .acct{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--c);color:#fff;font:700 11px var(--sans);letter-spacing:.3px;margin:1px 0}
-tr.total td{background:var(--panel2);font-weight:700;border-top:2px solid var(--line)}tr.total td:first-child{color:var(--ink)}
+#tMap tr.dirty td{background:#fff8e6}tr.total td{background:var(--panel2);font-weight:700;border-top:2px solid var(--line)}tr.total td:first-child{color:var(--ink)}
 .swatch{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer;background:var(--s)}
 .accbar[hidden]{display:none}.swatch{box-shadow:0 0 0 1px var(--line)}
 .swatch[aria-pressed="true"]{border-color:var(--ink)}
@@ -196,6 +196,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <p class="note" style="margin:14px 18px 0">Har listing ke saamne <b>Sellers dekhiye</b> dabaiye: flipkart.com par us product ke saare sellers khulenge. Agar aapke alawa koi aur seller dikhe to status <b>⚠️ Doosra seller</b> chuniye, kitne seller hain likhiye aur <b>Save</b> dabaiye (PIN wahi jo Products tab ka hai). Sabse zyada bikne wali listing upar hain.</p>
 <div class="bar"><label for="mapPin">PIN</label><input type="password" id="mapPin" inputmode="numeric" autocomplete="off" style="width:110px">
 <select id="mapShow"><option value="">Sab listing</option><option value="none">Abhi check nahi hui</option><option value="other">⚠️ Doosra seller</option><option value="case">📨 Case raise kiya</option><option value="ok">✅ Sirf aap</option></select>
+<button type="button" class="ceSave" id="mapSaveAll">💾 Sab save karo</button>
 <input type="search" id="mapFind" placeholder="🔍 SKU / product dhoondhiye" style="flex:1;min-width:160px"><span id="mapMsg" style="font-size:13px"></span></div>
 <div class="tw"><table id="tMap"></table></div></div>
 </section>
@@ -626,8 +627,8 @@ function renderMapping() {
   const opt = cur => '<option value="">— chuniye —</option>' + Object.entries(MAP_ST).map(([v, l]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`).join('');
   const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   $('tMap').innerHTML = '<tr><th>Account</th><th>SKU / Product</th><th>30 din me bike</th><th>Flipkart par</th><th>Status</th><th>Kitne seller</th><th>Note</th><th>Last check</th><th></th></tr>' +
-    list.map((x, i) => { const m = MAP[x.k] || {}, fsn = x.fsn || F[x.k], g = byAcc.find(r => r.x === x.acc);
-      return (i && list[i - 1].acc === x.acc ? '' : `<tr class="total"><td colspan="9" style="text-align:left">${tag(x.acc)} &nbsp; ${g.n} listing · <span class="bad">${g.left} baaki</span></td></tr>`) + `<tr data-k="${esc(x.k)}" data-st="${m.status || 'none'}" data-fsn="${fsn || ''}"><td>${tag(x.acc)}</td><td style="white-space:normal;min-width:220px">${esc(x.sku)}<br><small style="color:var(--mut);font-weight:400">${esc(x.title).slice(0, 70)}</small></td><td>${x.u30}</td>
+    list.map((x, i) => { const m = (typeof MAP_DIRTY !== 'undefined' && MAP_DIRTY.get(x.k)) || MAP[x.k] || {}, fsn = x.fsn || F[x.k], g = byAcc.find(r => r.x === x.acc);
+      return (i && list[i - 1].acc === x.acc ? '' : `<tr class="total"><td colspan="9" style="text-align:left">${tag(x.acc)} &nbsp; ${g.n} listing · <span class="bad">${g.left} baaki</span></td></tr>`) + `<tr class="${typeof MAP_DIRTY !== 'undefined' && MAP_DIRTY.has(x.k) ? 'dirty' : ''}" data-k="${esc(x.k)}" data-st="${m.status || 'none'}" data-fsn="${fsn || ''}"><td>${tag(x.acc)}</td><td style="white-space:normal;min-width:220px">${esc(x.sku)}<br><small style="color:var(--mut);font-weight:400">${esc(x.title).slice(0, 70)}</small></td><td>${x.u30}</td>
         <td>${fsn ? `<a href="https://www.flipkart.com/sellers?pid=${fsn}" target="_blank" rel="noopener">Sellers dekhiye ↗</a>` : '<span style="color:var(--mut)">FSN nahi mila</span>'}</td>
         <td><select>${opt(m.status)}</select></td><td><input type="number" min="1" style="width:64px" value="${m.sellers ?? ''}"></td><td><input style="width:150px" value="${esc(m.note)}"></td>
         <td style="color:var(--mut)">${m.checked_at ? dmy(m.checked_at.slice(0, 10)) : '—'}</td><td><button type="button" class="ceSave">Save</button></td></tr>`; }).join('');
@@ -638,20 +639,35 @@ function filterMap() {
   document.querySelectorAll('#tMap tr[data-k]').forEach(r => r.hidden = !((!q || r.textContent.toLowerCase().includes(q) || r.dataset.k.toLowerCase().includes(q)) && (!st || r.dataset.st === st)));
 }
 $('mapFind').oninput = filterMap; $('mapShow').onchange = filterMap;
-$('tMap').onclick = async e => {
-  const b = e.target.closest('button.ceSave'); if (!b) return;
-  const tr = b.closest('tr'), [sel] = tr.querySelectorAll('select'), [nIn, noteIn] = tr.querySelectorAll('input'), pin = $('mapPin').value, [acc, ...sk] = tr.dataset.k.split('|');
+// Rows changed but not saved yet (kept across re-renders so several can be filled, then saved together)
+const MAP_DIRTY = new Map();
+$('tMap').addEventListener('input', e => { const tr = e.target.closest('tr[data-k]'); if (!tr) return;
+  const [sel] = tr.querySelectorAll('select'), [nIn, noteIn] = tr.querySelectorAll('input');
+  MAP_DIRTY.set(tr.dataset.k, { status: sel.value, sellers: nIn.value, note: noteIn.value }); tr.classList.add('dirty'); mapDirtyMsg(); });
+function mapDirtyMsg() { $('mapSaveAll').textContent = MAP_DIRTY.size ? `💾 Sab save karo (${MAP_DIRTY.size})` : '💾 Sab save karo'; }
+async function saveMapRow(k, v, pin) {
+  const [acc, ...sk] = k.split('|'), tr = [...document.querySelectorAll('#tMap tr[data-k]')].find(r => r.dataset.k === k);
+  const r = await fetch(SB_URL + '/rest/v1/rpc/fk_save_mapping', { method: 'POST', headers: sbHead,
+    body: JSON.stringify({ p_pin: pin, p_acc: acc, p_sku: sk.join('|'), p_fsn: (tr && tr.dataset.fsn) || null, p_status: v.status, p_sellers: v.sellers ? +v.sellers : null, p_note: v.note }) });
+  const msg = await r.json();
+  if (msg !== 'ok') throw new Error(msg.message || msg);
+  MAP[k] = { status: v.status, sellers: v.sellers ? +v.sellers : null, note: v.note, checked_at: new Date().toISOString() }; MAP_DIRTY.delete(k);
+}
+async function saveMapRows(keys) {
+  const pin = $('mapPin').value;
   if (!pin) { $('mapMsg').textContent = 'Pehle PIN daaliye.'; $('mapPin').focus(); return; }
-  if (!sel.value) { $('mapMsg').textContent = 'Status chuniye.'; sel.focus(); return; }
-  b.disabled = true; $('mapMsg').textContent = 'Save ho raha hai…';
-  try { const r = await fetch(SB_URL + '/rest/v1/rpc/fk_save_mapping', { method: 'POST', headers: sbHead,
-      body: JSON.stringify({ p_pin: pin, p_acc: acc, p_sku: sk.join('|'), p_fsn: tr.dataset.fsn || null, p_status: sel.value, p_sellers: nIn.value ? +nIn.value : null, p_note: noteIn.value }) });
-    const msg = await r.json();
-    if (msg === 'ok') { MAP[tr.dataset.k] = { status: sel.value, sellers: nIn.value ? +nIn.value : null, note: noteIn.value, checked_at: new Date().toISOString() }; $('mapMsg').textContent = '✔ Saved: ' + sk.join('|'); renderMapping(); }
-    else $('mapMsg').textContent = msg.message || msg; }
-  catch (err) { $('mapMsg').textContent = 'Save nahi hua: ' + err.message; }
-  b.disabled = false;
-};
+  const todo = keys.filter(k => MAP_DIRTY.has(k) && MAP_DIRTY.get(k).status);
+  if (!todo.length) { $('mapMsg').textContent = 'Pehle status chuniye.'; return; }
+  let ok = 0, err = '';
+  for (const k of todo) { $('mapMsg').textContent = `Save ho raha hai… ${ok + 1}/${todo.length}`;
+    try { await saveMapRow(k, MAP_DIRTY.get(k), pin); ok++; } catch (e) { err = e.message; break; } }
+  $('mapMsg').textContent = err ? `${ok} save hue, phir ruk gaya: ${err}` : `✔ ${ok} listing save ho gayi`;
+  renderMapping(); mapDirtyMsg();
+}
+$('tMap').onclick = e => { const b = e.target.closest('button.ceSave'); if (!b) return;
+  const tr = b.closest('tr'), [sel] = tr.querySelectorAll('select'), [nIn, noteIn] = tr.querySelectorAll('input');
+  MAP_DIRTY.set(tr.dataset.k, { status: sel.value, sellers: nIn.value, note: noteIn.value }); saveMapRows([tr.dataset.k]); };
+$('mapSaveAll').onclick = () => saveMapRows([...MAP_DIRTY.keys()]);
 loadMapping();
 $('chips').addEventListener('click', () => setTimeout(renderMapping, 0));
 // Account boxes on top: same effect as the dropdown
