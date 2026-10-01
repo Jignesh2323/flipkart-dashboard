@@ -672,7 +672,7 @@ $('itemFind').oninput = filterItems; new MutationObserver(filterItems).observe($
   paint();
   const S = window.FK_SETTLE || {}, ok = (D.status || []).filter(s => s.ok).length;
   $('tInfo').innerHTML = [['Orders data update hua', dmy(D.generated)], ['Bank settlement Seller Hub se liya', window.FK_SETTLE_AT ? dmy(window.FK_SETTLE_AT) : '—'],
-    ['Auto update', 'Roz subah 9:00 baje (dusre PC par update.bat)'], ['Orders kab se hain', dmy(ORD_MIN_ALL) + ' se ' + dmy(lastDate)],
+    ['Auto update', 'Roz subah 10:00 baje, ya PC chalu hone ke 3 minute baad (update.bat)'], ['Orders kab se hain', dmy(ORD_MIN_ALL) + ' se ' + dmy(lastDate)],
     ['Kul orders (data me)', D.orders.length.toLocaleString('en-IN')], ['Kul returns (data me)', D.returns.length.toLocaleString('en-IN')],
     ['Accounts (API chalu)', accs.length + ' : ' + accs.map(short).join(', ')], ['Accounts ka API status', ok + ' / ' + (D.status || []).length + ' OK (neeche table dekhiye)'],
     ['Product cost', 'Products tab me (online save, PIN se)'], ['Packing kharcha', '₹' + PACK + ' har parcel']]
