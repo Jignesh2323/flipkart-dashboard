@@ -469,7 +469,7 @@ async function loadCosts() {
 function renderCostEditor() {
   const C = window.FK_COST || {}, N = window.FK_NAME || {}, units = {};
   for (const o of D.orders) if (!/CANCEL/i.test(o.status || '')) { const p = productOf(o.sku); units[p] = (units[p] || 0) + o.qty; }
-  for (const rows of Object.values(window.FK_HUBSALES || {})) for (const [, sku, n] of rows) { const p = productOf(sku); units[p] = (units[p] || 0) + n; }
+  for (const a of hubAccs) for (const [, sku, n] of (window.FK_HUBSALES[a] || [])) { const p = productOf(sku); units[p] = (units[p] || 0) + n; }
   const all = [...new Set([...Object.keys(units), ...Object.keys(C)])];
   const q = ($('ceFind').value || '').toUpperCase();
   const list = all.filter(p => !q || p.includes(q) || (N[p] || '').toUpperCase().includes(q))
