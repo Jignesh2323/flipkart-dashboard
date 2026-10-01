@@ -1,8 +1,8 @@
 @echo off
-rem Daily auto-update (Task Scheduler, 9:00 AM): fetch API data, rebuild settle.js, push to GitHub.
+rem Daily auto-update (Task Scheduler, 10:00 AM): fetch API data, rebuild settle.js, push to GitHub.
 rem Progress shows in this window and is also appended to update.log
 cd /d "%~dp0"
-rem Also runs at logon (for days the PC was off at 9 AM); skip if today's update already ran
+rem Also runs at logon (for days the PC was off at 10 AM); skip if today's update already ran
 set TODAY=%date%
 set LAST=none
 if exist last-update.txt set /p LAST=<last-update.txt
