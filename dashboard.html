@@ -175,7 +175,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 
 <section class="tab" data-tab="sales" hidden>
 <div class="grid"><div class="card"><h3>Top Selling SKUs</h3><div class="bar" id="topBy" role="group" aria-label="Sort"><button type="button" data-by="u" aria-pressed="true">Units wise</button><button type="button" data-by="s" aria-pressed="false">Sale (₹) wise</button></div><div class="tw"><table id="tTop"></table></div></div>
-<div class="card"><h3>Order Status</h3><div style="position:relative;height:260px"><canvas id="cStatus"></canvas></div></div></div>
+<div class="card" style="display:flex;flex-direction:column"><h3>Order Status</h3><div style="position:relative;flex:1;min-height:380px"><canvas id="cStatus"></canvas></div></div></div>
 </section>
 
 <section class="tab" data-tab="returns" hidden>
@@ -323,7 +323,7 @@ function render() {
       ? `<tr><td>${tag(r.ac)}</td><td>${inr(r.s)}</td><td>${r.n}</td><td>${r.d}</td><td>${r.c}</td><td>${r.cu}</td><td>${r.rto}</td><td><b>${r.r}</b></td>${pc(r.cuP, 10)}${pc(r.rtoP, 10)}${pc(r.rr, 20)}</tr>`
       : `<tr><td>${tag(r.ac)}</td><td colspan="10" style="text-align:left;color:var(--mut)">API approval baaki hai</td></tr>`).join('');
   const st = grp(O, 'status');
-  chart('cStatus', { type: 'doughnut', data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: [PRI(),'#1f9d55','#f7b500','#d64545','#8a5cf6','#14b8a6','#f97316'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } } });
+  chart('cStatus', { type: 'doughnut', data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: [PRI(),'#1f9d55','#f7b500','#d64545','#8a5cf6','#14b8a6','#f97316'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 14, padding: 14, font: { size: 13 } } } } } });
   const top = grp(live, o => o.sku, o => o.qty), topS = grp(live, o => o.sku, o => o.amount);
   const by = window.topBy || 'u'; document.querySelectorAll('#topBy button').forEach(b => b.setAttribute('aria-pressed', b.dataset.by === by));
   $('tTop').innerHTML = '<tr><th>SKU</th><th>Units</th><th>Sales</th></tr>' + Object.entries(top).sort((a, b) => by === 's' ? topS[b[0]] - topS[a[0]] : b[1] - a[1] || topS[b[0]] - topS[a[0]]).slice(0, 20).map(([s, u]) => `<tr><td>${s}</td><td>${u}</td><td>${inr(topS[s])}</td></tr>`).join('');
