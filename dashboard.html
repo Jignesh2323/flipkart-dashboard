@@ -216,6 +216,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <script>document.write('<script src="cost.js?v=' + Date.now() + '"><\/script>')</script>
 <script>document.write('<script src="gst.js?v=' + Date.now() + '"><\/script>')</script>
 <script>document.write('<script src="fsn.js?v=' + Date.now() + '"><\/script>')</script>
+<script>document.write('<script src="hubsales.js?v=' + Date.now() + '"><\/script>')</script>
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
@@ -242,7 +243,10 @@ const dmy = s => String(s || '').replace(/(\d{4})-(\d{2})-(\d{2})/g, '$3-$2-$1')
 $('gen').textContent = (demo ? 'DEMO DATA — ' : 'Updated: ') + dmy(D.generated);
 if (demo) $('note').innerHTML = '<div class="warn">Abhi demo data dikh raha hai. RUN.bat chalaiye.</div>';
 // Only accounts whose API works; pending ones (settlement data only) join automatically once approved
-const accs = [...new Set(D.orders.map(o => o.acc))].sort();
+// API accounts (orders) plus accounts whose data so far comes only from Seller Hub (API approval pending)
+const apiAccs = new Set(D.orders.map(o => o.acc));
+const hubAccs = Object.keys(window.FK_HUBSALES || {}).filter(a => !apiAccs.has(a));
+const accs = [...new Set([...apiAccs, ...hubAccs])].sort();
 $('fAcc').innerHTML = '<option value="">All Accounts</option>' + accs.map(a => `<option value="${a}">${short(a)}</option>`).join('');
 // Period buttons (30/60/90/180 days back from the latest data date) drive the hidden fFrom/fTo
 const lastDate = D.orders.map(o => o.date).concat(Object.values(window.FK_SETTLE || {}).flatMap(a => a.p.map(p => p[0]))).sort().at(-1) || new Date().toISOString().slice(0, 10);
@@ -272,7 +276,8 @@ function render() {
   ORD_MIN = $('fAcc').value ? (accMin[$('fAcc').value] || ORD_MIN_ALL) : ORD_MIN_ALL;
   const a = $('fAcc').value, t = $('fTo').value, f0 = $('fFrom').value, f = f0 < ORD_MIN ? ORD_MIN : f0;
   if (!demo) $('note').innerHTML = `<div class="range">📅 Orders &amp; Returns: <b>${dmy(f)}</b> se <b>${dmy(t)}</b> tak`
-    + (f0 < ORD_MIN ? ` <span>(${a ? 'Is account ke' : 'Saare accounts ke'} orders Flipkart API se ${dmy(ORD_MIN)} se hi poore milte hain)</span>` : '') + '</div>';
+    + (f0 < ORD_MIN ? ` <span>(${a ? 'Is account ke' : 'Saare accounts ke'} orders Flipkart API se ${dmy(ORD_MIN)} se hi poore milte hain)</span>` : '') + '</div>'
+    + (a && hubAccs.includes(a) ? `<div class="warn">${short(a)} ki Flipkart API abhi approve nahi hui: orders, cancel aur return ke boxes khaali rahenge. Bank settlement, return charges, profit aur listing Seller Hub se hain.</div>` : '');
   const inR = x => (!a || x.acc === a) && (!f || x.date >= f) && (!t || x.date <= t);
   const O = D.orders.filter(inR), R = D.returns.filter(inR), live = O.filter(o => !isLost(o));
   const sales = live.reduce((s, o) => s + o.amount, 0), units = live.reduce((s, o) => s + o.qty, 0);
@@ -429,7 +434,8 @@ function renderMonthly(keys) {
     const R = D.returns.filter(r => keys.includes(r.acc) && r.date >= f && r.date <= to);
     const S = settleView(window.FK_SETTLE, f, to), T = (k, ty, x) => ((S[k] && S[k].t[ty]) || {})[x] || 0, sum = g => keys.reduce((s, k) => s + (S[k] ? g(k) : 0), 0);
     const bank = sum(k => S[k].p.reduce((s, p) => s + p[1], 0)), chg = sum(k => T(k, 'Return', 'chargedAmt') || -(T(k, 'Return', 'fees') + T(k, 'Return', 'taxes')));
-    const pack = sum(k => T(k, 'Sale', 'n') + T(k, 'Return', 'n')) * PACK, cogs = del.reduce((s, o) => s + (C[productOf(o.sku)] || 0) * o.qty, 0);
+    const pack = sum(k => T(k, 'Sale', 'n') + T(k, 'Return', 'n')) * PACK, cogs = del.reduce((s, o) => s + (C[productOf(o.sku)] || 0) * o.qty, 0)
+      + keys.filter(k => hubAccs.includes(k)).reduce((s, k) => s + (window.FK_HUBSALES[k] || []).filter(r => r[0] >= f && r[0] <= to).reduce((x, [, sku, n]) => x + (C[productOf(sku)] || 0) * n, 0), 0);
     rows.push({ lbl: MN[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4) + (f > from || to < end ? `<br><small style="color:var(--mut)">${dmy(f).slice(0, 5)} se ${dmy(to).slice(0, 5)}</small>` : ''),
       n: new Set(O.map(o => o.orderId)).size, sale: live.reduce((s, o) => s + o.amount, 0), del: new Set(del.map(o => o.orderId)).size,
       cu: R.filter(r => r.type === 'customer_return').length, rto: R.filter(r => r.type === 'courier_return').length, bank, chg, cogs, pack, profit: bank - cogs - pack });
@@ -462,6 +468,7 @@ async function loadCosts() {
 function renderCostEditor() {
   const C = window.FK_COST || {}, N = window.FK_NAME || {}, units = {};
   for (const o of D.orders) if (!/CANCEL/i.test(o.status || '')) { const p = productOf(o.sku); units[p] = (units[p] || 0) + o.qty; }
+  for (const rows of Object.values(window.FK_HUBSALES || {})) for (const [, sku, n] of rows) { const p = productOf(sku); units[p] = (units[p] || 0) + n; }
   const all = [...new Set([...Object.keys(units), ...Object.keys(C)])];
   const q = ($('ceFind').value || '').toUpperCase();
   const list = all.filter(p => !q || p.includes(q) || (N[p] || '').toUpperCase().includes(q))
@@ -510,6 +517,10 @@ function renderProfit(keys, S, from, to) {
     for (const o of D.orders) if (o.acc === k && o.status === 'DELIVERED' && inP(o.date)) {
       const p = productOf(o.sku), c = C[p]; units += o.qty;
       gst += o.amount * gstOf(o.sku) / (100 + gstOf(o.sku)); if (c) cogs += c * o.qty; else { miss += o.qty; missing.set(p, (missing.get(p) || 0) + o.qty); }
+    }
+    // No API orders: units Flipkart paid for (Seller Hub settled sales) by order date
+    if (hubAccs.includes(k)) for (const [d, sku, n] of (window.FK_HUBSALES[k] || [])) if (inP(d)) {
+      const p = productOf(sku), c = C[p]; units += n; if (c) cogs += c * n; else { miss += n; missing.set(p, (missing.get(p) || 0) + n); }
     }
     const pack = (T(k, 'Sale', 'n') + T(k, 'Return', 'n')) * PACK;
     return { k, bank, cogs, pack, gst, units, miss, profit: bank - cogs - pack };
