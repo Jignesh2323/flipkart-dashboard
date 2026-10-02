@@ -308,7 +308,12 @@ function render() {
     ['Kul return % (customer + RTO)', rate(custM + rtoM), `(${custM} + ${rtoM}) ÷ ${shipped} bheje units`]);
   $('kpis').innerHTML = k.map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const byDay = grp(live, 'date', o => o.amount), days = Object.keys(byDay).sort();
-  chart('cTrend', { type: 'line', data: { labels: days.map(dmy), datasets: [{ label: 'Sales', data: days.map(d => byDay[d]), borderColor: PRI(), backgroundColor: PRI() + '22', fill: true, tension: .3 }] }, options: { plugins: { legend: { display: false } } } });
+  // One bar per day; tap/hover a bar for that day's orders and sale
+  const ordDay = {}; for (const o of live) (ordDay[o.date] = ordDay[o.date] || new Set()).add(o.orderId);
+  chart('cTrend', { type: 'bar', data: { labels: days.map(d => dmy(d).slice(0, 5)), datasets: [{ label: 'Sale', data: days.map(d => byDay[d]), backgroundColor: PRI(), borderRadius: 4 }] },
+    options: { interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { padding: 10, titleFont: { size: 13 }, bodyFont: { size: 13 },
+      callbacks: { title: it => dmy(days[it[0].dataIndex]), label: it => [' Sale: ' + inr(it.raw), ' Orders: ' + ordDay[days[it.dataIndex]].size] } } },
+      scales: { x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90, font: { size: 10 } } }, y: { ticks: { callback: v => '₹' + (v >= 1000 ? Math.round(v / 1000) + 'k' : v) } } } } });
   const allO = D.orders.filter(o => (!f || o.date >= f) && (!t || o.date <= t)), allR = D.returns.filter(r => (!f || r.date >= f) && (!t || r.date <= t));
   const rows = accs.filter(ac => !a || ac === a).map(ac => { const o = allO.filter(x => x.acc === ac), l = o.filter(x => !isLost(x)), r = allR.filter(x => x.acc === ac), u = l.reduce((s, x) => s + x.qty, 0);
     // Return % is over shipped units (everything not cancelled, incl. items later returned)
