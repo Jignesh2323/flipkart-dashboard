@@ -13,11 +13,13 @@ Chart.defaults.color = '#57606a'; Chart.defaults.borderColor = '#e5e7eb';
 Chart.defaults.font.family = "'Space Grotesk', system-ui, sans-serif";
 </script>
 <style>
+/* The mono font draws % oddly; take only the % sign from a normal font */
+@font-face{font-family:'PctFix';src:local('Segoe UI'),local('Roboto'),local('Arial'),local('Helvetica');unicode-range:U+0025}
 /* Same look as the Sandip Amazon dashboard (light): white page, segmented tabs, coloured account pills,
    tinted KPI tiles with an icon chip, Space Grotesk text and IBM Plex Mono numbers */
 :root{--bg:#ffffff;--card:#ffffff;--panel2:#f6f8fa;--line:#e5e7eb;--ink:#1f2328;--mut:#57606a;--pri:#1a7f37;--pri-soft:#e9f7ee;
   --acc:#bf8700;--bad:#cf222e;--ok:#1a7f37;--blue:#0969da;
-  --mono:'IBM Plex Mono',ui-monospace,monospace;--sans:'Space Grotesk',system-ui,sans-serif;color-scheme:light}
+  --mono:'PctFix','IBM Plex Mono',ui-monospace,monospace;--sans:'Space Grotesk',system-ui,sans-serif;color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--sans);font-size:14px;background:var(--bg);color:var(--ink)}
 header{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
