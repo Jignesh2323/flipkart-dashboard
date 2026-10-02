@@ -642,8 +642,9 @@ async function loadMapping() {
   // The API returns at most 1000 rows per call, so page through
   try { const all = []; for (let off = 0; ; off += 1000) { const r = await fetch(SB_URL + `/rest/v1/fk_listing?select=acc,sku,fsn,title&order=acc,sku&limit=1000&offset=${off}`, { headers: sbHead });
       if (!r.ok) break; const p = await r.json(); all.push(...p); if (p.length < 1000) break; } if (all.length) window.FK_LIST = all; } catch (e) {}
-  try { const r = await fetch(SB_URL + '/rest/v1/fk_mapping?select=acc,sku,status,sellers,note,checked_at&limit=10000', { headers: sbHead });
-    if (r.ok) { MAP = {}; for (const x of await r.json()) MAP[x.acc + '|' + x.sku] = x; } } catch (e) {}
+  // Max 1000 rows per call: page through (there are more than 1000 saved checks)
+  try { const M = {}; for (let off = 0; ; off += 1000) { const r = await fetch(SB_URL + `/rest/v1/fk_mapping?select=acc,sku,status,sellers,note,checked_at&order=acc,sku&limit=1000&offset=${off}`, { headers: sbHead });
+      if (!r.ok) break; const p = await r.json(); for (const x of p) M[x.acc + '|' + x.sku] = x; if (p.length < 1000) break; } MAP = M; } catch (e) {}
   renderMapping();
 }
 function renderMapping() {
