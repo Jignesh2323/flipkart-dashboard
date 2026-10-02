@@ -154,7 +154,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <div id="pWarn"></div>
 <div class="kpis" id="pKpis"></div>
 </div>
-<div class="grid"><div class="card"><h3>Daily Sales (₹)</h3><canvas id="cTrend"></canvas></div>
+<div class="grid"><div class="card"><h3 id="trendTitle">Daily Sales (₹)</h3><div class="bar" id="trendDays" role="group" aria-label="Trend days"><button type="button" data-n="30" aria-pressed="true">30 din</button><button type="button" data-n="60" aria-pressed="false">60 din</button><button type="button" data-n="90" aria-pressed="false">90 din</button></div><canvas id="cTrend"></canvas></div>
 <div class="card"><h3>Account-wise Sales (₹)</h3><canvas id="cAcc"></canvas></div></div>
 <div class="card"><h3>Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
 </section>
@@ -307,13 +307,19 @@ function render() {
   k.push(['Customer return %', rate(custM), `Isi period ke orders ke ${custM} customer returns ÷ ${shipped} bheje units`], ['RTO %', rate(rtoM), `Isi period ke orders ke ${rtoM} RTO ÷ ${shipped} bheje units`],
     ['Kul return % (customer + RTO)', rate(custM + rtoM), `(${custM} + ${rtoM}) ÷ ${shipped} bheje units`]);
   $('kpis').innerHTML = k.map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
-  const byDay = grp(live, 'date', o => o.amount), days = Object.keys(byDay).sort();
+  // Trend has its own 30/60/90 day buttons (only the account filter is shared); every day gets a bar, 0 if no sale
+  const tn = window.trendN || 30, tEnd = new Date(lastDate), days = [];
+  for (let i = tn - 1; i >= 0; i--) { const x = new Date(tEnd); x.setDate(x.getDate() - i); const d = x.toISOString().slice(0, 10); if (d >= ORD_MIN) days.push(d); }
+  const tLive = D.orders.filter(o => (!a || o.acc === a) && o.date >= days[0] && o.date <= lastDate && !isLost(o));
+  const byDay = grp(tLive, 'date', o => o.amount);
   // One bar per day; tap/hover a bar for that day's orders and sale
-  const ordDay = {}; for (const o of live) (ordDay[o.date] = ordDay[o.date] || new Set()).add(o.orderId);
-  chart('cTrend', { type: 'bar', data: { labels: days.map(d => dmy(d).slice(0, 5)), datasets: [{ label: 'Sale', data: days.map(d => byDay[d]), backgroundColor: PRI(), borderRadius: 4 }] },
+  const ordDay = {}; for (const o of tLive) (ordDay[o.date] = ordDay[o.date] || new Set()).add(o.orderId);
+  $('trendTitle').textContent = `Daily Sales (₹): pichhle ${days.length} din ka trend`;
+  document.querySelectorAll('#trendDays button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === tn));
+  chart('cTrend', { type: 'bar', data: { labels: days.map(d => dmy(d).slice(0, 5)), datasets: [{ label: 'Sale', data: days.map(d => byDay[d] || 0), backgroundColor: PRI(), borderRadius: 4 }] },
     options: { interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { padding: 10, titleFont: { size: 13 }, bodyFont: { size: 13 },
-      callbacks: { title: it => dmy(days[it[0].dataIndex]), label: it => [' Sale: ' + inr(it.raw), ' Orders: ' + ordDay[days[it.dataIndex]].size] } } },
-      scales: { x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90, font: { size: 10 } } }, y: { ticks: { callback: v => '₹' + (v >= 1000 ? Math.round(v / 1000) + 'k' : v) } } } } });
+      callbacks: { title: it => dmy(days[it[0].dataIndex]), label: it => [' Sale: ' + inr(it.raw), ' Orders: ' + ((ordDay[days[it.dataIndex]] || new Set()).size)] } } },
+      scales: { x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90, font: { size: tn > 30 ? 8 : 10 } } }, y: { ticks: { callback: v => '₹' + (v >= 1000 ? Math.round(v / 1000) + 'k' : v) } } } } });
   const allO = D.orders.filter(o => (!f || o.date >= f) && (!t || o.date <= t)), allR = D.returns.filter(r => (!f || r.date >= f) && (!t || r.date <= t));
   const rows = accs.filter(ac => !a || ac === a).map(ac => { const o = allO.filter(x => x.acc === ac), l = o.filter(x => !isLost(x)), r = allR.filter(x => x.acc === ac), u = l.reduce((s, x) => s + x.qty, 0);
     // Return % is over shipped units (everything not cancelled, incl. items later returned)
@@ -746,6 +752,7 @@ $('itemFind').oninput = filterItems; new MutationObserver(filterItems).observe($
     ['Product cost', 'Products tab me (online save, PIN se)'], ['Packing kharcha', '₹' + PACK + ' har parcel']]
     .map(([a, b]) => `<tr><td>${a}</td><td style="text-align:left">${b}</td></tr>`).join('');
 })();
+$('trendDays').onclick = e => { const b = e.target.closest('button'); if (b) { window.trendN = +b.dataset.n; render(); } };
 $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { window.topBy = b.dataset.by; render(); } };
 </script><script>
 // Tabs (remembered per browser) and collapsible cards
