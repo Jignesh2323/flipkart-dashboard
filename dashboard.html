@@ -576,7 +576,7 @@ function renderMonthly(keys) {
 }
 // Same rule as sku-key.ps1: drop account prefix and trailing listing number -> product name
 const productOf = sku => String(sku || '').trim()
-  .replace(/^(ARZ|ARKZ|AVD|AVSP|AV|KDCSP|KDC|PVDSP|PVD|TD|WSKSP|WSK|ZTSP|ZT|ZO|FO|VU|BRL|BR)\s*-\s*(SP-)?/i, '')
+  .replace(/^(ARZSP|AEZSP|ARZ|ARKZ|AVD|AVSP|AV|KDCSP|KDC|PVDSP|PVD|TDSP|TD|WSKSP|WSK|ZTSP|ZT|ZO|FOV|FO|VUSP|VU|BRSP|BRL|BRE|BR)\s*-\s*(SP-)?/i, '')
   .replace(/[\s_-]+0*\d{1,2}[a-zA-Z]?$/, '').replace(/\s+/g, ' ').trim().toUpperCase();
 // Profit per account: bank payouts in the period − cost of units delivered in the period − packing
 // Product costs live in Supabase (fk_product_cost), readable by anyone with the page, writable only
