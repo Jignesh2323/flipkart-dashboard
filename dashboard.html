@@ -125,7 +125,20 @@ header .bar button[aria-pressed="true"]{background:#fff;color:var(--pri);border-
 // Saved theme (per browser) applied before anything draws
 try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark") document.documentElement.dataset.theme = "dark";
   if (th.pri) { document.documentElement.style.setProperty("--pri", th.pri); document.documentElement.style.setProperty("--pri-soft", th.pri + "18"); } } catch (e) {}
-</script></head><body>
+</script>
+<script>try { if (localStorage.fkLockPin && !sessionStorage.fkUnlocked) document.documentElement.classList.add('locked'); } catch (e) {}</script>
+<style>
+#lock{display:none}html.locked body>*:not(#lock){display:none!important}
+html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--pri),color-mix(in srgb,var(--pri) 60%,#000));padding:16px}
+#lock .lkbox{background:var(--card,#fff);border-radius:18px;padding:26px 22px;width:100%;max-width:330px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+#lock h2{margin:6px 0 4px;font-size:20px;color:var(--ink)}#lock p{margin:4px 0 14px;color:var(--mut);font-size:13px}
+#lock input{width:100%;box-sizing:border-box;font:600 24px var(--mono,monospace);letter-spacing:10px;text-align:center;padding:12px;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:var(--panel2);color:var(--ink)}
+#lock button{width:100%;padding:12px;border:0;border-radius:12px;font:700 15px var(--sans,sans-serif);cursor:pointer;margin-top:8px}
+#lkGo{background:var(--pri);color:#fff}#lkFp{background:var(--pri-soft);color:var(--pri)}#lkErr{color:#cf222e!important;min-height:18px}
+</style></head><body>
+<div id="lock" role="dialog" aria-label="App lock"><div class="lkbox"><div style="font-size:40px">🔒</div><h2>FK Business</h2><p>PIN daaliye ya fingerprint lagaiye</p>
+<input type="password" id="lkIn" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••">
+<button type="button" id="lkGo">Kholo</button><button type="button" id="lkFp" hidden>👆 Fingerprint / Face se kholo</button><p id="lkErr"></p></div></div>
 <header><img src="logo.png" alt="Ecom24x7 · Flipkart Seller Hub" class="logo"><div><h1>FLIPKART · <span>Seller Business</span></h1><small id="gen"></small></div>
 <div class="bar" id="period" role="group" aria-label="Period"><button type="button" data-d="30">30 Days</button><button type="button" data-d="60">60 Days</button><button type="button" data-d="90">90 Days</button><button type="button" data-d="180">180 Days</button><select id="fAcc" hidden></select><input type="hidden" id="fFrom"><input type="hidden" id="fTo"></div></header>
 <main>
@@ -230,6 +243,13 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <div class="setrow"><label>Mode</label><div class="bar" id="setMode"><button type="button" data-m="light">☀️ Light</button><button type="button" data-m="dark">🌙 Dark</button></div></div>
 <div class="setrow"><label>Main rang</label><div id="setPri" style="display:flex;gap:10px;flex-wrap:wrap"></div></div>
 <p class="note" style="margin:0 18px 14px">Ye pasand sirf is browser/PC me yaad rehti hai.</p></div>
+<div class="card"><h3>🔒 App Lock (PIN / Fingerprint)</h3>
+<p class="note" style="margin:14px 18px 0">App kholte waqt PIN ya phone ka fingerprint / face lock maangega. Ye lock sirf isi phone/browser me lagta hai (har device par alag set karein). App 2 minute se zyada background me rahe to dobara lock ho jayega.</p>
+<div class="setrow"><label>Lock</label><span id="lkState" style="font-weight:600"></span></div>
+<div class="setrow"><label>Naya PIN (4-6 ank)</label><div class="bar"><input type="password" id="lkPin1" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="PIN" style="width:110px"><input type="password" id="lkPin2" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="Dobara PIN" style="width:120px"><button type="button" class="ceSave" id="lkSet">PIN set karo</button></div></div>
+<div class="setrow"><label>Fingerprint / Face</label><div class="bar"><button type="button" class="ceSave" id="lkBio">👆 Fingerprint chalu karo</button></div></div>
+<div class="setrow"><label>Lock hatana</label><div class="bar"><button type="button" class="ceSave" id="lkOff">Lock band karo</button></div></div>
+<p class="note" id="lkMsg" style="margin:0 18px 14px"></p></div>
 <div class="card"><h3>🚀 Dashboard kholne par</h3>
 <div class="setrow"><label>Pehle se chuna period</label><div class="bar" id="setPeriod"><button type="button" data-p="30">30 Days</button><button type="button" data-p="60">60 Days</button><button type="button" data-p="90">90 Days</button><button type="button" data-p="max">Sabse zyada din</button></div></div>
 <div class="setrow"><label>Sab pasand hatayein</label><button type="button" class="ceSave" id="setReset">Reset (default par wapas)</button></div></div>
@@ -832,6 +852,68 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
     [/kharid/i, '🏭'], [/packing|kharcha/i, '📦'], [/return charge|nuksaan/i, '⚠️'], [/munafa/i, '📈'], [/parcels bheje/i, '🧮']];
   const put = () => document.querySelectorAll('.k>span:not([data-i])').forEach(s => { const m = I.find(([r]) => r.test(s.textContent)); s.dataset.i = m ? m[1] : '•'; });
   put(); new MutationObserver(put).observe(document.querySelector('main'), { childList: true, subtree: true });
+})();
+</script>
+<script>
+// App lock: PIN (SHA-256 hash in localStorage) + optional phone fingerprint/face via WebAuthn (platform
+// authenticator, user verification required). A screen lock for this device only — data files stay public.
+(function () {
+  const $ = id => document.getElementById(id), LS = localStorage, html = document.documentElement;
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))), unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  const rand = n => crypto.getRandomValues(new Uint8Array(n));
+  const hash = async pin => b64(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('fk-lock|' + pin)));
+  const bioOk = () => !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext);
+  let fails = 0, waitUntil = 0;
+  function unlock() { try { sessionStorage.fkUnlocked = '1'; } catch (e) {} html.classList.remove('locked'); $('lkIn').value = ''; $('lkErr').textContent = '';
+    setTimeout(() => { try { Object.values(charts).forEach(c => c && c.resize()); } catch (e) {} }, 50); }
+  function lock() { if (!LS.fkLockPin) return; try { delete sessionStorage.fkUnlocked; } catch (e) {} html.classList.add('locked'); $('lkFp').hidden = !LS.fkLockBio; $('lkIn').focus(); }
+  async function tryPin() {
+    if (Date.now() < waitUntil) { $('lkErr').textContent = `Bahut galat PIN. ${Math.ceil((waitUntil - Date.now()) / 1000)} sec ruk kar try kariye.`; return; }
+    if (await hash($('lkIn').value) === LS.fkLockPin) { fails = 0; unlock(); return; }
+    fails++; $('lkIn').value = ''; $('lkErr').textContent = 'Galat PIN';
+    if (fails >= 5) { waitUntil = Date.now() + 30000; fails = 0; $('lkErr').textContent = '5 baar galat. 30 sec ruk kar try kariye.'; }
+  }
+  async function tryBio() {
+    try {
+      await navigator.credentials.get({ publicKey: { challenge: rand(32), allowCredentials: [{ type: 'public-key', id: unb64(LS.fkLockBio) }], userVerification: 'required', timeout: 60000 } });
+      unlock();
+    } catch (e) { $('lkErr').textContent = 'Fingerprint nahi hua, PIN daaliye.'; }
+  }
+  $('lkGo').onclick = tryPin; $('lkIn').onkeydown = e => { if (e.key === 'Enter') tryPin(); }; $('lkFp').onclick = tryBio;
+  if (html.classList.contains('locked')) { $('lkFp').hidden = !LS.fkLockBio; if (LS.fkLockBio && bioOk()) setTimeout(tryBio, 400); }
+  // re-lock after 2 minutes in the background
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { try { sessionStorage.fkHidAt = Date.now(); } catch (e) {} }
+    else if (LS.fkLockPin && Date.now() - (+sessionStorage.fkHidAt || Date.now()) > 120000) { lock(); if (LS.fkLockBio && bioOk()) tryBio(); }
+  });
+  // Settings card
+  const state = () => { $('lkState').textContent = LS.fkLockPin ? (LS.fkLockBio ? '✅ Chalu: PIN + Fingerprint' : '✅ Chalu: PIN') : '❌ Band';
+    $('lkBio').disabled = !LS.fkLockPin || !bioOk(); $('lkOff').disabled = !LS.fkLockPin; };
+  const msg = t => $('lkMsg').textContent = t;
+  $('lkSet').onclick = async () => {
+    const a = $('lkPin1').value, b = $('lkPin2').value;
+    if (!/^\d{4,6}$/.test(a)) return msg('PIN 4 se 6 ank ka hona chahiye.');
+    if (a !== b) return msg('Dono PIN alag hain.');
+    LS.fkLockPin = await hash(a); try { sessionStorage.fkUnlocked = '1'; } catch (e) {} $('lkPin1').value = $('lkPin2').value = '';
+    msg('PIN set ho gaya. Ab app kholte waqt PIN maangega.'); state();
+  };
+  $('lkBio').onclick = async () => {
+    if (!LS.fkLockPin) return msg('Pehle PIN set kariye.');
+    if (!bioOk()) return msg('Is browser me fingerprint support nahi hai.');
+    try {
+      const c = await navigator.credentials.create({ publicKey: { challenge: rand(32), rp: { name: 'FK Business' },
+        user: { id: rand(16), name: 'fk-business', displayName: 'FK Business' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' }, timeout: 60000 } });
+      LS.fkLockBio = b64(c.rawId); msg('Fingerprint / Face chalu ho gaya.'); state();
+    } catch (e) { msg('Fingerprint set nahi hua: ' + (e.message || e.name)); }
+  };
+  $('lkOff').onclick = async () => {
+    const p = prompt('Lock band karne ke liye PIN daaliye'); if (p == null) return;
+    if (await hash(p) !== LS.fkLockPin) return msg('Galat PIN.');
+    delete LS.fkLockPin; delete LS.fkLockBio; msg('Lock band ho gaya.'); state();
+  };
+  state();
 })();
 </script>
 </body></html>
