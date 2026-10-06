@@ -120,6 +120,32 @@ header .bar button[aria-pressed="true"]{background:#fff;color:var(--pri);border-
 [data-theme="dark"] header .bar button{background:rgba(255,255,255,.1)}[data-theme="dark"] header .bar button[aria-pressed="true"]{background:#fff}
 .logo{position:absolute;left:20px;top:50%;transform:translateY(-50%);height:96px;background:#fff;border-radius:14px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 @media(max-width:768px){header h1{font-size:22px}.logo{position:static;transform:none;height:56px}}
+nav.tabs .gi{margin-right:6px}
+/* Phone layout (same style as the Amazon app): bottom tab bar, compact header, 2-column KPI tiles */
+@media(max-width:768px){
+  html,body{overflow-x:clip;-webkit-text-size-adjust:100%}
+  header{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;text-align:left;gap:6px 10px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px}
+  header .logo{height:34px!important;border-radius:8px}
+  header h1{font-size:16px!important}header small{font-size:10.5px}
+  header #period{width:100%;flex-wrap:nowrap;overflow-x:auto;gap:6px}header #period button{flex:1 0 auto;padding:7px 10px;font-size:12px}
+  main{padding:10px 12px calc(86px + env(safe-area-inset-bottom))!important}
+  .stick{box-shadow:none}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:150;margin:0!important;max-width:none;display:grid!important;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;
+    padding:6px 2px calc(6px + env(safe-area-inset-bottom));border-radius:0;border:0;border-top:1px solid var(--line);
+    background:color-mix(in srgb,var(--card) 92%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:visible}
+  nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 0!important;font-size:9.5px!important;font-weight:600;line-height:1.15;border-radius:10px;background:none!important;box-shadow:none!important;min-width:0}
+  nav.tabs .gi{margin:0;font-size:19px;line-height:1;filter:grayscale(1);opacity:.65}
+  nav.tabs button[aria-selected="true"]{color:var(--pri)}nav.tabs button[aria-selected="true"] .gi{filter:none;opacity:1}
+  .kpis{grid-template-columns:1fr 1fr!important;gap:10px!important}
+  .k{padding:13px 12px!important;border-radius:16px;min-height:104px}
+  .k>span{font-size:10px!important;margin-bottom:7px;letter-spacing:.3px}.k>span::before{width:24px;height:24px;font-size:13px}
+  .k b{font-size:20px!important}.k .how{font-size:10.5px!important}
+  .kpis>.k:first-child{grid-column:1/-1}.kpis>.k:first-child b{font-size:30px!important}
+  .card{border-radius:16px}.card>h3{font-size:14.5px;padding:12px 36px}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  button:active,.k:active{transform:scale(.97);transition:transform .08s}
+  input,select{font-size:16px}
+}
 </style>
 <script>
 // Saved theme (per browser) applied before anything draws
@@ -144,14 +170,14 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <main>
 <div class="stick">
 <nav class="tabs" role="tablist" aria-label="Sections">
-<button role="tab" data-tab="overview" aria-selected="true">🏠 Overview</button>
-<button role="tab" data-tab="paisa" aria-selected="false">💰 Paisa</button>
-<button role="tab" data-tab="sales" aria-selected="false">📈 Sales</button>
-<button role="tab" data-tab="returns" aria-selected="false">🔙 Returns</button>
-<button role="tab" data-tab="products" aria-selected="false">📦 Products</button>
-<button role="tab" data-tab="mapping" aria-selected="false">🔗 Mapping</button>
-<button role="tab" data-tab="price" aria-selected="false">🏷️ Price</button>
-<button role="tab" data-tab="settings" aria-selected="false">⚙️ Settings</button>
+<button role="tab" data-tab="overview" aria-selected="true"><span class="gi">🏠</span>Overview</button>
+<button role="tab" data-tab="paisa" aria-selected="false"><span class="gi">💰</span>Paisa</button>
+<button role="tab" data-tab="sales" aria-selected="false"><span class="gi">📈</span>Sales</button>
+<button role="tab" data-tab="returns" aria-selected="false"><span class="gi">🔙</span>Returns</button>
+<button role="tab" data-tab="products" aria-selected="false"><span class="gi">📦</span>Products</button>
+<button role="tab" data-tab="mapping" aria-selected="false"><span class="gi">🔗</span>Mapping</button>
+<button role="tab" data-tab="price" aria-selected="false"><span class="gi">🏷️</span>Price</button>
+<button role="tab" data-tab="settings" aria-selected="false"><span class="gi">⚙️</span>Settings</button>
 </nav>
 <div id="note"></div>
 <div class="accbar"><span class="lbl">Accounts:</span><div class="chips" id="chips" aria-label="Account"></div></div>
