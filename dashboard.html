@@ -121,6 +121,8 @@ header .bar button[aria-pressed="true"]{background:#fff;color:var(--pri);border-
 .logo{position:absolute;left:20px;top:50%;transform:translateY(-50%);height:96px;background:#fff;border-radius:14px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 @media(max-width:768px){header h1{font-size:22px}.logo{position:static;transform:none;height:56px}}
 nav.tabs .gi{margin-right:6px}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}th.sortable::after{content:" ⇅";opacity:.45;font-size:.95em}
+th.sortable.asc::after{content:" ▲";opacity:1;color:var(--pri)}th.sortable.desc::after{content:" ▼";opacity:1;color:var(--pri)}th.sortable:hover{color:var(--pri)}
 .stick .toprow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.stick .toprow nav.tabs{margin-bottom:10px}
 .stick #period{margin:0 0 10px}#period button[aria-pressed="true"]{background:var(--pri);color:#fff;border-color:var(--pri)}
 /* Phone layout (same style as the Amazon app): bottom tab bar, compact header, 2-column KPI tiles */
@@ -988,6 +990,36 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
     delete LS.fkLockPin; delete LS.fkLockBio; msg('Lock band ho gaya.'); state();
   };
   state();
+})();
+</script>
+<script>
+// Click a number column's title to sort the table: 1st click ascending, 2nd descending. Text columns
+// (Item, Account, SKU...) are left alone; "total" rows keep their place; grouped tables (colspan rows) are skipped.
+(function () {
+  const num = s => { const m = String(s).replace(/[₹,\s]/g, '').match(/^[-+]?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+  function mark(table) {
+    const rows = [...table.rows]; if (rows.length < 3 || !rows[0].cells[0] || rows[0].cells[0].tagName !== 'TH' || table.querySelector('td[colspan]')) return;
+    const body = rows.slice(1).filter(r => !r.classList.contains('total'));
+    [...rows[0].cells].forEach((th, i) => {
+      const vals = body.map(r => (r.cells[i] ? r.cells[i].innerText.trim() : '')).filter(v => v && v !== '—');
+      const isNum = vals.length > 1 && vals.filter(v => num(v) !== null && !/^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/.test(v)).length >= vals.length * 0.8;
+      th.classList.toggle('sortable', isNum);
+    });
+  }
+  let t; const markAll = () => { clearTimeout(t); t = setTimeout(() => document.querySelectorAll('main table').forEach(mark), 60); };
+  new MutationObserver(markAll).observe(document.querySelector('main'), { childList: true, subtree: true }); markAll();
+  document.addEventListener('click', e => {
+    const th = e.target.closest('th.sortable'); if (!th) return;
+    const head = th.parentElement, table = th.closest('table'), i = [...head.cells].indexOf(th);
+    const dir = th.classList.contains('asc') ? 'desc' : 'asc';
+    head.querySelectorAll('th').forEach(x => x.classList.remove('asc', 'desc')); th.classList.add(dir);
+    const rows = [...table.rows].slice(1), firstBody = rows.findIndex(r => !r.classList.contains('total'));
+    const top = rows.filter((r, k) => r.classList.contains('total') && k < firstBody), bottom = rows.filter((r, k) => r.classList.contains('total') && k >= firstBody);
+    const v = r => { const x = num(r.cells[i] ? r.cells[i].innerText : ''); return x === null ? -Infinity : x; };
+    const body = rows.filter(r => !r.classList.contains('total')).sort((a, b) => dir === 'asc' ? v(a) - v(b) : v(b) - v(a));
+    const parent = rows[0] ? rows[0].parentElement : table;
+    [...top, ...body, ...bottom].forEach(r => parent.appendChild(r));
+  });
 })();
 </script>
 </body></html>
