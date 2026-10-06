@@ -808,7 +808,7 @@ function renderMapping() {
     byAcc.map(r => `<tr><td>${tag(r.x)}</td><td>${r.n}</td><td class="${r.left ? 'bad' : 'ok'}"><b>${r.left}</b></td><td>${r.other}</td><td>${r.cs}</td><td>${r.ok}</td><td>${r.n ? Math.round((r.n - r.left) / r.n * 100) : 0}%</td></tr>`).join('');
   const cnt = st => list.filter(x => (MAP[x.k] || {}).status === st).length, none = list.filter(x => !MAP[x.k]).length;
   $('mapKpis').innerHTML = [[LI.length ? 'Kul active listing (Seller Hub)' : 'Kul listing (jinme order aaya)', list.length, a ? short(a) + ' account' : 'Sabhi chalu accounts'], ['Abhi check nahi hui', none, 'Inhe ek-ek karke dekhna baaki hai'],
-    ['⚠️ Doosra seller mila', cnt('other'), 'Inpar case raise karna hai'], ['📨 Case raise kiya', cnt('case'), 'Flipkart ke jawab ka intezaar'], ['✅ Sirf aap', cnt('ok'), 'Koi doosra seller nahi mila']]
+    ['Doosra seller mila', cnt('other'), 'Inpar case raise karna hai'], ['Case raise kiya', cnt('case'), 'Flipkart ke jawab ka intezaar'], ['Sirf aap', cnt('ok'), 'Koi doosra seller nahi mila']]
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const opt = cur => '<option value="">— chuniye —</option>' + Object.entries(MAP_ST).map(([v, l]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`).join('');
   const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
