@@ -149,22 +149,26 @@ function Merge-Rows($fresh, $old, $idProp, $cutoff) {
     @($m.Values)
 }
 $cutoff = (Get-Date).AddDays(-$Keep).ToString('yyyy-MM-dd')
-$oldOrders = @(); $oldReturns = @()
+$oldOrders = @(); $oldReturns = @(); $titles = @{}
 $dataPath = Join-Path $root 'data.js'
 if (Test-Path $dataPath) {
     try {
         $t = Get-Content $dataPath -Raw -Encoding utf8
         $prev = $t.Substring($t.IndexOf('{'), $t.LastIndexOf('}') - $t.IndexOf('{') + 1) | ConvertFrom-Json
         $oldOrders = @($prev.orders); $oldReturns = @($prev.returns)
+        if ($prev.titles) { $prev.titles.PSObject.Properties | ForEach-Object { $titles[$_.Name] = $_.Value } }
         if ($Only) { $status = @($prev.status | Where-Object { $_.acc -ne $Only }) + @($status) }
     } catch { Write-Host "purana data.js padh nahi paya, sirf naya data rakhenge" -ForegroundColor Yellow }
 }
 $orders  = Merge-Rows $orders  $oldOrders  'itemId'   $cutoff
 $returns = Merge-Rows $returns $oldReturns 'returnId' $cutoff
 Write-Host "data.js: $($orders.Count) order items, $($returns.Count) returns ($cutoff se)"
+# Product titles are kept once per account|sku (titles map) instead of on every order: keeps data.js small
+foreach ($o in $orders) { if ($o.title) { $titles["$($o.acc)|$($o.sku)"] = $o.title } }
+$orders = @($orders | Select-Object -Property * -ExcludeProperty title)
 $data = [pscustomobject]@{
     generated = (Get-Date).ToString('yyyy-MM-dd HH:mm'); days = $Keep
-    orders = @($orders); returns = @($returns); status = @($status)
+    orders = @($orders); returns = @($returns); status = @($status); titles = $titles
 }
 "window.FK_DATA = " + ($data | ConvertTo-Json -Depth 6 -Compress) + ";" |
     Out-File (Join-Path $root 'data.js') -Encoding utf8

@@ -5,7 +5,7 @@
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1a7f37">
 <script>if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(() => {});</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>document.write('<script src="data.js?v=' + Date.now() + '"><\/script>')</script>
+<script>document.write('<script src="data.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script>
 // Chart text/grid colours to match the page
@@ -237,12 +237,12 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <div class="card"><h3>API Status</h3><div class="tw"><table id="tApi"></table></div></div>
 </section>
 </main>
-<script>document.write('<script src="settle.js?v=' + Date.now() + '"><\/script>')</script>
-<script>document.write('<script src="cost.js?v=' + Date.now() + '"><\/script>')</script>
-<script>document.write('<script src="gst.js?v=' + Date.now() + '"><\/script>')</script>
-<script>document.write('<script src="fsn.js?v=' + Date.now() + '"><\/script>')</script>
-<script>document.write('<script src="hubsales.js?v=' + Date.now() + '"><\/script>')</script>
-<script>document.write('<script src="hubitems.js?v=' + Date.now() + '"><\/script>')</script>
+<script>document.write('<script src="settle.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
+<script>document.write('<script src="cost.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
+<script>document.write('<script src="gst.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
+<script>document.write('<script src="fsn.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
+<script>document.write('<script src="hubsales.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
+<script>document.write('<script src="hubitems.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
@@ -703,7 +703,7 @@ function renderMapping() {
   for (const l of LI) { if (a && l.acc !== a) continue; const k = l.acc + '|' + l.sku;
     rows.set(k, { k, acc: l.acc, sku: l.sku, title: l.title || '', fsn: l.fsn, u30: 0, last: '' }); }
   for (const o of D.orders) { if (a && o.acc !== a) continue; const k = o.acc + '|' + o.sku;
-    if (!rows.has(k)) { if (LI.length && LI.some(l => l.acc === o.acc)) continue; rows.set(k, { k, acc: o.acc, sku: o.sku, title: o.title || '', u30: 0, last: '' }); }
+    if (!rows.has(k)) { if (LI.length && LI.some(l => l.acc === o.acc)) continue; rows.set(k, { k, acc: o.acc, sku: o.sku, title: o.title || (D.titles || {})[o.acc + '|' + o.sku] || '', u30: 0, last: '' }); }
     const x = rows.get(k); if (o.date >= s30 && !isLost(o)) x.u30 += o.qty; if (o.date > x.last) x.last = o.date; }
   // Grouped by account (VUSTICA/BRAINLE too, they have listings even without API orders), best sellers first inside each account
   const accAll = [...new Set([...accs, ...LI.map(l => l.acc)])].sort();
