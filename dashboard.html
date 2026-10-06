@@ -222,11 +222,19 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 </section>
 
 <section class="tab" data-tab="sales" hidden>
+<div class="card"><h3 data-p>Item-wise Sale &amp; Return (saare accounts jod kar)</h3>
+<div class="bar"><input type="search" id="tItemSFind" placeholder="🔍 Item dhoondhiye (jaise sheep hair cutter)" style="flex:1;max-width:360px"><span id="tItemSCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
+<div class="tw" style="max-height:560px"><table id="tItemS"></table></div></div>
+
 <div class="grid"><div class="card"><h3 data-p>Top Selling SKUs</h3><div class="bar" id="topBy" role="group" aria-label="Sort"><button type="button" data-by="u" aria-pressed="true">Units wise</button><button type="button" data-by="s" aria-pressed="false">Sale (₹) wise</button></div><div class="tw"><table id="tTop"></table></div></div>
 <div class="card" style="display:flex;flex-direction:column"><h3 data-p>Order Status</h3><div style="position:relative;flex:1;min-height:380px"><canvas id="cStatus"></canvas></div></div></div>
 </section>
 
 <section class="tab" data-tab="returns" hidden>
+<div class="card"><h3 data-p>Item-wise Return (saare accounts jod kar)</h3>
+<div class="bar"><input type="search" id="tItemRFind" placeholder="🔍 Item dhoondhiye (jaise sheep hair cutter)" style="flex:1;max-width:360px"><span id="tItemRCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
+<div class="tw" style="max-height:560px"><table id="tItemR"></table></div></div>
+
 <div class="card"><h3 data-p>Returns ka hisaab</h3>
 <div id="rExplain" style="font-size:14px;line-height:1.6"></div>
 <div class="tw"><table id="tRefund"></table></div></div>
@@ -353,6 +361,32 @@ function periodTitles() {
   const n = f && t ? Math.round((new Date(t) - new Date(f)) / 864e5) + 1 : 0;
   document.querySelectorAll('h3[data-p]').forEach(h => { if (h.dataset.base == null) h.dataset.base = h.textContent; h.textContent = n ? `${h.dataset.base} (Last ${n} Days)` : h.dataset.base; });
 }
+// Item-wise (all accounts together): SKUs of the same product across accounts are joined by productOf()
+function renderItemSR() {
+  const S = window.__isr; if (!S) return;
+  const N = window.FK_NAME || {}, esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;'), m = new Map();
+  const get = sku => { const p = productOf(sku); if (!m.has(p)) m.set(p, { p, name: N[p] || p, accs: new Set(), skus: new Set(), ord: new Set(), units: 0, sale: 0, canc: 0, sent: 0, cu: 0, rto: 0 }); const x = m.get(p); x.skus.add(sku); return x; };
+  for (const o of S.O) { if (!o.sku) continue; const x = get(o.sku); x.accs.add(o.acc); x.ord.add(o.orderId);
+    if (isCancel(o)) x.canc += o.qty; else x.sent += o.qty;
+    if (!isLost(o)) { x.units += o.qty; x.sale += o.amount; } }
+  for (const r of S.R) { const sku = r.sku || S.skuOf[r.itemId]; if (!sku) continue; const x = get(sku); x.accs.add(r.acc);
+    if (r.type === 'customer_return') x.cu++; else if (r.type === 'courier_return') x.rto++; }
+  const all = [...m.values()];
+  const draw = (id, sortKey) => {
+    const q = ($(id + 'Find').value || '').toUpperCase().trim();
+    const L = all.filter(x => !q || x.name.toUpperCase().includes(q) || x.p.includes(q) || [...x.skus].some(s => s.toUpperCase().includes(q)))
+      .sort((a, b) => sortKey(b) - sortKey(a));
+    const tot = L.reduce((s, x) => { for (const k of ['units', 'sale', 'canc', 'cu', 'rto', 'sent']) s[k] += x[k]; s.ord += x.ord.size; return s; }, { units: 0, sale: 0, canc: 0, cu: 0, rto: 0, sent: 0, ord: 0 });
+    const pc = (r, s) => s ? (r / s * 100).toFixed(1) + '%' : '—';
+    $(id + 'Cnt').textContent = L.length + ' items';
+    $(id).innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Orders</th><th>Units bike</th><th>Sale</th><th>Cancel</th><th>Customer Return</th><th>RTO</th><th>Total Return</th><th>Return %</th></tr>' +
+      (q && L.length > 1 ? `<tr class="total"><td>Kul (${L.length} items)</td><td></td><td>${tot.ord}</td><td>${tot.units}</td><td>${inr(tot.sale)}</td><td>${tot.canc}</td><td>${tot.cu}</td><td>${tot.rto}</td><td><b>${tot.cu + tot.rto}</b></td><td>${pc(tot.cu + tot.rto, tot.sent)}</td></tr>` : '') +
+      L.slice(0, 300).map(x => `<tr><td style="text-align:left;white-space:normal;min-width:170px" title="${esc([...x.skus].join(', '))}">${esc(x.name)}<br><small style="color:var(--mut);font-weight:400">${x.skus.size} SKU</small></td>` +
+        `<td class="accs">${[...x.accs].sort().map(tag).join(' ')}</td><td>${x.ord.size}</td><td>${x.units}</td><td>${inr(x.sale)}</td><td>${x.canc}</td><td>${x.cu}</td><td>${x.rto}</td><td><b>${x.cu + x.rto}</b></td><td>${pc(x.cu + x.rto, x.sent)}</td></tr>`).join('');
+  };
+  draw('tItemS', x => x.sale); draw('tItemR', x => x.cu + x.rto);
+  $('tItemSFind').oninput = () => draw('tItemS', x => x.sale); $('tItemRFind').oninput = () => draw('tItemR', x => x.cu + x.rto);
+}
 function render() {
   periodTitles();
   ORD_MIN = $('fAcc').value ? (accMin[$('fAcc').value] || ORD_MIN_ALL) : ORD_MIN_ALL;
@@ -416,6 +450,7 @@ function render() {
   const retS = r => r.sku || skuOf[r.itemId] || '—';
   const retCu = grp(R.filter(r => r.type === 'customer_return'), retS), retRto = grp(R.filter(r => r.type === 'courier_return'), retS), ret = grp(R, retS);
   $('tRet').innerHTML = '<tr><th>SKU</th><th>Customer Return</th><th>RTO</th><th>Total</th><th>Sold</th></tr>' + Object.entries(ret).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s, n]) => `<tr><td>${s}</td><td>${retCu[s] || 0}</td><td>${retRto[s] || 0}</td><td><b>${n}</b></td><td>${top[s] || 0}</td></tr>`).join('');
+  window.__isr = { O, R, skuOf }; renderItemSR();
   const rs = Object.entries(grp(R, 'reason')).sort((a, b) => b[1] - a[1]).slice(0, 8);
   chart('cReason', { type: 'bar', data: { labels: rs.map(r => r[0]), datasets: [{ data: rs.map(r => r[1]), backgroundColor: '#f7b500' }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } } } });
   $('tApi').innerHTML = '<tr><th>Account</th><th>Status</th></tr>' + D.status.map(s => `<tr><td>${tag(s.acc)}</td><td class="${s.ok ? 'ok' : 'bad'}">${s.ok ? '✔ ' : '✖ '}${s.msg}</td></tr>`).join('');
