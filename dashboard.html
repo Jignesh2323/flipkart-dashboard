@@ -61,16 +61,17 @@ h2.sec{font-size:12.5px;font-weight:700;color:var(--mut);text-transform:uppercas
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
 .k{--t:#1a7f37;background:linear-gradient(135deg,#fff 55%,color-mix(in srgb,var(--t) 7%,#fff));border:1px solid color-mix(in srgb,var(--t) 22%,var(--line));
   border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.k>span{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.k{text-align:center}
+.k>span{display:flex;align-items:center;justify-content:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .k>span::before{content:attr(data-i);width:26px;height:26px;border-radius:8px;flex:none;background:color-mix(in srgb,var(--t) 16%,#fff);border:1px solid color-mix(in srgb,var(--t) 30%,#fff);display:grid;place-items:center;font-size:14px}
 .k .how{display:block;margin-top:7px;font:500 11.5px/1.4 var(--sans);color:var(--mut)}
 .k b{display:block;font-size:26px;font-weight:600;font-family:var(--mono);letter-spacing:-1px;color:var(--ink)}
 #sKpis .k{--t:#0969da}#pKpis .k{--t:#bf8700}
 /* cards with a tinted, collapsible header */
 .card{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:18px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.card>h3{margin:0;padding:13px 40px 13px 18px;border-bottom:1px solid var(--line);font-size:15.5px;font-weight:700;color:var(--pri);cursor:pointer;position:relative;
-  background:linear-gradient(90deg,var(--pri-soft),#fff 70%);border-left:4px solid var(--pri)}
-.card>h3::after{content:"▴";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--mut);font-size:13px}
+.card>h3{margin:0;padding:13px 40px;border-bottom:1px solid var(--line);font-size:15.5px;font-weight:700;color:#fff;cursor:pointer;position:relative;
+  text-align:center;letter-spacing:.3px;background:linear-gradient(90deg,var(--pri),color-mix(in srgb,var(--pri) 70%,#000))}
+.card>h3::after{content:"▴";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.8);font-size:13px}
 .card.closed>h3{border-bottom:0}.card.closed>h3::after{content:"▾"}.card.closed>:not(h3){display:none!important}
 .card>:not(h3){margin:14px 18px}.card>canvas{max-width:calc(100% - 36px)}.card>.tw{margin:0}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:18px}
@@ -98,7 +99,7 @@ tr:hover td{background:#f8fafc}
 [data-theme="dark"] .bar button{background:#1c2430}
 [data-theme="dark"] .k{background:linear-gradient(135deg,var(--card) 55%,color-mix(in srgb,var(--t) 14%,var(--card)))}
 [data-theme="dark"] .k>span::before{background:color-mix(in srgb,var(--t) 25%,var(--card));border-color:color-mix(in srgb,var(--t) 40%,var(--card))}
-[data-theme="dark"] .card>h3{background:linear-gradient(90deg,var(--pri-soft),var(--card) 70%)}
+[data-theme="dark"] .card>h3{background:linear-gradient(90deg,var(--pri),color-mix(in srgb,var(--pri) 55%,var(--card)))}
 [data-theme="dark"] tr:hover td{background:#1c2430}[data-theme="dark"] .warn{background:#2b2410;border-color:#5c4a14;color:#f0c75e}
 [data-theme="dark"] .chips button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--c)}
 .acct{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--c);color:#fff;font:700 11px var(--sans);letter-spacing:.3px;margin:1px 0}
@@ -136,6 +137,7 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <button role="tab" data-tab="returns" aria-selected="false">🔙 Returns</button>
 <button role="tab" data-tab="products" aria-selected="false">📦 Products</button>
 <button role="tab" data-tab="mapping" aria-selected="false">🔗 Mapping</button>
+<button role="tab" data-tab="price" aria-selected="false">🏷️ Price</button>
 <button role="tab" data-tab="settings" aria-selected="false">⚙️ Settings</button>
 </nav>
 <div id="note"></div>
@@ -210,6 +212,17 @@ try { const th = JSON.parse(localStorage.fkTheme || "{}"); if (th.mode === "dark
 <button type="button" class="ceSave" id="mapSaveAll">💾 Sab save karo</button>
 <input type="search" id="mapFind" placeholder="🔍 SKU / product dhoondhiye" style="flex:1;min-width:160px"><span id="mapMsg" style="font-size:13px"></span></div>
 <div class="tw"><table id="tMap"></table></div></div>
+</section>
+
+<section class="tab" data-tab="price" hidden>
+<div class="kpis" id="prKpis"></div>
+<div class="card"><h3>Account-wise: settlement target me hai ya nahi</h3>
+<p class="note" id="prNote" style="margin:14px 18px 0">Target = settlement-target-product.xlsx ka Min/Max (±₹5). Ye ginti Seller Hub ki asli settlement se banti hai, har baar settlement script chalne ke baad update hoti hai.</p>
+<div class="tw"><table id="tPrAcc"></table></div></div>
+<div class="card"><h3>Target se bahar listings</h3>
+<div class="bar"><select id="prAcc"></select><select id="prKind"><option value="">Kam + Zyada</option><option value="low">⬆ Settlement kam</option><option value="high">⬇ Settlement zyada</option></select>
+<input type="search" id="prFind" placeholder="🔍 SKU dhoondhiye" style="flex:1;min-width:160px"><span id="prCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
+<div class="tw" style="max-height:600px"><table id="tPr"></table></div></div>
 </section>
 
 <section class="tab" data-tab="settings" hidden>
@@ -634,7 +647,40 @@ function makeDemo() {
     if (Math.random() < .1) r.push({ acc, itemId: 'I' + i, date: d, sku, type: Math.random() < .6 ? 'customer_return' : 'courier_return', reason: rs[Math.floor(Math.random() * 4)] }); }
   return { generated: new Date().toISOString().slice(0, 16).replace('T', ' '), orders: o, returns: r, status: Array.from({ length: 9 }, (_, i) => ({ acc: 'Account' + (i + 1), ok: true, msg: 'demo' })) };
 }
-render(); renderSettle(); renderCostEditor(); loadCosts();
+render(); renderSettle(); renderCostEditor(); loadCosts(); loadPrice();
+// Price tab: settlement-in-target status per account, written to Supabase fk_blob 'settlement_status'
+// after each settlement run (counted from Seller Hub's live settlement, not estimated).
+async function loadPrice() {
+  const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  let S;
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/fk_blob?name=eq.settlement_status&select=data', { headers: sbHead });
+    let d = JSON.parse((await r.json())[0].data); if (d.value) d = JSON.parse(d.value); S = d;
+  } catch (e) { $('prNote').textContent = 'Price data abhi load nahi hua.'; if (!loadPrice.retried) { loadPrice.retried = 1; setTimeout(loadPrice, 3000); } return; }
+  const A = S.accounts || {}, names = Object.keys(A), sum = k => names.reduce((s, a) => s + (A[a][k] || 0), 0);
+  const tot = sum('total'), inR = sum('inR'), low = sum('low'), high = sum('high');
+  const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '-';
+  $('prKpis').innerHTML = [['Kul active listings', tot, 'Saare 9 accounts'], ['Target me', `${inR} (${pct(inR, tot)})`, 'Settlement Min/Max ke andar'],
+    ['Settlement kam (badhani)', low, 'Roz 2 × 5% badhti hai'], ['Settlement zyada (ghatani)', high, 'Roz 5% ghatti hai']]
+    .map(([l, v, h]) => `<div class="k"><span>${l}</span><b${/kam|zyada/.test(l) && +v > 0 ? ' class="bad"' : ''}>${v}</b><small class="how">${h}</small></div>`).join('');
+  $('prNote').textContent = `Last update: ${new Date(S.at).toLocaleString('en-IN')}. Target = settlement-target-product.xlsx ka Min/Max (±₹5), Seller Hub ki asli settlement se gina gaya.`;
+  $('tPrAcc').innerHTML = '<tr><th>Account</th><th>Kul</th><th>✅ Target me</th><th>⬆ Kam</th><th>⬇ Zyada</th><th>Target nahi</th><th>% sahi</th></tr>' +
+    names.map(a => { const x = A[a], p = x.total ? x.inR / (x.total - (x.noT || 0) - (x.zero || 0)) : 0;
+      return `<tr${p < .8 ? ' style="background:#fff4d6"' : ''}><td>${a}</td><td>${x.total}</td><td>${x.inR}</td><td${x.low ? ' class="bad"' : ''}>${x.low}</td><td${x.high ? ' class="bad"' : ''}>${x.high}</td><td>${(x.noT || 0) + (x.zero || 0)}</td><td>${Math.round(p * 100)}%</td></tr>`; }).join('') +
+    `<tr class="total"><td>Kul</td><td>${tot}</td><td>${inR}</td><td>${low}</td><td>${high}</td><td>${sum('noT') + sum('zero')}</td><td>${pct(inR, tot - sum('noT') - sum('zero'))}</td></tr>`;
+  $('prAcc').innerHTML = '<option value="">Sab account</option>' + names.map(a => `<option>${a}</option>`).join('');
+  const rows = names.flatMap(a => [...(A[a].lows || []).map(s => [a, 'low', s]), ...(A[a].highs || []).map(s => [a, 'high', s])]).map(([a, k, s]) => {
+    const p = s.split(' '), [e, t] = p.pop().split('/').map(Number); return { a, k, sku: p.join(' '), e, t, gap: Math.round((t - e) / e * 100) }; });
+  const draw = () => {
+    const fa = $('prAcc').value, fk = $('prKind').value, q = ($('prFind').value || '').toUpperCase();
+    const L = rows.filter(r => (!fa || r.a === fa) && (!fk || r.k === fk) && (!q || r.sku.toUpperCase().includes(q))).sort((x, y) => Math.abs(y.gap) - Math.abs(x.gap));
+    $('prCnt').textContent = L.length + ' listings';
+    $('tPr').innerHTML = '<tr><th>Account</th><th>SKU</th><th>Abhi settlement</th><th>Target</th><th>Farak</th><th>Kitne din</th></tr>' +
+      L.map(r => `<tr><td>${r.a}</td><td style="text-align:left">${esc(r.sku)}</td><td>₹${r.e}</td><td>${r.k === 'low' ? 'Min' : 'Max'} ₹${r.t}</td>` +
+        `<td class="bad">${r.gap > 0 ? '+' : ''}${r.gap}%</td><td>${Math.max(1, Math.ceil(Math.abs(r.gap) / (r.k === 'low' ? 10 : 5)))}</td></tr>`).join('');
+  };
+  ['prAcc', 'prKind'].forEach(i => $(i).onchange = draw); $('prFind').oninput = draw; draw();
+}
 // Mapping tab: one row per account + SKU, status of other sellers saved online (fk_mapping)
 let MAP = {};
 const MAP_ST = { ok: '✅ Sirf aap', other: '⚠️ Doosra seller', case: '📨 Case raise kiya' };
@@ -764,7 +810,7 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
   function show(name) {
     btns.forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
     document.querySelectorAll('section.tab').forEach(s => s.hidden = s.dataset.tab !== name);
-    const noFilter = name === 'settings' || name === 'products'; $('note').hidden = noFilter; document.querySelector('.accbar').hidden = noFilter;
+    const noFilter = name === 'settings' || name === 'products' || name === 'price'; $('note').hidden = noFilter; document.querySelector('.accbar').hidden = noFilter;
     // charts drawn while their tab was hidden have no size yet
     setTimeout(() => { try { Object.values(charts).forEach(c => c && c.resize()); } catch (e) {} }, 30);
     try { localStorage.fkTab = name; } catch (e) {}
