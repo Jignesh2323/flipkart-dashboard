@@ -763,7 +763,7 @@ async function loadPrice() {
     : 'Seller Hub ki asli settlement se gina gaya.');
   $('tPrAcc').innerHTML = '<tr><th>Account</th><th>Kul</th><th>✅ Target me</th><th>⬆ Kam</th><th>⬇ Zyada</th><th>Target nahi</th><th>% sahi</th></tr>' +
     names.map(a => { const x = A[a], p = x.total ? x.inR / (x.total - (x.noT || 0) - (x.zero || 0)) : 0;
-      return `<tr${p < .8 ? ' style="background:#fff4d6"' : ''}><td>${a}</td><td>${x.total}</td><td>${x.inR}</td><td${x.low ? ' class="bad"' : ''}>${x.low}</td><td${x.high ? ' class="bad"' : ''}>${x.high}</td><td>${(x.noT || 0) + (x.zero || 0)}</td><td>${Math.round(p * 100)}%</td></tr>`; }).join('') +
+      return `<tr${p < .8 ? ' style="background:#fff4d6"' : ''}><td>${tag(a)}</td><td>${x.total}</td><td>${x.inR}</td><td${x.low ? ' class="bad"' : ''}>${x.low}</td><td${x.high ? ' class="bad"' : ''}>${x.high}</td><td>${(x.noT || 0) + (x.zero || 0)}</td><td>${Math.round(p * 100)}%</td></tr>`; }).join('') +
     `<tr class="total"><td>Kul</td><td>${tot}</td><td>${inR}</td><td>${low}</td><td>${high}</td><td>${sum('noT') + sum('zero')}</td><td>${pct(inR, tot - sum('noT') - sum('zero'))}</td></tr>`;
   $('prAcc').innerHTML = '<option value="">Sab account</option>' + names.map(a => `<option>${a}</option>`).join('');
   const rows = names.flatMap(a => [...(A[a].lows || []).map(s => [a, 'low', s]), ...(A[a].highs || []).map(s => [a, 'high', s])]).map(([a, k, s]) => {
@@ -773,7 +773,7 @@ async function loadPrice() {
     const L = rows.filter(r => (!fa || r.a === fa) && (!fk || r.k === fk) && (!q || r.sku.toUpperCase().includes(q))).sort((x, y) => Math.abs(y.gap) - Math.abs(x.gap));
     $('prCnt').textContent = L.length + ' listings';
     $('tPr').innerHTML = '<tr><th>Account</th><th style="text-align:center">SKU</th><th>Abhi settlement</th><th>Target</th><th>Farak</th><th>Kitne din</th></tr>' +
-      L.map(r => `<tr><td>${r.a}</td><td style="text-align:center">${esc(r.sku)}</td><td>₹${r.e}</td><td>${r.k === 'low' ? 'Min' : 'Max'} ₹${r.t}</td>` +
+      L.map(r => `<tr><td>${tag(r.a)}</td><td style="text-align:center">${esc(r.sku)}</td><td>₹${r.e}</td><td>${r.k === 'low' ? 'Min' : 'Max'} ₹${r.t}</td>` +
         `<td class="bad">${r.gap > 0 ? '+' : ''}${r.gap}%</td><td>${Math.max(1, Math.ceil(Math.abs(r.gap) / (r.k === 'low' ? 10 : 5)))}</td></tr>`).join('');
   };
   ['prAcc', 'prKind'].forEach(i => $(i).onchange = draw); $('prFind').oninput = draw; draw();
