@@ -198,38 +198,38 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <div class="kpis" id="pKpis"></div>
 </div>
 <div class="grid"><div class="card"><h3 id="trendTitle">Daily Sales (₹)</h3><div class="bar" id="trendDays" role="group" aria-label="Trend days"><button type="button" data-n="30" aria-pressed="true">30 din</button><button type="button" data-n="60" aria-pressed="false">60 din</button><button type="button" data-n="90" aria-pressed="false">90 din</button></div><canvas id="cTrend"></canvas></div>
-<div class="card"><h3>Account-wise Sales (₹)</h3><canvas id="cAcc"></canvas></div></div>
-<div class="card"><h3>Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
+<div class="card"><h3 data-p>Account-wise Sales (₹)</h3><canvas id="cAcc"></canvas></div></div>
+<div class="card"><h3 data-p>Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
 </section>
 
 <section class="tab" data-tab="paisa" hidden>
 <div class="card"><h3>📅 Month-wise Hisaab</h3>
 <p class="note" style="margin:14px 18px 0">Har mahine ki sale (us mahine aaye orders) aur bank me aaya paisa (us mahine mile payments). Upar ke 30/60/90 Days is table par asar nahi karte; account button se account chun sakte hain. Pehla mahina adhoora hai (orders API se wahi se milte hain), isliye usme bank ka paisa pichhle orders ka bhi hai aur profit zyada dikhega.</p>
 <div class="tw"><table id="tMonth"></table></div></div>
-<div class="card"><h3>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
-<div class="card"><h3>Item-wise Profit (zyada profit sabse upar)</h3>
+<div class="card"><h3 data-p>Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
+<div class="card"><h3 data-p>Item-wise Profit (zyada profit sabse upar)</h3>
 <p class="note" id="itemNote" style="margin:14px 18px 0">Flipkart bank payout SKU-wise nahi deta, isliye har account ka "Bank me aaya" us account ke items me unki delivered sale ke hisaab se baanta gaya hai; return charge har item ka asli (Seller Hub se) ghataya gaya hai. Packing ₹15 har dispatch order par.</p>
 <div class="bar"><input type="search" id="itemFind" placeholder="🔍 Product ya item name dhoondhiye" style="flex:1;max-width:360px"><span id="itemCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw"><table id="tItem"></table></div></div>
 <section id="settle" hidden>
-<div class="grid"><div class="card"><h3>Bank Credits by Date (₹)</h3><canvas id="cBank"></canvas></div>
-<div class="card"><h3>Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
+<div class="grid"><div class="card"><h3 data-p>Bank Credits by Date (₹)</h3><canvas id="cBank"></canvas></div>
+<div class="card"><h3 data-p>Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
 </section>
 
 </section>
 
 <section class="tab" data-tab="sales" hidden>
-<div class="grid"><div class="card"><h3>Top Selling SKUs</h3><div class="bar" id="topBy" role="group" aria-label="Sort"><button type="button" data-by="u" aria-pressed="true">Units wise</button><button type="button" data-by="s" aria-pressed="false">Sale (₹) wise</button></div><div class="tw"><table id="tTop"></table></div></div>
-<div class="card" style="display:flex;flex-direction:column"><h3>Order Status</h3><div style="position:relative;flex:1;min-height:380px"><canvas id="cStatus"></canvas></div></div></div>
+<div class="grid"><div class="card"><h3 data-p>Top Selling SKUs</h3><div class="bar" id="topBy" role="group" aria-label="Sort"><button type="button" data-by="u" aria-pressed="true">Units wise</button><button type="button" data-by="s" aria-pressed="false">Sale (₹) wise</button></div><div class="tw"><table id="tTop"></table></div></div>
+<div class="card" style="display:flex;flex-direction:column"><h3 data-p>Order Status</h3><div style="position:relative;flex:1;min-height:380px"><canvas id="cStatus"></canvas></div></div></div>
 </section>
 
 <section class="tab" data-tab="returns" hidden>
-<div class="card"><h3>Returns ka hisaab</h3>
+<div class="card"><h3 data-p>Returns ka hisaab</h3>
 <div id="rExplain" style="font-size:14px;line-height:1.6"></div>
 <div class="tw"><table id="tRefund"></table></div></div>
-<div class="card"><h3>SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div>
-<div class="grid"><div class="card"><h3>Most Returned SKUs</h3><div class="tw"><table id="tRet"></table></div></div>
-<div class="card"><h3>Return Reasons</h3><canvas id="cReason"></canvas></div></div>
+<div class="card"><h3 data-p>SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div>
+<div class="grid"><div class="card"><h3 data-p>Most Returned SKUs</h3><div class="tw"><table id="tRet"></table></div></div>
+<div class="card"><h3 data-p>Return Reasons</h3><canvas id="cReason"></canvas></div></div>
 </section>
 
 <section class="tab" data-tab="products" hidden>
@@ -344,7 +344,14 @@ function chart(id, cfg) { charts[id]?.destroy(); charts[id] = new Chart($(id), c
 const isCancel = o => /CANCEL/i.test(o.status || "");
 const isLost = o => /CANCEL|^RETURNED$/i.test(o.status || "");
 function grp(arr, key, val) { const m = {}; arr.forEach(x => { const k = typeof key == 'function' ? key(x) : x[key] || '—'; m[k] = (m[k] || 0) + (val ? val(x) : 1); }); return m; }
+// Cards that follow the 30/60/90-day buttons show the period in their title, e.g. "Top Selling SKUs (Last 30 Days)"
+function periodTitles() {
+  const f0 = $('fFrom').value, f = f0 < ORD_MIN ? ORD_MIN : f0, t = $('fTo').value;
+  const n = f && t ? Math.round((new Date(t) - new Date(f)) / 864e5) + 1 : 0;
+  document.querySelectorAll('h3[data-p]').forEach(h => { if (h.dataset.base == null) h.dataset.base = h.textContent; h.textContent = n ? `${h.dataset.base} (Last ${n} Days)` : h.dataset.base; });
+}
 function render() {
+  periodTitles();
   ORD_MIN = $('fAcc').value ? (accMin[$('fAcc').value] || ORD_MIN_ALL) : ORD_MIN_ALL;
   const a = $('fAcc').value, t = $('fTo').value, f0 = $('fFrom').value, f = f0 < ORD_MIN ? ORD_MIN : f0;
   if (!demo) $('note').innerHTML = `<div class="range">📅 Orders &amp; Returns: <b>${dmy(f)}</b> se <b>${dmy(t)}</b> tak`
