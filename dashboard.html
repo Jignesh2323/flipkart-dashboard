@@ -379,10 +379,10 @@ function renderItemSR() {
     const tot = L.reduce((s, x) => { for (const k of ['units', 'sale', 'canc', 'cu', 'rto', 'sent']) s[k] += x[k]; s.ord += x.ord.size; return s; }, { units: 0, sale: 0, canc: 0, cu: 0, rto: 0, sent: 0, ord: 0 });
     const pc = (r, s) => s ? (r / s * 100).toFixed(1) + '%' : '—';
     $(id + 'Cnt').textContent = L.length + ' items';
-    $(id).innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Orders</th><th>Units bike</th><th>Sale</th><th>Cancel</th><th>Customer Return</th><th>RTO</th><th>Total Return</th><th>Return %</th></tr>' +
-      (q && L.length > 1 ? `<tr class="total"><td>Kul (${L.length} items)</td><td></td><td>${tot.ord}</td><td>${tot.units}</td><td>${inr(tot.sale)}</td><td>${tot.canc}</td><td>${tot.cu}</td><td>${tot.rto}</td><td><b>${tot.cu + tot.rto}</b></td><td>${pc(tot.cu + tot.rto, tot.sent)}</td></tr>` : '') +
+    $(id).innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Orders</th><th>Units bike</th><th>Sale</th><th>Cancel</th><th>Customer Return</th><th>RTO</th><th>Total Return</th><th>Customer Return %</th></tr>' +
+      (q && L.length > 1 ? `<tr class="total"><td>Kul (${L.length} items)</td><td></td><td>${tot.ord}</td><td>${tot.units}</td><td>${inr(tot.sale)}</td><td>${tot.canc}</td><td>${tot.cu}</td><td>${tot.rto}</td><td><b>${tot.cu + tot.rto}</b></td><td>${pc(tot.cu, tot.sent)}</td></tr>` : '') +
       L.slice(0, 300).map(x => `<tr><td style="text-align:left;white-space:normal;min-width:170px" title="${esc([...x.skus].join(', '))}">${esc(x.name)}<br><small style="color:var(--mut);font-weight:400">${x.skus.size} SKU</small></td>` +
-        `<td class="accs">${[...x.accs].sort().map(tag).join(' ')}</td><td>${x.ord.size}</td><td>${x.units}</td><td>${inr(x.sale)}</td><td>${x.canc}</td><td>${x.cu}</td><td>${x.rto}</td><td><b>${x.cu + x.rto}</b></td><td>${pc(x.cu + x.rto, x.sent)}</td></tr>`).join('');
+        `<td class="accs">${[...x.accs].sort().map(tag).join(' ')}</td><td>${x.ord.size}</td><td>${x.units}</td><td>${inr(x.sale)}</td><td>${x.canc}</td><td>${x.cu}</td><td>${x.rto}</td><td><b>${x.cu + x.rto}</b></td><td>${pc(x.cu, x.sent)}</td></tr>`).join('');
   };
   draw('tItemS', x => x.sale); draw('tItemR', x => x.cu + x.rto);
   $('tItemSFind').oninput = () => draw('tItemS', x => x.sale); $('tItemRFind').oninput = () => draw('tItemR', x => x.cu + x.rto);
