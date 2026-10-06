@@ -663,7 +663,10 @@ async function loadPrice() {
   $('prKpis').innerHTML = [['Kul active listings', tot, 'Saare 9 accounts'], ['Target me', `${inR} (${pct(inR, tot)})`, 'Settlement Min/Max ke andar'],
     ['Settlement kam (badhani)', low, 'Roz 2 × 5% badhti hai'], ['Settlement zyada (ghatani)', high, 'Roz 5% ghatti hai']]
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b${/kam|zyada/.test(l) && +v > 0 ? ' class="bad"' : ''}>${v}</b><small class="how">${h}</small></div>`).join('');
-  $('prNote').textContent = `Last update: ${new Date(S.at).toLocaleString('en-IN')}. Target = settlement-target-product.xlsx ka Min/Max (±₹5), Seller Hub ki asli settlement se gina gaya.`;
+  const dt = x => new Date(x).toLocaleString('en-IN');
+  $('prNote').textContent = `Last update: ${dt(S.at)}. Target = settlement-target-product.xlsx ka Min/Max (±₹5). ` + (S.source === 'api'
+    ? `Subah ki jaanch: aaj ki price − Seller Hub fee (${S.feesAt ? dt(S.feesAt) : '-'} wali). Fee badli ho to agle Seller Hub run par sahi ho jayega.`
+    : 'Seller Hub ki asli settlement se gina gaya.');
   $('tPrAcc').innerHTML = '<tr><th>Account</th><th>Kul</th><th>✅ Target me</th><th>⬆ Kam</th><th>⬇ Zyada</th><th>Target nahi</th><th>% sahi</th></tr>' +
     names.map(a => { const x = A[a], p = x.total ? x.inR / (x.total - (x.noT || 0) - (x.zero || 0)) : 0;
       return `<tr${p < .8 ? ' style="background:#fff4d6"' : ''}><td>${a}</td><td>${x.total}</td><td>${x.inR}</td><td${x.low ? ' class="bad"' : ''}>${x.low}</td><td${x.high ? ' class="bad"' : ''}>${x.high}</td><td>${(x.noT || 0) + (x.zero || 0)}</td><td>${Math.round(p * 100)}%</td></tr>`; }).join('') +
