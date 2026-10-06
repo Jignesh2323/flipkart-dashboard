@@ -772,8 +772,8 @@ async function loadPrice() {
     const fa = $('prAcc').value, fk = $('prKind').value, q = ($('prFind').value || '').toUpperCase();
     const L = rows.filter(r => (!fa || r.a === fa) && (!fk || r.k === fk) && (!q || r.sku.toUpperCase().includes(q))).sort((x, y) => Math.abs(y.gap) - Math.abs(x.gap));
     $('prCnt').textContent = L.length + ' listings';
-    $('tPr').innerHTML = '<tr><th>Account</th><th>SKU</th><th>Abhi settlement</th><th>Target</th><th>Farak</th><th>Kitne din</th></tr>' +
-      L.map(r => `<tr><td>${r.a}</td><td style="text-align:left">${esc(r.sku)}</td><td>₹${r.e}</td><td>${r.k === 'low' ? 'Min' : 'Max'} ₹${r.t}</td>` +
+    $('tPr').innerHTML = '<tr><th>Account</th><th style="text-align:center">SKU</th><th>Abhi settlement</th><th>Target</th><th>Farak</th><th>Kitne din</th></tr>' +
+      L.map(r => `<tr><td>${r.a}</td><td style="text-align:center">${esc(r.sku)}</td><td>₹${r.e}</td><td>${r.k === 'low' ? 'Min' : 'Max'} ₹${r.t}</td>` +
         `<td class="bad">${r.gap > 0 ? '+' : ''}${r.gap}%</td><td>${Math.max(1, Math.ceil(Math.abs(r.gap) / (r.k === 'low' ? 10 : 5)))}</td></tr>`).join('');
   };
   ['prAcc', 'prKind'].forEach(i => $(i).onchange = draw); $('prFind').oninput = draw; draw();
