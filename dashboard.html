@@ -5,7 +5,7 @@
 <link rel="manifest" href="manifest.webmanifest?v=2"><meta name="theme-color" content="#1a7f37">
 <script>if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(() => {});</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>document.write('<script src="data.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
+<script src="data.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script>
 // Chart text/grid colours to match the page
@@ -296,12 +296,12 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <div class="card"><h3>🔌 API Status</h3><div class="tw"><table id="tApi"></table></div></div>
 </section>
 </main>
-<script>document.write('<script src="settle.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
-<script>document.write('<script src="cost.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
-<script>document.write('<script src="gst.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
-<script>document.write('<script src="fsn.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
-<script>document.write('<script src="hubsales.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
-<script>document.write('<script src="hubitems.js?v=' + Math.floor(Date.now() / 36e5) + '"><\/script>')</script>
+<script src="settle.js"></script>
+<script src="cost.js"></script>
+<script src="gst.js"></script>
+<script src="fsn.js"></script>
+<script src="hubsales.js"></script>
+<script src="hubitems.js"></script>
 <script>
 let D = window.FK_DATA, demo = false;
 if (!D) { demo = true; D = makeDemo(); }
