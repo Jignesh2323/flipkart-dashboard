@@ -1,7 +1,7 @@
 {
-  "id": "/flipkart-dashboard/",
+  "id": "/flipkart-dashboard/?app=fk2",
   "name": "Flipkart Seller Business",
-  "short_name": "Flipkart",
+  "short_name": "FK Business",
   "description": "Flipkart sales, settlement, profit and returns for all accounts",
   "start_url": "/flipkart-dashboard/dashboard.html",
   "scope": "/flipkart-dashboard/",
