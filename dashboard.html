@@ -914,7 +914,8 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
   });
   // Settings card
   const state = () => { $('lkState').textContent = LS.fkLockPin ? (LS.fkLockBio ? '✅ Chalu: PIN + Fingerprint' : '✅ Chalu: PIN') : '❌ Band';
-    $('lkBio').disabled = !LS.fkLockPin || !bioOk(); $('lkOff').disabled = !LS.fkLockPin; };
+    $('lkBio').disabled = !LS.fkLockPin || !bioOk(); $('lkOff').disabled = !LS.fkLockPin;
+    $('lkBio').textContent = LS.fkLockBio ? '🚫 Fingerprint band karo' : '👆 Fingerprint chalu karo'; };
   const msg = t => $('lkMsg').textContent = t;
   $('lkSet').onclick = async () => {
     const a = $('lkPin1').value, b = $('lkPin2').value;
@@ -924,6 +925,7 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
     msg('PIN set ho gaya. Ab app kholte waqt PIN maangega.'); state();
   };
   $('lkBio').onclick = async () => {
+    if (LS.fkLockBio) { delete LS.fkLockBio; msg('Fingerprint band ho gaya. Ab sirf PIN se khulega.'); state(); return; }
     if (!LS.fkLockPin) return msg('Pehle PIN set kariye.');
     if (!bioOk()) return msg('Is browser me fingerprint support nahi hai.');
     try {
