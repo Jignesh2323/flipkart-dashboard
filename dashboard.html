@@ -410,8 +410,9 @@ function render() {
   const by = window.topBy || 'u'; document.querySelectorAll('#topBy button').forEach(b => b.setAttribute('aria-pressed', b.dataset.by === by));
   $('tTop').innerHTML = '<tr><th>SKU</th><th>Units</th><th>Sales</th></tr>' + Object.entries(top).sort((a, b) => by === 's' ? topS[b[0]] - topS[a[0]] : b[1] - a[1] || topS[b[0]] - topS[a[0]]).slice(0, 20).map(([s, u]) => `<tr><td>${s}</td><td>${u}</td><td>${inr(topS[s])}</td></tr>`).join('');
   const skuOf = {}; D.orders.forEach(o => skuOf[o.itemId] = o.sku);
-  const ret = grp(R, r => r.sku || skuOf[r.itemId] || '—');
-  $('tRet').innerHTML = '<tr><th>SKU</th><th>Returns</th><th>Sold</th></tr>' + Object.entries(ret).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s, n]) => `<tr><td>${s}</td><td>${n}</td><td>${top[s] || 0}</td></tr>`).join('');
+  const retS = r => r.sku || skuOf[r.itemId] || '—';
+  const retCu = grp(R.filter(r => r.type === 'customer_return'), retS), retRto = grp(R.filter(r => r.type === 'courier_return'), retS), ret = grp(R, retS);
+  $('tRet').innerHTML = '<tr><th>SKU</th><th>Customer Return</th><th>RTO</th><th>Total</th><th>Sold</th></tr>' + Object.entries(ret).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s, n]) => `<tr><td>${s}</td><td>${retCu[s] || 0}</td><td>${retRto[s] || 0}</td><td><b>${n}</b></td><td>${top[s] || 0}</td></tr>`).join('');
   const rs = Object.entries(grp(R, 'reason')).sort((a, b) => b[1] - a[1]).slice(0, 8);
   chart('cReason', { type: 'bar', data: { labels: rs.map(r => r[0]), datasets: [{ data: rs.map(r => r[1]), backgroundColor: '#f7b500' }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } } } });
   $('tApi').innerHTML = '<tr><th>Account</th><th>Status</th></tr>' + D.status.map(s => `<tr><td>${tag(s.acc)}</td><td class="${s.ok ? 'ok' : 'bad'}">${s.ok ? '✔ ' : '✖ '}${s.msg}</td></tr>`).join('');
@@ -660,7 +661,7 @@ function renderItemProfit(keys, rows, from, to) {
       if (C[p]) x.cogs += C[p] * o.qty; else x.miss += o.qty; }
     if (!isLost(o)) { a.disp++; s.disp++; }
   }
-  for (const r of D.returns) if (acc[r.acc] && inP(r.date) && r.type === 'customer_return') { const sku = r.sku || skuOf.get(r.acc + '|' + r.itemId); if (sku) get(productOf(sku)).cr++; }
+  for (const r of D.returns) if (acc[r.acc] && inP(r.date) && (r.type === 'customer_return' || r.type === 'courier_return')) { const sku = r.sku || skuOf.get(r.acc + '|' + r.itemId); if (sku) { const x = get(productOf(sku)); if (r.type === 'customer_return') x.cr++; else x.rto = (x.rto || 0) + 1; } }
   for (const k of keys) for (const [md, item, amt] of (window.FK_SETTLE[k].cr || [])) {
     if (!inP('2026-' + md)) continue; const r = retOf.get(k + '|' + item), sku = (r && r.sku) || skuOf.get(k + '|' + item);
     if (!sku) continue; get(productOf(sku)).chg += amt; acc[k].chg += amt;
@@ -669,10 +670,10 @@ function renderItemProfit(keys, rows, from, to) {
     for (const [p, s] of a.items) { const x = get(p);
       if (a.sale) x.bank += (r.bank + a.chg) * s.sale / a.sale;
       if (a.disp) x.pack += r.pack * s.disp / a.disp; } }
-  const list = [...it.values()].filter(x => x.units || x.chg || x.cr).map(x => ({ ...x, bank: x.bank - x.chg, profit: x.bank - x.chg - x.cogs - x.pack }))
+  const list = [...it.values()].filter(x => x.units || x.chg || x.cr || x.rto).map(x => ({ ...x, bank: x.bank - x.chg, profit: x.bank - x.chg - x.cogs - x.pack }))
     .sort((a, b) => b.profit - a.profit);
-  $('tItem').innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Delivered units</th><th>Customer return</th><th>Delivered sale</th><th>Bank me aaya (anumaan)</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
-    list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].map(tag).join(' ') || '—'}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(${x.miss} bina cost)</span>` : ''}</td><td>${x.cr}</td><td>${inr(x.sale)}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+  $('tItem').innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Delivered units</th><th>Customer return</th><th>RTO</th><th>Delivered sale</th><th>Bank me aaya (anumaan)</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
+    list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].map(tag).join(' ') || '—'}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(${x.miss} bina cost)</span>` : ''}</td><td>${x.cr}</td><td>${x.rto || 0}</td><td>${inr(x.sale)}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
 }
 // Per SKU: customer / RTO returns (API, cleaned) and the returns Flipkart actually charged
 // (settlement "cr" rows [MM-DD payment date, order item id, charge ₹], joined to the API return type).
