@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Flipkart Seller Business</title>
 <link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
@@ -71,8 +71,8 @@ h2.sec{font-size:12.5px;font-weight:700;color:var(--mut);text-transform:uppercas
 .card{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:18px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .card>h3{margin:0;padding:13px 40px;border-bottom:1px solid var(--line);font-size:15.5px;font-weight:700;color:#fff;cursor:pointer;position:relative;
   text-align:center;letter-spacing:.3px;background:linear-gradient(90deg,var(--pri),color-mix(in srgb,var(--pri) 70%,#000))}
-.card>h3::after{content:"â–´";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.8);font-size:13px}
-.card.closed>h3{border-bottom:0}.card.closed>h3::after{content:"â–¾"}.card.closed>:not(h3){display:none!important}
+.card>h3::after{content:"▴";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.8);font-size:13px}
+.card.closed>h3{border-bottom:0}.card.closed>h3::after{content:"▾"}.card.closed>:not(h3){display:none!important}
 .card>:not(h3){margin:14px 18px}.card>canvas{max-width:calc(100% - 36px)}.card>.tw{margin:0}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:18px}
 /* tables */
@@ -121,8 +121,8 @@ header .bar button[aria-pressed="true"]{background:#fff;color:var(--pri);border-
 .logo{position:absolute;left:20px;top:50%;transform:translateY(-50%);height:96px;background:#fff;border-radius:14px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 @media(max-width:768px){header h1{font-size:22px}.logo{position:static;transform:none;height:56px}}
 nav.tabs .gi{margin-right:6px}
-th.sortable{cursor:pointer;user-select:none;white-space:nowrap}th.sortable::after{content:" â‡…";opacity:.45;font-size:.95em}
-th.sortable.asc::after{content:" â–²";opacity:1;color:var(--pri)}th.sortable.desc::after{content:" â–¼";opacity:1;color:var(--pri)}th.sortable:hover{color:var(--pri)}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}th.sortable::after{content:" ⇅";opacity:.45;font-size:.95em}
+th.sortable.asc::after{content:" ▲";opacity:1;color:var(--pri)}th.sortable.desc::after{content:" ▼";opacity:1;color:var(--pri)}th.sortable:hover{color:var(--pri)}
 .stick .toprow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.stick .toprow nav.tabs{margin-bottom:10px}
 .stick #period{margin:0 0 10px}#period button[aria-pressed="true"]{background:var(--pri);color:#fff;border-color:var(--pri)}
 /* Phone layout (same style as the Amazon app): bottom tab bar, compact header, 2-column KPI tiles */
@@ -166,22 +166,22 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 #lock button{width:100%;padding:12px;border:0;border-radius:12px;font:700 15px var(--sans,sans-serif);cursor:pointer;margin-top:8px}
 #lkGo{background:var(--pri);color:#fff}#lkFp{background:var(--pri-soft);color:var(--pri)}#lkErr{color:#cf222e!important;min-height:18px}
 </style></head><body>
-<div id="lock" role="dialog" aria-label="App lock"><div class="lkbox"><div style="font-size:40px">ðŸ”’</div><h2>FK Business</h2><p>PIN daaliye ya fingerprint lagaiye</p>
-<input type="password" id="lkIn" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="â€¢â€¢â€¢â€¢">
-<button type="button" id="lkGo">Kholo</button><button type="button" id="lkFp" hidden>ðŸ‘† Fingerprint / Face se kholo</button><p id="lkErr"></p></div></div>
-<header><img src="logo.png" alt="Ecom24x7 Â· Flipkart Seller Hub" class="logo"><div><h1>FLIPKART Â· <span>Seller Business</span></h1><small id="gen"></small></div>
+<div id="lock" role="dialog" aria-label="App lock"><div class="lkbox"><div style="font-size:40px">🔒</div><h2>FK Business</h2><p>PIN daaliye ya fingerprint lagaiye</p>
+<input type="password" id="lkIn" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••">
+<button type="button" id="lkGo">Kholo</button><button type="button" id="lkFp" hidden>👆 Fingerprint / Face se kholo</button><p id="lkErr"></p></div></div>
+<header><img src="logo.png" alt="Ecom24x7 · Flipkart Seller Hub" class="logo"><div><h1>FLIPKART · <span>Seller Business</span></h1><small id="gen"></small></div>
 </header>
 <main>
 <div class="stick">
 <div class="toprow"><nav class="tabs" role="tablist" aria-label="Sections">
-<button role="tab" data-tab="overview" aria-selected="true"><span class="gi">ðŸ </span>Overview</button>
-<button role="tab" data-tab="paisa" aria-selected="false"><span class="gi">ðŸ’°</span>Paisa</button>
-<button role="tab" data-tab="sales" aria-selected="false"><span class="gi">ðŸ“ˆ</span>Sales</button>
-<button role="tab" data-tab="returns" aria-selected="false"><span class="gi">ðŸ”™</span>Returns</button>
-<button role="tab" data-tab="products" aria-selected="false"><span class="gi">ðŸ“¦</span>Products</button>
-<button role="tab" data-tab="mapping" aria-selected="false"><span class="gi">ðŸ”—</span>Mapping</button>
-<button role="tab" data-tab="price" aria-selected="false"><span class="gi">ðŸ·ï¸</span>Price</button>
-<button role="tab" data-tab="settings" aria-selected="false"><span class="gi">âš™ï¸</span>Settings</button>
+<button role="tab" data-tab="overview" aria-selected="true"><span class="gi">🏠</span>Overview</button>
+<button role="tab" data-tab="paisa" aria-selected="false"><span class="gi">💰</span>Paisa</button>
+<button role="tab" data-tab="sales" aria-selected="false"><span class="gi">📈</span>Sales</button>
+<button role="tab" data-tab="returns" aria-selected="false"><span class="gi">🔙</span>Returns</button>
+<button role="tab" data-tab="products" aria-selected="false"><span class="gi">📦</span>Products</button>
+<button role="tab" data-tab="mapping" aria-selected="false"><span class="gi">🔗</span>Mapping</button>
+<button role="tab" data-tab="price" aria-selected="false"><span class="gi">🏷️</span>Price</button>
+<button role="tab" data-tab="settings" aria-selected="false"><span class="gi">⚙️</span>Settings</button>
 </nav>
 <div class="bar" id="period" role="group" aria-label="Period"><button type="button" data-d="30">30 Days</button><button type="button" data-d="60">60 Days</button><button type="button" data-d="90">90 Days</button><button type="button" data-d="180">180 Days</button><select id="fAcc" hidden></select><input type="hidden" id="fFrom"><input type="hidden" id="fTo"></div></div>
 <div id="note"></div>
@@ -198,57 +198,57 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 </div>
 <div id="profitTop" hidden>
 <h2 class="sec">Profit</h2>
-<p class="note">Profit = Bank me aaya âˆ’ Product cost (delivered units Ã— aapki cost) âˆ’ Packing (â‚¹15/order).</p>
+<p class="note">Profit = Bank me aaya − Product cost (delivered units × aapki cost) − Packing (₹15/order).</p>
 <div id="pWarn"></div>
 <div class="kpis" id="pKpis"></div>
 </div>
-<div class="grid"><div class="card"><h3 id="trendTitle">ðŸ“ˆ Daily Sales (â‚¹)</h3><div class="bar" id="trendDays" role="group" aria-label="Trend days"><button type="button" data-n="30" aria-pressed="true">30 din</button><button type="button" data-n="60" aria-pressed="false">60 din</button><button type="button" data-n="90" aria-pressed="false">90 din</button></div><canvas id="cTrend"></canvas></div>
-<div class="card"><h3 data-p>ðŸ“Š Account-wise Sales (â‚¹)</h3><canvas id="cAcc"></canvas></div></div>
-<div class="card"><h3 data-p>ðŸ†š Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
+<div class="grid"><div class="card"><h3 id="trendTitle">📈 Daily Sales (₹)</h3><div class="bar" id="trendDays" role="group" aria-label="Trend days"><button type="button" data-n="30" aria-pressed="true">30 din</button><button type="button" data-n="60" aria-pressed="false">60 din</button><button type="button" data-n="90" aria-pressed="false">90 din</button></div><canvas id="cTrend"></canvas></div>
+<div class="card"><h3 data-p>📊 Account-wise Sales (₹)</h3><canvas id="cAcc"></canvas></div></div>
+<div class="card"><h3 data-p>🆚 Account Comparison</h3><div class="tw"><table id="tAcc"></table></div></div>
 </section>
 
 <section class="tab" data-tab="paisa" hidden>
-<div class="card"><h3>ðŸ“… Month-wise Hisaab</h3>
+<div class="card"><h3>📅 Month-wise Hisaab</h3>
 <p class="note" style="margin:14px 18px 0">Har mahine ki sale (us mahine aaye orders) aur bank me aaya paisa (us mahine mile payments). Upar ke 30/60/90 Days is table par asar nahi karte; account button se account chun sakte hain. Pehla mahina adhoora hai (orders API se wahi se milte hain), isliye usme bank ka paisa pichhle orders ka bhi hai aur profit zyada dikhega.</p>
 <div class="tw"><table id="tMonth"></table></div></div>
-<div class="card"><h3 data-p>ðŸ’¹ Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
-<div class="card"><h3 data-p>ðŸ’° Item-wise Profit (zyada profit sabse upar)</h3>
-<p class="note" id="itemNote" style="margin:14px 18px 0">Flipkart bank payout SKU-wise nahi deta, isliye har account ka "Bank me aaya" us account ke items me unki delivered sale ke hisaab se baanta gaya hai; return charge har item ka asli (Seller Hub se) ghataya gaya hai. Packing â‚¹15 har dispatch order par.</p>
-<div class="bar"><input type="search" id="itemFind" placeholder="ðŸ” Product ya item name dhoondhiye" style="flex:1;max-width:360px"><span id="itemCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
+<div class="card"><h3 data-p>💹 Account-wise Profit</h3><div class="tw"><table id="tProfit"></table></div></div>
+<div class="card"><h3 data-p>💰 Item-wise Profit (zyada profit sabse upar)</h3>
+<p class="note" id="itemNote" style="margin:14px 18px 0">Flipkart bank payout SKU-wise nahi deta, isliye har account ka "Bank me aaya" us account ke items me unki delivered sale ke hisaab se baanta gaya hai; return charge har item ka asli (Seller Hub se) ghataya gaya hai. Packing ₹15 har dispatch order par.</p>
+<div class="bar"><input type="search" id="itemFind" placeholder="🔍 Product ya item name dhoondhiye" style="flex:1;max-width:360px"><span id="itemCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw"><table id="tItem"></table></div></div>
 <section id="settle" hidden>
-<div class="grid"><div class="card"><h3 data-p>ðŸ¦ Bank Credits by Date (â‚¹)</h3><canvas id="cBank"></canvas></div>
-<div class="card"><h3 data-p>ðŸ§¾ Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
+<div class="grid"><div class="card"><h3 data-p>🏦 Bank Credits by Date (₹)</h3><canvas id="cBank"></canvas></div>
+<div class="card"><h3 data-p>🧾 Account-wise Settlement</h3><div class="tw"><table id="tSet"></table></div></div></div>
 </section>
 
 </section>
 
 <section class="tab" data-tab="sales" hidden>
-<div class="card"><h3 data-p>ðŸ§® Item-wise Sale &amp; Return (saare accounts jod kar)</h3>
-<div class="bar"><input type="search" id="tItemSFind" placeholder="ðŸ” Item dhoondhiye (jaise sheep hair cutter)" style="flex:1;max-width:360px"><span id="tItemSCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
+<div class="card"><h3 data-p>🧮 Item-wise Sale &amp; Return (saare accounts jod kar)</h3>
+<div class="bar"><input type="search" id="tItemSFind" placeholder="🔍 Item dhoondhiye (jaise sheep hair cutter)" style="flex:1;max-width:360px"><span id="tItemSCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw" style="max-height:560px"><table id="tItemS"></table></div></div>
 
-<div class="grid"><div class="card"><h3 data-p>ðŸ† Top Selling SKUs</h3><div class="bar" id="topBy" role="group" aria-label="Sort"><button type="button" data-by="u" aria-pressed="true">Units wise</button><button type="button" data-by="s" aria-pressed="false">Sale (â‚¹) wise</button></div><div class="tw"><table id="tTop"></table></div></div>
-<div class="card" style="display:flex;flex-direction:column"><h3 data-p>ðŸšš Order Status</h3><div style="position:relative;flex:1;min-height:380px"><canvas id="cStatus"></canvas></div></div></div>
+<div class="grid"><div class="card"><h3 data-p>🏆 Top Selling SKUs</h3><div class="bar" id="topBy" role="group" aria-label="Sort"><button type="button" data-by="u" aria-pressed="true">Units wise</button><button type="button" data-by="s" aria-pressed="false">Sale (₹) wise</button></div><div class="tw"><table id="tTop"></table></div></div>
+<div class="card" style="display:flex;flex-direction:column"><h3 data-p>🚚 Order Status</h3><div style="position:relative;flex:1;min-height:380px"><canvas id="cStatus"></canvas></div></div></div>
 </section>
 
 <section class="tab" data-tab="returns" hidden>
-<div class="card"><h3 data-p>â†©ï¸ Item-wise Return (saare accounts jod kar)</h3>
-<div class="bar"><input type="search" id="tItemRFind" placeholder="ðŸ” Item dhoondhiye (jaise sheep hair cutter)" style="flex:1;max-width:360px"><span id="tItemRCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
+<div class="card"><h3 data-p>↩️ Item-wise Return (saare accounts jod kar)</h3>
+<div class="bar"><input type="search" id="tItemRFind" placeholder="🔍 Item dhoondhiye (jaise sheep hair cutter)" style="flex:1;max-width:360px"><span id="tItemRCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw" style="max-height:560px"><table id="tItemR"></table></div></div>
 
-<div class="card"><h3 data-p>ðŸ”™ Returns ka hisaab</h3>
+<div class="card"><h3 data-p>🔙 Returns ka hisaab</h3>
 <div id="rExplain" style="font-size:14px;line-height:1.6"></div>
 <div class="tw"><table id="tRefund"></table></div></div>
-<div class="card"><h3 data-p>âš ï¸ SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div>
-<div class="grid"><div class="card"><h3 data-p>ðŸ” Most Returned SKUs</h3><div class="tw"><table id="tRet"></table></div></div>
-<div class="card"><h3 data-p>â“ Return Reasons</h3><canvas id="cReason"></canvas></div></div>
+<div class="card"><h3 data-p>⚠️ SKUs with Highest Return Charges</h3><div class="tw"><table id="tLoss"></table></div></div>
+<div class="grid"><div class="card"><h3 data-p>🔁 Most Returned SKUs</h3><div class="tw"><table id="tRet"></table></div></div>
+<div class="card"><h3 data-p>❓ Return Reasons</h3><canvas id="cReason"></canvas></div></div>
 </section>
 
 <section class="tab" data-tab="products" hidden>
 <section class="card" id="costEditor">
-<h3>ðŸ“¦ Products &amp; Cost</h3>
-<p class="note" style="margin:14px 20px 0">Naam aur kharid keemat (â‚¹/unit) badal kar <b>Save</b> dabaiye. Naye products (jinki cost nahi bhari) sabse upar peele rang me aate hain. Pehli baar jo PIN daalenge wahi aage ke liye set ho jayega.</p>
+<h3>📦 Products &amp; Cost</h3>
+<p class="note" style="margin:14px 20px 0">Naam aur kharid keemat (₹/unit) badal kar <b>Save</b> dabaiye. Naye products (jinki cost nahi bhari) sabse upar peele rang me aate hain. Pehli baar jo PIN daalenge wahi aage ke liye set ho jayega.</p>
 <div class="bar"><label for="cePin">PIN</label><input type="password" id="cePin" inputmode="numeric" autocomplete="off" style="width:110px"><input type="search" id="ceFind" placeholder="Product dhoondhiye" style="flex:1;min-width:160px"><span id="ceMsg" style="font-size:13px"></span></div>
 <div class="tw" style="max-height:600px"><table id="tCost"></table></div>
 </section>
@@ -256,44 +256,44 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 
 <section class="tab" data-tab="mapping" hidden>
 <div class="kpis" id="mapKpis"></div>
-<div class="card"><h3>ðŸ“‹ Account-wise: kitni listing check karna baaki hai</h3><div class="tw"><table id="tMapAcc"></table></div></div>
-<div class="card"><h3>ðŸ”— Listing Mapping: kis listing par doosra seller baitha hai</h3>
-<p class="note" style="margin:14px 18px 0">Har listing ke saamne <b>Sellers dekhiye</b> dabaiye: flipkart.com par us product ke saare sellers khulenge. Agar aapke alawa koi aur seller dikhe to status <b>âš ï¸ Doosra seller</b> chuniye, kitne seller hain likhiye aur <b>Save</b> dabaiye (PIN wahi jo Products tab ka hai). Sabse zyada bikne wali listing upar hain.</p>
+<div class="card"><h3>📋 Account-wise: kitni listing check karna baaki hai</h3><div class="tw"><table id="tMapAcc"></table></div></div>
+<div class="card"><h3>🔗 Listing Mapping: kis listing par doosra seller baitha hai</h3>
+<p class="note" style="margin:14px 18px 0">Har listing ke saamne <b>Sellers dekhiye</b> dabaiye: flipkart.com par us product ke saare sellers khulenge. Agar aapke alawa koi aur seller dikhe to status <b>⚠️ Doosra seller</b> chuniye, kitne seller hain likhiye aur <b>Save</b> dabaiye (PIN wahi jo Products tab ka hai). Sabse zyada bikne wali listing upar hain.</p>
 <div class="bar"><label for="mapPin">PIN</label><input type="password" id="mapPin" inputmode="numeric" autocomplete="off" style="width:110px">
-<select id="mapShow"><option value="">Sab listing</option><option value="none">Abhi check nahi hui</option><option value="other">âš ï¸ Doosra seller</option><option value="case">ðŸ“¨ Case raise kiya</option><option value="ok">âœ… Sirf aap</option></select>
-<button type="button" class="ceSave" id="mapSaveAll">ðŸ’¾ Sab save karo</button>
-<input type="search" id="mapFind" placeholder="ðŸ” SKU / product dhoondhiye" style="flex:1;min-width:160px"><span id="mapMsg" style="font-size:13px"></span></div>
+<select id="mapShow"><option value="">Sab listing</option><option value="none">Abhi check nahi hui</option><option value="other">⚠️ Doosra seller</option><option value="case">📨 Case raise kiya</option><option value="ok">✅ Sirf aap</option></select>
+<button type="button" class="ceSave" id="mapSaveAll">💾 Sab save karo</button>
+<input type="search" id="mapFind" placeholder="🔍 SKU / product dhoondhiye" style="flex:1;min-width:160px"><span id="mapMsg" style="font-size:13px"></span></div>
 <div class="tw"><table id="tMap"></table></div></div>
 </section>
 
 <section class="tab" data-tab="price" hidden>
 <div class="kpis" id="prKpis"></div>
-<div class="card"><h3>ðŸŽ¯ Account-wise: settlement target me hai ya nahi</h3>
-<p class="note" id="prNote" style="margin:14px 18px 0">Target = settlement-target-product.xlsx ka Min/Max (Â±â‚¹5). Ye ginti Seller Hub ki asli settlement se banti hai, har baar settlement script chalne ke baad update hoti hai.</p>
+<div class="card"><h3>🎯 Account-wise: settlement target me hai ya nahi</h3>
+<p class="note" id="prNote" style="margin:14px 18px 0">Target = settlement-target-product.xlsx ka Min/Max (±₹5). Ye ginti Seller Hub ki asli settlement se banti hai, har baar settlement script chalne ke baad update hoti hai.</p>
 <div class="tw"><table id="tPrAcc"></table></div></div>
-<div class="card"><h3>ðŸš¨ Target se bahar listings</h3>
-<div class="bar"><select id="prAcc"></select><select id="prKind"><option value="">Kam + Zyada</option><option value="low">â¬† Settlement kam</option><option value="high">â¬‡ Settlement zyada</option></select>
-<input type="search" id="prFind" placeholder="ðŸ” SKU dhoondhiye" style="flex:1;min-width:160px"><span id="prCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
+<div class="card"><h3>🚨 Target se bahar listings</h3>
+<div class="bar"><select id="prAcc"></select><select id="prKind"><option value="">Kam + Zyada</option><option value="low">⬆ Settlement kam</option><option value="high">⬇ Settlement zyada</option></select>
+<input type="search" id="prFind" placeholder="🔍 SKU dhoondhiye" style="flex:1;min-width:160px"><span id="prCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw" style="max-height:600px"><table id="tPr"></table></div></div>
 </section>
 
 <section class="tab" data-tab="settings" hidden>
-<div class="card"><h3>ðŸŽ¨ Rang aur Theme</h3>
-<div class="setrow"><label>Mode</label><div class="bar" id="setMode"><button type="button" data-m="light">â˜€ï¸ Light</button><button type="button" data-m="dark">ðŸŒ™ Dark</button></div></div>
+<div class="card"><h3>🎨 Rang aur Theme</h3>
+<div class="setrow"><label>Mode</label><div class="bar" id="setMode"><button type="button" data-m="light">☀️ Light</button><button type="button" data-m="dark">🌙 Dark</button></div></div>
 <div class="setrow"><label>Main rang</label><div id="setPri" style="display:flex;gap:10px;flex-wrap:wrap"></div></div>
 <p class="note" style="margin:0 18px 14px">Ye pasand sirf is browser/PC me yaad rehti hai.</p></div>
-<div class="card"><h3>ðŸ”’ App Lock (PIN / Fingerprint)</h3>
+<div class="card"><h3>🔒 App Lock (PIN / Fingerprint)</h3>
 <p class="note" style="margin:14px 18px 0">App kholte waqt PIN ya phone ka fingerprint / face lock maangega. Ye lock sirf isi phone/browser me lagta hai (har device par alag set karein). App 2 minute se zyada background me rahe to dobara lock ho jayega.</p>
 <div class="setrow"><label>Lock</label><span id="lkState" style="font-weight:600"></span></div>
 <div class="setrow"><label>Naya PIN (4-6 ank)</label><div class="bar"><input type="password" id="lkPin1" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="PIN" style="width:110px"><input type="password" id="lkPin2" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="Dobara PIN" style="width:120px"><button type="button" class="ceSave" id="lkSet">PIN set karo</button></div></div>
-<div class="setrow"><label>Fingerprint / Face</label><div class="bar"><button type="button" class="ceSave" id="lkBio">ðŸ‘† Fingerprint chalu karo</button></div></div>
+<div class="setrow"><label>Fingerprint / Face</label><div class="bar"><button type="button" class="ceSave" id="lkBio">👆 Fingerprint chalu karo</button></div></div>
 <div class="setrow"><label>Lock hatana</label><div class="bar"><button type="button" class="ceSave" id="lkOff">Lock band karo</button></div></div>
 <p class="note" id="lkMsg" style="margin:0 18px 14px"></p></div>
-<div class="card"><h3>ðŸš€ Dashboard kholne par</h3>
+<div class="card"><h3>🚀 Dashboard kholne par</h3>
 <div class="setrow"><label>Pehle se chuna period</label><div class="bar" id="setPeriod"><button type="button" data-p="30">30 Days</button><button type="button" data-p="60">60 Days</button><button type="button" data-p="90">90 Days</button><button type="button" data-p="max">Sabse zyada din</button></div></div>
 <div class="setrow"><label>Sab pasand hatayein</label><button type="button" class="ceSave" id="setReset">Reset (default par wapas)</button></div></div>
-<div class="card"><h3>ðŸ“Š Data ki jaankari</h3><div class="tw"><table id="tInfo" class="info"></table></div></div>
-<div class="card"><h3>ðŸ”Œ API Status</h3><div class="tw"><table id="tApi"></table></div></div>
+<div class="card"><h3>📊 Data ki jaankari</h3><div class="tw"><table id="tInfo" class="info"></table></div></div>
+<div class="card"><h3>🔌 API Status</h3><div class="tw"><table id="tApi"></table></div></div>
 </section>
 </main>
 <script src="settle.js"></script>
@@ -317,15 +317,15 @@ if (!D) { demo = true; D = makeDemo(); }
 const accMin = {}; for (const o of D.orders) if (!accMin[o.acc] || o.date < accMin[o.acc]) accMin[o.acc] = o.date;
 const ORD_MIN_ALL = Object.values(accMin).sort().at(-1) || '';
 let ORD_MIN = ORD_MIN_ALL;
-const PACK = 15; // packing cost per dispatched order: box + authorised plastic bag (â‚¹)
+const PACK = 15; // packing cost per dispatched order: box + authorised plastic bag (₹)
 const short = a => String(a).replace(/^Acc\d+_/, '').toUpperCase();
 // Same colour per account everywhere (matches the account buttons)
 const ACC_C = { AVEDIA: '#2563eb', BRAINLE: '#9333ea', ZOTIMO: '#ea580c', ARKZO: '#0e7490', PIVDO: '#ca8a04', KIDOCA: '#475569', WISKA: '#92400e', TAUDI: '#dc2626', VUSTICA: '#15803d' };
 const accColor = a => ACC_C[short(a)] || '#57606a', tag = a => `<span class="acct" style="--c:${accColor(a)}">${short(a)}</span>`;
-const $ = id => document.getElementById(id), inr = n => 'â‚¹' + Math.round(n).toLocaleString('en-IN');
+const $ = id => document.getElementById(id), inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
 // Dates are stored as yyyy-mm-dd; show them as dd-mm-yyyy everywhere
 const dmy = s => String(s || '').replace(/(\d{4})-(\d{2})-(\d{2})/g, '$3-$2-$1');
-$('gen').textContent = (demo ? 'DEMO DATA â€” ' : 'Updated: ') + dmy(D.generated);
+$('gen').textContent = (demo ? 'DEMO DATA — ' : 'Updated: ') + dmy(D.generated);
 if (demo) $('note').innerHTML = '<div class="warn">Abhi demo data dikh raha hai. RUN.bat chalaiye.</div>';
 // Only accounts whose API works; pending ones (settlement data only) join automatically once approved
 // API accounts (orders) plus accounts whose data so far comes only from Seller Hub (API approval pending)
@@ -356,7 +356,7 @@ const PRI = () => getComputedStyle(document.documentElement).getPropertyValue('-
 function chart(id, cfg) { charts[id]?.destroy(); charts[id] = new Chart($(id), cfg); }
 const isCancel = o => /CANCEL/i.test(o.status || "");
 const isLost = o => /CANCEL|^RETURNED$/i.test(o.status || "");
-function grp(arr, key, val) { const m = {}; arr.forEach(x => { const k = typeof key == 'function' ? key(x) : x[key] || 'â€”'; m[k] = (m[k] || 0) + (val ? val(x) : 1); }); return m; }
+function grp(arr, key, val) { const m = {}; arr.forEach(x => { const k = typeof key == 'function' ? key(x) : x[key] || '—'; m[k] = (m[k] || 0) + (val ? val(x) : 1); }); return m; }
 // Cards that follow the 30/60/90-day buttons show the period in their title, e.g. "Top Selling SKUs (Last 30 Days)"
 function periodTitles() {
   const f0 = $('fFrom').value, f = f0 < ORD_MIN ? ORD_MIN : f0, t = $('fTo').value;
@@ -379,7 +379,7 @@ function renderItemSR() {
     const L = all.filter(x => !q || x.name.toUpperCase().includes(q) || x.p.includes(q) || [...x.skus].some(s => s.toUpperCase().includes(q)))
       .sort((a, b) => sortKey(b) - sortKey(a));
     const tot = L.reduce((s, x) => { for (const k of ['units', 'sale', 'canc', 'cu', 'rto', 'sent']) s[k] += x[k]; s.ord += x.ord.size; return s; }, { units: 0, sale: 0, canc: 0, cu: 0, rto: 0, sent: 0, ord: 0 });
-    const pc = (r, s) => s ? (r / s * 100).toFixed(1) + '%' : 'â€”';
+    const pc = (r, s) => s ? (r / s * 100).toFixed(1) + '%' : '—';
     $(id + 'Cnt').textContent = L.length + ' items';
     $(id).innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Orders</th><th>Sale</th><th>Customer Return</th><th>RTO</th><th>Sold</th><th>Customer Return %</th></tr>' +
       (q && L.length > 1 ? `<tr class="total"><td>Kul (${L.length} items)</td><td></td><td>${tot.ord}</td><td>${inr(tot.sale)}</td><td>${tot.cu}</td><td>${tot.rto}</td><td>${tot.units}</td><td>${pc(tot.cu, tot.sent)}</td></tr>` : '') +
@@ -393,7 +393,7 @@ function render() {
   periodTitles();
   ORD_MIN = $('fAcc').value ? (accMin[$('fAcc').value] || ORD_MIN_ALL) : ORD_MIN_ALL;
   const a = $('fAcc').value, t = $('fTo').value, f0 = $('fFrom').value, f = f0 < ORD_MIN ? ORD_MIN : f0;
-  if (!demo) $('note').innerHTML = `<div class="range">ðŸ“… Orders &amp; Returns: <b>${dmy(f)}</b> se <b>${dmy(t)}</b> tak`
+  if (!demo) $('note').innerHTML = `<div class="range">📅 Orders &amp; Returns: <b>${dmy(f)}</b> se <b>${dmy(t)}</b> tak`
     + (f0 < ORD_MIN ? ` <span>(${a ? 'Is account ke' : 'Saare accounts ke'} orders Flipkart API se ${dmy(ORD_MIN)} se hi poore milte hain)</span>` : '') + '</div>'
     + (a && hubAccs.includes(a) ? `<div class="warn">${short(a)} ki Flipkart API abhi approve nahi hui: orders, cancel aur return ke boxes khaali rahenge. Bank settlement, return charges, profit aur listing Seller Hub se hain.</div>` : '');
   const inR = x => (!a || x.acc === a) && (!f || x.date >= f) && (!t || x.date <= t);
@@ -402,17 +402,17 @@ function render() {
   const orderCount = new Set(O.map(o => o.orderId)).size, canc = O.filter(isCancel).length;
   const cust = R.filter(r => r.type === 'customer_return').length, rto = R.filter(r => r.type === 'courier_return').length;
   const liveN = new Set(live.map(o => o.orderId)).size;
-  const k = [['Kul Sale (â‚¹)', inr(sales), 'Cancel aur return hue orders chhod kar baaki orders ki keemat ka jod'], ['Kul orders aaye', orderCount, 'Is period me aaye sabhi orders (cancel wale bhi)'],
-    ['Kul units bike', units, 'Cancel aur return chhod kar bike units ka jod'], ['Ek order ki average keemat', inr(liveN ? sales / liveN : 0), `Kul Sale ${inr(sales)} Ã· ${liveN} orders`],
+  const k = [['Kul Sale (₹)', inr(sales), 'Cancel aur return hue orders chhod kar baaki orders ki keemat ka jod'], ['Kul orders aaye', orderCount, 'Is period me aaye sabhi orders (cancel wale bhi)'],
+    ['Kul units bike', units, 'Cancel aur return chhod kar bike units ka jod'], ['Ek order ki average keemat', inr(liveN ? sales / liveN : 0), `Kul Sale ${inr(sales)} ÷ ${liveN} orders`],
     ['Customer tak pahunche (Delivered)', new Set(O.filter(o => o.status === 'DELIVERED').map(o => o.orderId)).size, 'Is period ke orders jinka status abhi Delivered hai'], ['Cancel hue orders', canc, 'Customer ya Flipkart ne cancel kiye'],
     ['Customer ne wapas kiye', cust, 'Is period me aaye customer returns (Flipkart API)'], ['RTO (customer ne parcel liya nahi)', rto, 'Courier se wapas aaye parcels (Flipkart API)']];
-  // Rates: returns of orders placed in this period Ã· shipped units of those orders. Returns whose order is
+  // Rates: returns of orders placed in this period ÷ shipped units of those orders. Returns whose order is
   // outside the period (or older than the API's order history) would otherwise inflate the rate.
   const shipped = O.filter(o => !isCancel(o)).reduce((s, o) => s + o.qty, 0), rate = n => (shipped ? n / shipped * 100 : 0).toFixed(1) + '%';
   const inO = new Set(O.map(o => o.acc + '|' + o.itemId)), RM = D.returns.filter(r => (!a || r.acc === a) && inO.has(r.acc + '|' + r.itemId));
   const custM = RM.filter(r => r.type === 'customer_return').length, rtoM = RM.filter(r => r.type === 'courier_return').length;
-  k.push(['Customer return %', rate(custM), `Isi period ke orders ke ${custM} customer returns Ã· ${shipped} bheje units`], ['RTO %', rate(rtoM), `Isi period ke orders ke ${rtoM} RTO Ã· ${shipped} bheje units`],
-    ['Kul return % (customer + RTO)', rate(custM + rtoM), `(${custM} + ${rtoM}) Ã· ${shipped} bheje units`]);
+  k.push(['Customer return %', rate(custM), `Isi period ke orders ke ${custM} customer returns ÷ ${shipped} bheje units`], ['RTO %', rate(rtoM), `Isi period ke orders ke ${rtoM} RTO ÷ ${shipped} bheje units`],
+    ['Kul return % (customer + RTO)', rate(custM + rtoM), `(${custM} + ${rtoM}) ÷ ${shipped} bheje units`]);
   $('kpis').innerHTML = k.map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   // Trend has its own 30/60/90 day buttons (only the account filter is shared); every day gets a bar, 0 if no sale
   const tn = window.trendN || 30, tEnd = new Date(lastDate), days = [];
@@ -421,12 +421,12 @@ function render() {
   const byDay = grp(tLive, 'date', o => o.amount);
   // One bar per day; tap/hover a bar for that day's orders and sale
   const ordDay = {}; for (const o of tLive) (ordDay[o.date] = ordDay[o.date] || new Set()).add(o.orderId);
-  $('trendTitle').textContent = `ðŸ“ˆ Daily Sales (â‚¹): pichhle ${days.length} din ka trend`;
+  $('trendTitle').textContent = `📈 Daily Sales (₹): pichhle ${days.length} din ka trend`;
   document.querySelectorAll('#trendDays button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === tn));
   chart('cTrend', { type: 'bar', data: { labels: days.map(d => dmy(d).slice(0, 5)), datasets: [{ label: 'Sale', data: days.map(d => byDay[d] || 0), backgroundColor: PRI(), borderRadius: 4 }] },
     options: { interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { padding: 10, titleFont: { size: 13 }, bodyFont: { size: 13 },
       callbacks: { title: it => dmy(days[it[0].dataIndex]), label: it => [' Sale: ' + inr(it.raw), ' Orders: ' + ((ordDay[days[it.dataIndex]] || new Set()).size)] } } },
-      scales: { x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90, font: { size: tn > 30 ? 8 : 10 } } }, y: { ticks: { callback: v => 'â‚¹' + (v >= 1000 ? Math.round(v / 1000) + 'k' : v) } } } } });
+      scales: { x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90, font: { size: tn > 30 ? 8 : 10 } } }, y: { ticks: { callback: v => '₹' + (v >= 1000 ? Math.round(v / 1000) + 'k' : v) } } } } });
   const allO = D.orders.filter(o => (!f || o.date >= f) && (!t || o.date <= t)), allR = D.returns.filter(r => (!f || r.date >= f) && (!t || r.date <= t));
   const rows = accs.filter(ac => !a || ac === a).map(ac => { const o = allO.filter(x => x.acc === ac), l = o.filter(x => !isLost(x)), r = allR.filter(x => x.acc === ac), u = l.reduce((s, x) => s + x.qty, 0);
     // Return % is over shipped units (everything not cancelled, incl. items later returned)
@@ -449,13 +449,13 @@ function render() {
   const by = window.topBy || 'u'; document.querySelectorAll('#topBy button').forEach(b => b.setAttribute('aria-pressed', b.dataset.by === by));
   $('tTop').innerHTML = '<tr><th>SKU</th><th>Units</th><th>Sales</th></tr>' + Object.entries(top).sort((a, b) => by === 's' ? topS[b[0]] - topS[a[0]] : b[1] - a[1] || topS[b[0]] - topS[a[0]]).slice(0, 20).map(([s, u]) => `<tr><td>${s}</td><td>${u}</td><td>${inr(topS[s])}</td></tr>`).join('');
   const skuOf = {}; D.orders.forEach(o => skuOf[o.itemId] = o.sku);
-  const retS = r => r.sku || skuOf[r.itemId] || 'â€”';
+  const retS = r => r.sku || skuOf[r.itemId] || '—';
   const retCu = grp(R.filter(r => r.type === 'customer_return'), retS), retRto = grp(R.filter(r => r.type === 'courier_return'), retS), ret = grp(R, retS);
   $('tRet').innerHTML = '<tr><th>SKU</th><th>Customer Return</th><th>RTO</th><th>Total</th><th>Sold</th></tr>' + Object.entries(ret).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s, n]) => `<tr><td>${s}</td><td>${retCu[s] || 0}</td><td>${retRto[s] || 0}</td><td><b>${n}</b></td><td>${top[s] || 0}</td></tr>`).join('');
   window.__isr = { O, R, skuOf }; renderItemSR();
   const rs = Object.entries(grp(R, 'reason')).sort((a, b) => b[1] - a[1]).slice(0, 8);
   chart('cReason', { type: 'bar', data: { labels: rs.map(r => r[0]), datasets: [{ data: rs.map(r => r[1]), backgroundColor: '#f7b500' }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } } } });
-  $('tApi').innerHTML = '<tr><th>Account</th><th>Status</th></tr>' + D.status.map(s => `<tr><td>${tag(s.acc)}</td><td class="${s.ok ? 'ok' : 'bad'}">${s.ok ? 'âœ” ' : 'âœ– '}${s.msg}</td></tr>`).join('');
+  $('tApi').innerHTML = '<tr><th>Account</th><th>Status</th></tr>' + D.status.map(s => `<tr><td>${tag(s.acc)}</td><td class="${s.ok ? 'ok' : 'bad'}">${s.ok ? '✔ ' : '✖ '}${s.msg}</td></tr>`).join('');
 }
 // Settlement files hold per-month buckets (m: {"YYYY-MM": {t, s}}); older files have one flat {t, s}.
 // Build the view for whole payment months: a month counts when it starts no more than 5 days
@@ -499,7 +499,7 @@ function renderSettle() {
   $('settle').hidden = false; $('settleTop').hidden = false;
   const a = $('fAcc').value, keys = Object.keys(S).filter(k => accs.includes(k) && (!a || k === a)).sort();
   const dates = keys.flatMap(k => S[k].p.map(p => p[0])).sort();
-  $('sNote').innerHTML = `ðŸ“… Payments: <b>${dmy(dates[0])}</b> se <b>${dmy(dates.at(-1))}</b> tak Â· Seller Hub se liya: ${dmy(window.FK_SETTLE_AT)}`;
+  $('sNote').innerHTML = `📅 Payments: <b>${dmy(dates[0])}</b> se <b>${dmy(dates.at(-1))}</b> tak · Seller Hub se liya: ${dmy(window.FK_SETTLE_AT)}`;
   const T = (k, typ, f) => (S[k].t[typ] || {})[f] || 0, sum = f => keys.reduce((s, k) => s + f(k), 0);
   const bank = sum(k => S[k].p.reduce((s, p) => s + p[1], 0));
   const fees = sum(k => Object.values(S[k].t).reduce((s, t) => s + t.fees, 0));
@@ -534,23 +534,23 @@ function renderSettle() {
     <div class="kpis" style="margin:0 0 12px">
       <div class="k"><span>Wapas aaye parcels ka refund kata</span><b class="bad">${inr(rf)}</b><small class="how">Is period me jitne returns settle hue, un sab ka refund</small></div>
       <div class="k"><span>Inme se jinki sale isi mahine mili</span><b>${inr(rs)}</b><small class="how">Un returns ki sale jiska paisa bhi isi period me mila</small></div>
-      <div class="k"><span>Pichhle mahine mila paisa, ab kata (nuksaan nahi)</span><b>${inr(gap)}</b><small class="how">Refund ${inr(rf)} âˆ’ sale ${inr(rs)}. Ye paisa pehle mil chuka tha, isliye nuksaan nahi</small></div>
+      <div class="k"><span>Pichhle mahine mila paisa, ab kata (nuksaan nahi)</span><b>${inr(gap)}</b><small class="how">Refund ${inr(rf)} − sale ${inr(rs)}. Ye paisa pehle mil chuka tha, isliye nuksaan nahi</small></div>
       <div class="k"><span>Asli nuksaan: return charge</span><b class="bad">${inr(chgAll)}</b><small class="how">Flipkart ne customer returns par jo charge kaata (Seller Hub)</small></div>
     </div>
     <div class="kpis" style="margin:0 0 12px">
       <div class="k"><span>Parcels jinka paisa mila</span><b>${ordAll}</b><small class="how">Jin parcels ka sale ka paisa is period me mila</small></div>
       <div class="k"><span>Parcels jo wapas aaye (customer + RTO)</span><b>${retAll}</b>${chargedAll == null ? '' : `<small style="display:block;margin-top:6px;font:600 12.5px var(--sans);color:var(--mut)"><span class="bad">${chargedAll} Customer</span> + ${retAll - chargedAll} RTO</small>`}</div>
       <div class="k"><span>Kul parcels bheje</span><b>${ordAll + retAll}</b><small class="how">${ordAll} paisa mila + ${retAll} wapas aaye</small></div>
-      <div class="k"><span>Har parcel par average return charge</span><b class="bad">${ordAll + retAll ? 'â‚¹' + (chgAll / (ordAll + retAll)).toFixed(1) : 'â€”'}</b><small class="how">Return charge ${inr(chgAll)} Ã· ${ordAll + retAll} kul parcels</small></div>
-      <div class="k"><span>Packing kharcha (â‚¹${PACK} har parcel)</span><b class="bad">${inr((ordAll + retAll) * PACK)}</b><small class="how">${ordAll + retAll} parcels Ã— â‚¹${PACK}</small></div>
-      <div class="k"><span>Har parcel ka kharcha (return + packing)</span><b class="bad">${ordAll + retAll ? 'â‚¹' + (chgAll / (ordAll + retAll) + PACK).toFixed(1) : 'â€”'}</b><small class="how">Average return charge + â‚¹${PACK} packing</small></div>
-      <div class="k"><span>Charge lage returns (customer) / kul wapas</span><b>${chargedAll == null ? 'â€”' : chargedAll + ' / ' + retAll}</b><small class="how">${retAll} wapas me se sirf customer returns par charge lagta hai, RTO par nahi</small></div>
-      <div class="k"><span>${chargedAll ? "Ek customer return ka charge" : "Ek return ka average charge"}</span><b class="bad">${chargedAll ? inr(chargedAmt / chargedAll) : retAll ? inr(chgAll / retAll) : "â€”"}</b><small class="how">${chargedAll ? `Return charge ${inr(chargedAmt)} Ã· ${chargedAll} charge lage returns` : `Return charge Ã· ${retAll} returns`}</small></div>
+      <div class="k"><span>Har parcel par average return charge</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll)).toFixed(1) : '—'}</b><small class="how">Return charge ${inr(chgAll)} ÷ ${ordAll + retAll} kul parcels</small></div>
+      <div class="k"><span>Packing kharcha (₹${PACK} har parcel)</span><b class="bad">${inr((ordAll + retAll) * PACK)}</b><small class="how">${ordAll + retAll} parcels × ₹${PACK}</small></div>
+      <div class="k"><span>Har parcel ka kharcha (return + packing)</span><b class="bad">${ordAll + retAll ? '₹' + (chgAll / (ordAll + retAll) + PACK).toFixed(1) : '—'}</b><small class="how">Average return charge + ₹${PACK} packing</small></div>
+      <div class="k"><span>Charge lage returns (customer) / kul wapas</span><b>${chargedAll == null ? '—' : chargedAll + ' / ' + retAll}</b><small class="how">${retAll} wapas me se sirf customer returns par charge lagta hai, RTO par nahi</small></div>
+      <div class="k"><span>${chargedAll ? "Ek customer return ka charge" : "Ek return ka average charge"}</span><b class="bad">${chargedAll ? inr(chargedAmt / chargedAll) : retAll ? inr(chgAll / retAll) : "—"}</b><small class="how">${chargedAll ? `Return charge ${inr(chargedAmt)} ÷ ${chargedAll} charge lage returns` : `Return charge ÷ ${retAll} returns`}</small></div>
     </div>
-    <p class="note" style="margin:0 0 8px">ðŸ“ <b>Note:</b> "Har parcel par average return charge" abhi thoda zyada dikhega. Is mahine bheje kai parcels abhi raste (transit) me hain, unka pata nahi ki deliver honge, RTO honge ya customer return. Wo parcels abhi ginti me nahi hain, jabki pichhle mahine ke parcels ke return charge is mahine kat gaye.</p>`;
-  $('tRefund').innerHTML = '<tr><th>Account</th><th>Payment mile</th><th>Return settle</th><th>Total settle</th><th>Return charges</th><th>Charge / order</th><th>Packing (â‚¹' + PACK + '/order)</th><th>Kul kharcha / order</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th></tr>' +
+    <p class="note" style="margin:0 0 8px">📝 <b>Note:</b> "Har parcel par average return charge" abhi thoda zyada dikhega. Is mahine bheje kai parcels abhi raste (transit) me hain, unka pata nahi ki deliver honge, RTO honge ya customer return. Wo parcels abhi ginti me nahi hain, jabki pichhle mahine ke parcels ke return charge is mahine kat gaye.</p>`;
+  $('tRefund').innerHTML = '<tr><th>Account</th><th>Payment mile</th><th>Return settle</th><th>Total settle</th><th>Return charges</th><th>Charge / order</th><th>Packing (₹' + PACK + '/order)</th><th>Kul kharcha / order</th><th>Is period ki sale</th><th>Refund kata</th><th>Pehle mila, ab kata</th></tr>' +
     keys.map(k => { const s = T(k, 'Return', 'sale'), r = -T(k, 'Return', 'refund'), c = chgOf(k), d = T(k, 'Sale', 'n'), n = T(k, 'Return', 'n');
-      return `<tr><td>${tag(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? 'â‚¹' + (c / (d + n)).toFixed(1) : 'â€”'}</b></td><td class="bad">${inr((d + n) * PACK)}</td><td class="bad"><b>${d + n ? 'â‚¹' + (c / (d + n) + PACK).toFixed(1) : 'â€”'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
+      return `<tr><td>${tag(k)}</td><td>${d}</td><td>${n}</td><td><b>${d + n}</b></td><td class="bad">${inr(c)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n)).toFixed(1) : '—'}</b></td><td class="bad">${inr((d + n) * PACK)}</td><td class="bad"><b>${d + n ? '₹' + (c / (d + n) + PACK).toFixed(1) : '—'}</b></td><td>${inr(s)}</td><td class="bad">${inr(r)}</td><td>${inr(r - s)}</td></tr>`; }).join('');
   renderSkuCharges(keys, sf, $('fTo').value);
   renderProfit(keys, S, sf, $('fTo').value);
   renderMonthly(keys);
@@ -580,7 +580,7 @@ function renderMonthly(keys) {
 const productOf = sku => String(sku || '').trim()
   .replace(/^(ARZSP|AEZSP|ARZ|ARKZ|AVD|AVSP|AV|KDCSP|KDC|PVDSP|PVD|TDSP|TD|WSKSP|WSK|ZTSP|ZT|ZO|FOV|FO|VUSP|VU|BRSP|BRL|BRE|BR)\s*-\s*(SP-)?/i, '')
   .replace(/[\s_-]+0*\d{1,2}[a-zA-Z]?$/, '').replace(/\s+/g, ' ').trim().toUpperCase();
-// Profit per account: bank payouts in the period âˆ’ cost of units delivered in the period âˆ’ packing
+// Profit per account: bank payouts in the period − cost of units delivered in the period − packing
 // Product costs live in Supabase (fk_product_cost), readable by anyone with the page, writable only
 // through fk_save_cost() with the PIN. cost.js (from product-cost.csv) is the offline fallback.
 const SB_URL = 'https://begblflwhxbbipsmxytd.supabase.co', SB_KEY = 'sb_publishable_HO0wPEI58Ia5k7CFOIyOhA_A6dtCsuL';
@@ -605,7 +605,7 @@ function renderCostEditor() {
   const list = all.filter(p => !q || p.includes(q) || (N[p] || '').toUpperCase().includes(q))
     .sort((a, b) => (C[a] == null) - (C[b] == null) || (units[b] || 0) - (units[a] || 0));
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  $('tCost').innerHTML = '<tr><th>Product (SKU se)</th><th>Item naam</th><th>Cost â‚¹</th><th>Bike (6 mahine)</th><th></th></tr>' +
+  $('tCost').innerHTML = '<tr><th>Product (SKU se)</th><th>Item naam</th><th>Cost ₹</th><th>Bike (6 mahine)</th><th></th></tr>' +
     list.map(p => `<tr${C[p] == null ? ' style="background:#fff4d6;color:#6b4e00"' : ''} data-p="${esc(p)}"><td>${esc(p)}${C[p] == null ? ' <b>(naya)</b>' : ''}</td>` +
       `<td><input value="${esc(N[p] || '')}" placeholder="${esc(p)}" style="width:100%;min-width:140px"></td>` +
       `<td><input type="number" min="0" step="0.01" value="${C[p] ?? ''}" style="width:90px"></td><td>${units[p] || 0}</td>` +
@@ -617,7 +617,7 @@ $('tCost').onclick = async e => {
   const tr = b.closest('tr'), [nameIn, costIn] = tr.querySelectorAll('input'), p = tr.dataset.p, pin = $('cePin').value;
   if (!pin) { $('ceMsg').textContent = 'Pehle PIN daaliye.'; $('cePin').focus(); return; }
   if (costIn.value === '') { $('ceMsg').textContent = 'Cost bhariye.'; costIn.focus(); return; }
-  b.disabled = true; b.textContent = 'Savingâ€¦';
+  b.disabled = true; b.textContent = 'Saving…';
   try {
     const r = await fetch(SB_URL + '/rest/v1/rpc/fk_save_cost', { method: 'POST', headers: sbHead,
       body: JSON.stringify({ p_pin: pin, p_product: p, p_item_name: nameIn.value, p_cost: +costIn.value }) });
@@ -657,17 +657,17 @@ function renderProfit(keys, S, from, to) {
     return { k, bank, cogs, pack, gst, units, miss, profit: bank - cogs - pack };
   });
   const s = f => rows.reduce((a, r) => a + r[f], 0), bank = s('bank'), profit = s('profit');
-  $('pKpis').innerHTML = [['Bank me aaya', inr(bank), 'Upar Bank Settlement wala hi number'], ['Maal ki kharid (product cost)', inr(s('cogs')), `Har delivered unit Ã— Products tab me bhari aapki cost`],
-    ['Packing kharcha', inr(s('pack')), `Kul parcels ${Math.round(s('pack') / PACK)} Ã— â‚¹${PACK}`],
-    ['Munafa (Profit)', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`, `${inr(bank)} âˆ’ ${inr(s('cogs'))} âˆ’ ${inr(s('pack'))}`], ['Munafa %', bank ? (profit / bank * 100).toFixed(1) + '%' : 'â€”', 'Munafa Ã· Bank me aaya Ã— 100'],
+  $('pKpis').innerHTML = [['Bank me aaya', inr(bank), 'Upar Bank Settlement wala hi number'], ['Maal ki kharid (product cost)', inr(s('cogs')), `Har delivered unit × Products tab me bhari aapki cost`],
+    ['Packing kharcha', inr(s('pack')), `Kul parcels ${Math.round(s('pack') / PACK)} × ₹${PACK}`],
+    ['Munafa (Profit)', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`, `${inr(bank)} − ${inr(s('cogs'))} − ${inr(s('pack'))}`], ['Munafa %', bank ? (profit / bank * 100).toFixed(1) + '%' : '—', 'Munafa ÷ Bank me aaya × 100'],
     ['Delivered units (jinki cost gini)', s('units'), 'Is period ke Delivered orders ke units']]
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const top = [...missing.entries()].sort((a, b) => b[1] - a[1]);
-  $('pWarn').innerHTML = top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? 'â€¦' : ''}</div>` : '';
+  $('pWarn').innerHTML = top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? '…' : ''}</div>` : '';
   renderItemProfit(keys, rows, from, to);
   $('tProfit').innerHTML = '<tr><th>Account</th><th>Bank me aaya</th><th>Delivered units</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
-    [...rows].sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${tag(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : 'â€”'}</td></tr>`).join('') +
-    `<tr class="total"><td>TOTAL</td><td>${inr(bank)}</td><td>${s('units')}${s('miss') ? ` <span style="color:var(--mut)">(${s('miss')} bina cost)</span>` : ''}</td><td>${inr(s('cogs'))}</td><td>${inr(s('pack'))}</td><td class="${profit < 0 ? 'bad' : 'ok'}"><b>${inr(profit)}</b></td><td>${bank ? (profit / bank * 100).toFixed(1) + '%' : 'â€”'}</td></tr>`;
+    [...rows].sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${tag(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('') +
+    `<tr class="total"><td>TOTAL</td><td>${inr(bank)}</td><td>${s('units')}${s('miss') ? ` <span style="color:var(--mut)">(${s('miss')} bina cost)</span>` : ''}</td><td>${inr(s('cogs'))}</td><td>${inr(s('pack'))}</td><td class="${profit < 0 ? 'bad' : 'ok'}"><b>${inr(profit)}</b></td><td>${bank ? (profit / bank * 100).toFixed(1) + '%' : '—'}</td></tr>`;
 }
 // Item-wise profit: account payout shared by delivered sale, minus the item's own return charges, cost and packing
 function renderItemProfit(keys, rows, from, to) {
@@ -679,7 +679,7 @@ function renderItemProfit(keys, rows, from, to) {
     for (const k of keys) for (const [d, sku, sn, ss, rn, rs, ch] of HI[k]) if (inP(d)) {
       const x = get(productOf(sku)); x.accs.add(k); x.sold += sn; x.ret += rn; x.bank += ss + rs; x.chg += ch; x.ss = (x.ss || 0) + ss; x.rs = (x.rs || 0) + rs; }
     // Many returns carry no money (COD orders that came back were never paid), so only the refunded value
-    // reduces the units: refunded units â‰ˆ refund (after the return charge) Ã· average payout per unit.
+    // reduces the units: refunded units ≈ refund (after the return charge) ÷ average payout per unit.
     // Customer returns (Flipkart API, by return date) per product; RTO left out on purpose
     const skuOf = new Map(D.orders.map(o => [o.acc + '|' + o.itemId, o.sku]));
     for (const r of D.returns) if (keys.includes(r.acc) && inP(r.date) && (r.type === 'customer_return' || r.type === 'courier_return')) { const sku = r.sku || skuOf.get(r.acc + '|' + r.itemId); if (sku) { const x = get(productOf(sku)); if (r.type === 'customer_return') x.cr = (x.cr || 0) + 1; else x.rto = (x.rto || 0) + 1; } }
@@ -687,8 +687,8 @@ function renderItemProfit(keys, rows, from, to) {
       const units = Math.max(0, x.sold - refunded), c = C[x.p], cogs = c ? c * units : 0, pack = (x.sold + x.ret) * PACK;
       return { ...x, units, cogs, pack, miss: c ? 0 : units, profit: x.bank - cogs - pack }; }).filter(x => x.sold || x.ret).sort((a, b) => b.profit - a.profit);
     $('tItem').innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Paisa mila (units)</th><th>Customer return</th><th>RTO</th><th>Bank me aaya</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
-      list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].sort().map(tag).join(' ')}</td><td>${x.sold}</td><td>${x.cr || 0}</td><td>${x.rto || 0}${x.miss ? ` <span style="color:var(--mut)">(cost nahi bhari)</span>` : ''}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : 'â€”'}</td></tr>`).join('');
-    $('itemNote').innerHTML = 'Har item ka <b>asli paisa</b> Seller Hub ke SKU-wise settlement se: is period ke payments me us item ki sale ka paisa + returns ka refund/charge (bank me jo aaya, wahi). Product cost sirf un units par jinka paisa mila aur refund nahi hua (COD ke RTO ka paisa kabhi aaya hi nahi tha, isliye wo units me nahi ghatte). Packing â‚¹15 har parcel (sale + return).';
+      list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].sort().map(tag).join(' ')}</td><td>${x.sold}</td><td>${x.cr || 0}</td><td>${x.rto || 0}${x.miss ? ` <span style="color:var(--mut)">(cost nahi bhari)</span>` : ''}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
+    $('itemNote').innerHTML = 'Har item ka <b>asli paisa</b> Seller Hub ke SKU-wise settlement se: is period ke payments me us item ki sale ka paisa + returns ka refund/charge (bank me jo aaya, wahi). Product cost sirf un units par jinka paisa mila aur refund nahi hua (COD ke RTO ka paisa kabhi aaya hi nahi tha, isliye wo units me nahi ghatte). Packing ₹15 har parcel (sale + return).';
     return;
   }
   const retOf = new Map(D.returns.map(r => [r.acc + '|' + r.itemId, r])), skuOf = new Map(D.orders.map(o => [o.acc + '|' + o.itemId, o.sku]));
@@ -713,26 +713,26 @@ function renderItemProfit(keys, rows, from, to) {
   const list = [...it.values()].filter(x => x.units || x.chg || x.cr || x.rto).map(x => ({ ...x, bank: x.bank - x.chg, profit: x.bank - x.chg - x.cogs - x.pack }))
     .sort((a, b) => b.profit - a.profit);
   $('tItem').innerHTML = '<tr><th>Item</th><th>Accounts</th><th>Delivered units</th><th>Customer return</th><th>RTO</th><th>Delivered sale</th><th>Bank me aaya (anumaan)</th><th>Return charge</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
-    list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].map(tag).join(' ') || 'â€”'}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(${x.miss} bina cost)</span>` : ''}</td><td>${x.cr}</td><td>${x.rto || 0}</td><td>${inr(x.sale)}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : 'â€”'}</td></tr>`).join('');
+    list.map(x => `<tr><td>${N[x.p] || x.p}</td><td class="accs">${[...x.accs].map(tag).join(' ') || '—'}</td><td>${x.units}${x.miss ? ` <span style="color:var(--mut)">(${x.miss} bina cost)</span>` : ''}</td><td>${x.cr}</td><td>${x.rto || 0}</td><td>${inr(x.sale)}</td><td>${inr(x.bank)}</td><td class="bad">${inr(x.chg)}</td><td>${inr(x.cogs)}</td><td>${inr(x.pack)}</td><td class="${x.profit < 0 ? 'bad' : 'ok'}"><b>${inr(x.profit)}</b></td><td>${x.bank > 0 ? (x.profit / x.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('');
 }
 // Per SKU: customer / RTO returns (API, cleaned) and the returns Flipkart actually charged
-// (settlement "cr" rows [MM-DD payment date, order item id, charge â‚¹], joined to the API return type).
+// (settlement "cr" rows [MM-DD payment date, order item id, charge ₹], joined to the API return type).
 function renderSkuCharges(keys, from, to) {
   const retOf = new Map(D.returns.map(r => [r.acc + '|' + r.itemId, r])), skuOf = new Map(D.orders.map(o => [o.acc + '|' + o.itemId, o.sku]));
   const rows = new Map(), row = (acc, sku) => { const k = acc + '|' + sku; if (!rows.has(k)) rows.set(k, { acc, sku, sold: 0, del: 0, cu: 0, rto: 0, cCu: 0, cRto: 0, cNa: 0, chg: 0 }); return rows.get(k); };
   const inP = d => d >= from && d <= to;
   for (const o of D.orders) if (keys.includes(o.acc) && inP(o.date)) { const x = row(o.acc, o.sku); if (!isLost(o)) x.sold += o.qty; if (o.status === 'DELIVERED') x.del += o.qty; }
-  for (const r of D.returns) if (keys.includes(r.acc) && inP(r.date)) { const x = row(r.acc, r.sku || skuOf.get(r.acc + '|' + r.itemId) || 'â€”'); r.type === 'courier_return' ? x.rto++ : x.cu++; }
+  for (const r of D.returns) if (keys.includes(r.acc) && inP(r.date)) { const x = row(r.acc, r.sku || skuOf.get(r.acc + '|' + r.itemId) || '—'); r.type === 'courier_return' ? x.rto++ : x.cu++; }
   let hasCr = false;
   for (const k of keys) for (const [md, item, amt] of (window.FK_SETTLE[k].cr || [])) {
     hasCr = true; const dt = '2026-' + md; if (!inP(dt)) continue;
-    const r = retOf.get(k + '|' + item), x = row(k, (r && r.sku) || skuOf.get(k + '|' + item) || 'â€”');
+    const r = retOf.get(k + '|' + item), x = row(k, (r && r.sku) || skuOf.get(k + '|' + item) || '—');
     x.chg += amt; if (!r) x.cNa++; else if (r.type === 'courier_return') x.cRto++; else x.cCu++;
   }
   const list = [...rows.values()].filter(x => x.chg > 0 || x.cu + x.rto > 0).sort((a, b) => b.chg - a.chg || (b.cu + b.rto) - (a.cu + a.rto)).slice(0, 20);
   $('tLoss').innerHTML = '<tr><th>SKU</th><th>Account</th><th>Sold</th><th>Customer Ret</th><th>RTO</th><th>Delivered</th><th>Charge laga: Customer</th><th>Charge laga: RTO</th><th>Return charge</th><th>Charge / charged return</th></tr>' +
     list.map(x => { const n = x.cCu + x.cRto + x.cNa;
-      return `<tr><td>${x.sku}</td><td>${tag(x.acc)}</td><td>${x.sold}</td><td>${x.cu}</td><td>${x.rto}</td><td>${x.del}</td><td>${hasCr ? x.cCu : 'â€”'}</td><td>${hasCr ? x.cRto + (x.cNa ? ` <span title="order ka return type data me nahi">(+${x.cNa}?)</span>` : '') : 'â€”'}</td><td class="bad">${hasCr ? inr(x.chg) : 'â€”'}</td><td>${n ? inr(x.chg / n) : 'â€”'}</td></tr>`; }).join('');
+      return `<tr><td>${x.sku}</td><td>${tag(x.acc)}</td><td>${x.sold}</td><td>${x.cu}</td><td>${x.rto}</td><td>${x.del}</td><td>${hasCr ? x.cCu : '—'}</td><td>${hasCr ? x.cRto + (x.cNa ? ` <span title="order ka return type data me nahi">(+${x.cNa}?)</span>` : '') : '—'}</td><td class="bad">${hasCr ? inr(x.chg) : '—'}</td><td>${n ? inr(x.chg / n) : '—'}</td></tr>`; }).join('');
 }
 function makeDemo() {
   const o = [], r = [], st = ['DELIVERED','SHIPPED','READY_TO_DISPATCH','CANCELLED'], rs = ['Size issue','Damaged','Not as described','Changed mind'];
@@ -755,13 +755,13 @@ async function loadPrice() {
   const tot = sum('total'), inR = sum('inR'), low = sum('low'), high = sum('high');
   const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '-';
   $('prKpis').innerHTML = [['Kul active listings', tot, 'Saare 9 accounts'], ['Target me', `${inR} (${pct(inR, tot)})`, 'Settlement Min/Max ke andar'],
-    ['Settlement kam (badhani)', low, 'Roz 2 Ã— 5% badhti hai'], ['Settlement zyada (ghatani)', high, 'Roz 5% ghatti hai']]
+    ['Settlement kam (badhani)', low, 'Roz 2 × 5% badhti hai'], ['Settlement zyada (ghatani)', high, 'Roz 5% ghatti hai']]
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b${/kam|zyada/.test(l) && +v > 0 ? ' class="bad"' : ''}>${v}</b><small class="how">${h}</small></div>`).join('');
   const dt = x => new Date(x).toLocaleString('en-IN');
-  $('prNote').textContent = `Last update: ${dt(S.at)}. Target = settlement-target-product.xlsx ka Min/Max (Â±â‚¹5). ` + (S.source === 'api'
-    ? `Subah ki jaanch: aaj ki price âˆ’ Seller Hub fee (${S.feesAt ? dt(S.feesAt) : '-'} wali). Fee badli ho to agle Seller Hub run par sahi ho jayega.`
+  $('prNote').textContent = `Last update: ${dt(S.at)}. Target = settlement-target-product.xlsx ka Min/Max (±₹5). ` + (S.source === 'api'
+    ? `Subah ki jaanch: aaj ki price − Seller Hub fee (${S.feesAt ? dt(S.feesAt) : '-'} wali). Fee badli ho to agle Seller Hub run par sahi ho jayega.`
     : 'Seller Hub ki asli settlement se gina gaya.');
-  $('tPrAcc').innerHTML = '<tr><th>Account</th><th>Kul</th><th>âœ… Target me</th><th>â¬† Kam</th><th>â¬‡ Zyada</th><th>Target nahi</th><th>% sahi</th></tr>' +
+  $('tPrAcc').innerHTML = '<tr><th>Account</th><th>Kul</th><th>✅ Target me</th><th>⬆ Kam</th><th>⬇ Zyada</th><th>Target nahi</th><th>% sahi</th></tr>' +
     names.map(a => { const x = A[a], p = x.total ? x.inR / (x.total - (x.noT || 0) - (x.zero || 0)) : 0;
       return `<tr${p < .8 ? ' style="background:#fff4d6"' : ''}><td>${tag(a)}</td><td>${x.total}</td><td>${x.inR}</td><td${x.low ? ' class="bad"' : ''}>${x.low}</td><td${x.high ? ' class="bad"' : ''}>${x.high}</td><td>${(x.noT || 0) + (x.zero || 0)}</td><td>${Math.round(p * 100)}%</td></tr>`; }).join('') +
     `<tr class="total"><td>Kul</td><td>${tot}</td><td>${inR}</td><td>${low}</td><td>${high}</td><td>${sum('noT') + sum('zero')}</td><td>${pct(inR, tot - sum('noT') - sum('zero'))}</td></tr>`;
@@ -773,14 +773,14 @@ async function loadPrice() {
     const L = rows.filter(r => (!fa || r.a === fa) && (!fk || r.k === fk) && (!q || r.sku.toUpperCase().includes(q))).sort((x, y) => Math.abs(y.gap) - Math.abs(x.gap));
     $('prCnt').textContent = L.length + ' listings';
     $('tPr').innerHTML = '<tr><th>Account</th><th style="text-align:center">SKU</th><th>Abhi settlement</th><th>Target</th><th>Farak</th><th>Kitne din</th></tr>' +
-      L.map(r => `<tr><td>${tag(r.a)}</td><td style="text-align:center">${esc(r.sku)}</td><td>â‚¹${r.e}</td><td>${r.k === 'low' ? 'Min' : 'Max'} â‚¹${r.t}</td>` +
+      L.map(r => `<tr><td>${tag(r.a)}</td><td style="text-align:center">${esc(r.sku)}</td><td>₹${r.e}</td><td>${r.k === 'low' ? 'Min' : 'Max'} ₹${r.t}</td>` +
         `<td class="bad">${r.gap > 0 ? '+' : ''}${r.gap}%</td><td>${Math.max(1, Math.ceil(Math.abs(r.gap) / (r.k === 'low' ? 10 : 5)))}</td></tr>`).join('');
   };
   ['prAcc', 'prKind'].forEach(i => $(i).onchange = draw); $('prFind').oninput = draw; draw();
 }
 // Mapping tab: one row per account + SKU, status of other sellers saved online (fk_mapping)
 let MAP = {};
-const MAP_ST = { ok: 'âœ… Sirf aap', other: 'âš ï¸ Doosra seller', case: 'ðŸ“¨ Case raise kiya' };
+const MAP_ST = { ok: '✅ Sirf aap', other: '⚠️ Doosra seller', case: '📨 Case raise kiya' };
 async function loadMapping() {
   // The API returns at most 1000 rows per call, so page through
   try { const all = []; for (let off = 0; ; off += 1000) { const r = await fetch(SB_URL + `/rest/v1/fk_listing?select=acc,sku,fsn,title&order=acc,sku&limit=1000&offset=${off}`, { headers: sbHead });
@@ -804,20 +804,20 @@ function renderMapping() {
   const list = [...rows.values()].sort((p, q) => accAll.indexOf(p.acc) - accAll.indexOf(q.acc) || q.u30 - p.u30 || (q.last > p.last ? 1 : -1));
   const byAcc = accAll.filter(x => !a || x === a).map(x => { const l = list.filter(r => r.acc === x), c = st => l.filter(r => (MAP[r.k] || {}).status === st).length;
     return { x, n: l.length, left: l.filter(r => !MAP[r.k]).length, other: c('other'), cs: c('case'), ok: c('ok') }; });
-  $('tMapAcc').innerHTML = '<tr><th>Account</th><th>Kul listing</th><th>Baaki (check nahi hui)</th><th>âš ï¸ Doosra seller</th><th>ðŸ“¨ Case raise</th><th>âœ… Sirf aap</th><th>Kitna ho gaya</th></tr>' +
+  $('tMapAcc').innerHTML = '<tr><th>Account</th><th>Kul listing</th><th>Baaki (check nahi hui)</th><th>⚠️ Doosra seller</th><th>📨 Case raise</th><th>✅ Sirf aap</th><th>Kitna ho gaya</th></tr>' +
     byAcc.map(r => `<tr><td>${tag(r.x)}</td><td>${r.n}</td><td class="${r.left ? 'bad' : 'ok'}"><b>${r.left}</b></td><td>${r.other}</td><td>${r.cs}</td><td>${r.ok}</td><td>${r.n ? Math.round((r.n - r.left) / r.n * 100) : 0}%</td></tr>`).join('');
   const cnt = st => list.filter(x => (MAP[x.k] || {}).status === st).length, none = list.filter(x => !MAP[x.k]).length;
   $('mapKpis').innerHTML = [[LI.length ? 'Kul active listing (Seller Hub)' : 'Kul listing (jinme order aaya)', list.length, a ? short(a) + ' account' : 'Sabhi chalu accounts'], ['Abhi check nahi hui', none, 'Inhe ek-ek karke dekhna baaki hai'],
     ['Doosra seller mila', cnt('other'), 'Inpar case raise karna hai'], ['Case raise kiya', cnt('case'), 'Flipkart ke jawab ka intezaar'], ['Sirf aap', cnt('ok'), 'Koi doosra seller nahi mila']]
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
-  const opt = cur => '<option value="">â€” chuniye â€”</option>' + Object.entries(MAP_ST).map(([v, l]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`).join('');
+  const opt = cur => '<option value="">— chuniye —</option>' + Object.entries(MAP_ST).map(([v, l]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`).join('');
   const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   $('tMap').innerHTML = '<tr><th>Account</th><th>SKU / Product</th><th>30 din me bike</th><th>Flipkart par</th><th>Status</th><th>Kitne seller</th><th>Note</th><th>Last check</th><th></th></tr>' +
     list.map((x, i) => { const m = (typeof MAP_DIRTY !== 'undefined' && MAP_DIRTY.get(x.k)) || MAP[x.k] || {}, fsn = x.fsn || F[x.k], g = byAcc.find(r => r.x === x.acc);
-      return (i && list[i - 1].acc === x.acc ? '' : `<tr class="total"><td colspan="9" style="text-align:left">${tag(x.acc)} &nbsp; ${g.n} listing Â· <span class="bad">${g.left} baaki</span></td></tr>`) + `<tr class="${typeof MAP_DIRTY !== 'undefined' && MAP_DIRTY.has(x.k) ? 'dirty' : ''}" data-k="${esc(x.k)}" data-st="${m.status || 'none'}" data-fsn="${fsn || ''}"><td>${tag(x.acc)}</td><td style="white-space:normal;min-width:220px">${esc(x.sku)}<br><small style="color:var(--mut);font-weight:400">${esc(x.title).slice(0, 70)}</small></td><td>${x.u30}</td>
-        <td>${fsn ? `<a href="https://www.flipkart.com/sellers?pid=${fsn}" target="_blank" rel="noopener">Sellers dekhiye â†—</a>` : '<span style="color:var(--mut)">FSN nahi mila</span>'}</td>
+      return (i && list[i - 1].acc === x.acc ? '' : `<tr class="total"><td colspan="9" style="text-align:left">${tag(x.acc)} &nbsp; ${g.n} listing · <span class="bad">${g.left} baaki</span></td></tr>`) + `<tr class="${typeof MAP_DIRTY !== 'undefined' && MAP_DIRTY.has(x.k) ? 'dirty' : ''}" data-k="${esc(x.k)}" data-st="${m.status || 'none'}" data-fsn="${fsn || ''}"><td>${tag(x.acc)}</td><td style="white-space:normal;min-width:220px">${esc(x.sku)}<br><small style="color:var(--mut);font-weight:400">${esc(x.title).slice(0, 70)}</small></td><td>${x.u30}</td>
+        <td>${fsn ? `<a href="https://www.flipkart.com/sellers?pid=${fsn}" target="_blank" rel="noopener">Sellers dekhiye ↗</a>` : '<span style="color:var(--mut)">FSN nahi mila</span>'}</td>
         <td><select>${opt(m.status)}</select></td><td><input type="number" min="1" style="width:64px" value="${m.sellers ?? ''}"></td><td><input style="width:150px" value="${esc(m.note)}"></td>
-        <td style="color:var(--mut)">${m.checked_at ? dmy(m.checked_at.slice(0, 10)) : 'â€”'}</td><td><button type="button" class="ceSave">Save</button></td></tr>`; }).join('');
+        <td style="color:var(--mut)">${m.checked_at ? dmy(m.checked_at.slice(0, 10)) : '—'}</td><td><button type="button" class="ceSave">Save</button></td></tr>`; }).join('');
   filterMap();
 }
 function filterMap() {
@@ -830,7 +830,7 @@ const MAP_DIRTY = new Map();
 $('tMap').addEventListener('input', e => { const tr = e.target.closest('tr[data-k]'); if (!tr) return;
   const [sel] = tr.querySelectorAll('select'), [nIn, noteIn] = tr.querySelectorAll('input');
   MAP_DIRTY.set(tr.dataset.k, { status: sel.value, sellers: nIn.value, note: noteIn.value }); tr.classList.add('dirty'); mapDirtyMsg(); });
-function mapDirtyMsg() { $('mapSaveAll').textContent = MAP_DIRTY.size ? `ðŸ’¾ Sab save karo (${MAP_DIRTY.size})` : 'ðŸ’¾ Sab save karo'; }
+function mapDirtyMsg() { $('mapSaveAll').textContent = MAP_DIRTY.size ? `💾 Sab save karo (${MAP_DIRTY.size})` : '💾 Sab save karo'; }
 async function saveMapRow(k, v, pin) {
   const [acc, ...sk] = k.split('|'), tr = [...document.querySelectorAll('#tMap tr[data-k]')].find(r => r.dataset.k === k);
   const r = await fetch(SB_URL + '/rest/v1/rpc/fk_save_mapping', { method: 'POST', headers: sbHead,
@@ -845,9 +845,9 @@ async function saveMapRows(keys) {
   const todo = keys.filter(k => MAP_DIRTY.has(k) && MAP_DIRTY.get(k).status);
   if (!todo.length) { $('mapMsg').textContent = 'Pehle status chuniye.'; return; }
   let ok = 0, err = '';
-  for (const k of todo) { $('mapMsg').textContent = `Save ho raha haiâ€¦ ${ok + 1}/${todo.length}`;
+  for (const k of todo) { $('mapMsg').textContent = `Save ho raha hai… ${ok + 1}/${todo.length}`;
     try { await saveMapRow(k, MAP_DIRTY.get(k), pin); ok++; } catch (e) { err = e.message; break; } }
-  $('mapMsg').textContent = err ? `${ok} save hue, phir ruk gaya: ${err}` : `âœ” ${ok} listing save ho gayi`;
+  $('mapMsg').textContent = err ? `${ok} save hue, phir ruk gaya: ${err}` : `✔ ${ok} listing save ho gayi`;
   renderMapping(); mapDirtyMsg();
 }
 $('tMap').onclick = e => { const b = e.target.closest('button.ceSave'); if (!b) return;
@@ -891,11 +891,11 @@ $('itemFind').oninput = filterItems; new MutationObserver(filterItems).observe($
   if (get().mode === 'dark') { Chart.defaults.color = '#9aa6b2'; Chart.defaults.borderColor = '#2b3542'; render(); renderSettle(); }
   paint();
   const S = window.FK_SETTLE || {}, ok = (D.status || []).filter(s => s.ok).length;
-  $('tInfo').innerHTML = [['Orders data update hua', dmy(D.generated)], ['Bank settlement Seller Hub se liya', window.FK_SETTLE_AT ? dmy(window.FK_SETTLE_AT) : 'â€”'],
+  $('tInfo').innerHTML = [['Orders data update hua', dmy(D.generated)], ['Bank settlement Seller Hub se liya', window.FK_SETTLE_AT ? dmy(window.FK_SETTLE_AT) : '—'],
     ['Auto update', 'Roz subah 10:00 baje, ya PC chalu hone ke 3 minute baad (update.bat)'], ['Orders kab se hain', dmy(ORD_MIN_ALL) + ' se ' + dmy(lastDate)],
     ['Kul orders (data me)', D.orders.length.toLocaleString('en-IN')], ['Kul returns (data me)', D.returns.length.toLocaleString('en-IN')],
     ['Accounts (API chalu)', accs.length + ' : ' + accs.map(short).join(', ')], ['Accounts ka API status', ok + ' / ' + (D.status || []).length + ' OK (neeche table dekhiye)'],
-    ['Product cost', 'Products tab me (online save, PIN se)'], ['Packing kharcha', 'â‚¹' + PACK + ' har parcel']]
+    ['Product cost', 'Products tab me (online save, PIN se)'], ['Packing kharcha', '₹' + PACK + ' har parcel']]
     .map(([a, b]) => `<tr><td>${a}</td><td style="text-align:left">${b}</td></tr>`).join('');
 })();
 $('trendDays').onclick = e => { const b = e.target.closest('button'); if (b) { window.trendN = +b.dataset.n; render(); } };
@@ -921,17 +921,17 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
 <script>
 // Icon in each KPI tile's chip, picked from its title
 (function () {
-  const I = [[/active listing/i, 'ðŸ·ï¸'], [/check nahi hui/i, 'â³'], [/doosra seller/i, 'âš ï¸'], [/case raise/i, 'ðŸ“¨'], [/sirf aap/i, 'âœ…'], [/target me/i, 'ðŸŽ¯'], [/settlement kam/i, 'â¬†ï¸'], [/settlement zyada/i, 'â¬‡ï¸'],
-    [/cancel/i, 'âŒ'], [/refund|pichhle/i, 'ðŸ’¸'], [/charge lage|return ka charge|average charge/i, 'âš ï¸'], [/munafa %/i, 'ðŸ“Š'], [/return %|rto %/i, 'ðŸ“‰'], [/rto/i, 'ðŸšš'], [/wapas/i, 'â†©ï¸'],
-    [/delivered/i, 'ðŸ“¦'], [/units/i, 'ðŸ§®'], [/average keemat/i, 'ðŸ·ï¸'], [/orders aaye/i, 'ðŸ›’'], [/sale/i, 'ðŸ’°'], [/bank|paisa mila/i, 'ðŸ¦'], [/fees/i, 'ðŸ’¸'], [/tax/i, 'ðŸ§¾'],
-    [/kharid/i, 'ðŸ­'], [/packing|kharcha/i, 'ðŸ“¦'], [/return charge|nuksaan/i, 'âš ï¸'], [/munafa/i, 'ðŸ“ˆ'], [/parcels bheje/i, 'ðŸ§®']];
-  const put = () => document.querySelectorAll('.k>span:not([data-i])').forEach(s => { const m = I.find(([r]) => r.test(s.textContent)); s.dataset.i = m ? m[1] : 'â€¢'; });
+  const I = [[/active listing/i, '🏷️'], [/check nahi hui/i, '⏳'], [/doosra seller/i, '⚠️'], [/case raise/i, '📨'], [/sirf aap/i, '✅'], [/target me/i, '🎯'], [/settlement kam/i, '⬆️'], [/settlement zyada/i, '⬇️'],
+    [/cancel/i, '❌'], [/refund|pichhle/i, '💸'], [/charge lage|return ka charge|average charge/i, '⚠️'], [/munafa %/i, '📊'], [/return %|rto %/i, '📉'], [/rto/i, '🚚'], [/wapas/i, '↩️'],
+    [/delivered/i, '📦'], [/units/i, '🧮'], [/average keemat/i, '🏷️'], [/orders aaye/i, '🛒'], [/sale/i, '💰'], [/bank|paisa mila/i, '🏦'], [/fees/i, '💸'], [/tax/i, '🧾'],
+    [/kharid/i, '🏭'], [/packing|kharcha/i, '📦'], [/return charge|nuksaan/i, '⚠️'], [/munafa/i, '📈'], [/parcels bheje/i, '🧮']];
+  const put = () => document.querySelectorAll('.k>span:not([data-i])').forEach(s => { const m = I.find(([r]) => r.test(s.textContent)); s.dataset.i = m ? m[1] : '•'; });
   put(); new MutationObserver(put).observe(document.querySelector('main'), { childList: true, subtree: true });
 })();
 </script>
 <script>
 // App lock: PIN (SHA-256 hash in localStorage) + optional phone fingerprint/face via WebAuthn (platform
-// authenticator, user verification required). A screen lock for this device only â€” data files stay public.
+// authenticator, user verification required). A screen lock for this device only — data files stay public.
 (function () {
   const $ = id => document.getElementById(id), LS = localStorage, html = document.documentElement;
   const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))), unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -962,9 +962,9 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
     else if (LS.fkLockPin && Date.now() - (+sessionStorage.fkHidAt || Date.now()) > 120000) { lock(); if (LS.fkLockBio && bioOk()) tryBio(); }
   });
   // Settings card
-  const state = () => { $('lkState').textContent = LS.fkLockPin ? (LS.fkLockBio ? 'âœ… Chalu: PIN + Fingerprint' : 'âœ… Chalu: PIN') : 'âŒ Band';
+  const state = () => { $('lkState').textContent = LS.fkLockPin ? (LS.fkLockBio ? '✅ Chalu: PIN + Fingerprint' : '✅ Chalu: PIN') : '❌ Band';
     $('lkBio').disabled = !LS.fkLockPin || !bioOk(); $('lkOff').disabled = !LS.fkLockPin;
-    $('lkBio').textContent = LS.fkLockBio ? 'ðŸš« Fingerprint band karo' : 'ðŸ‘† Fingerprint chalu karo'; };
+    $('lkBio').textContent = LS.fkLockBio ? '🚫 Fingerprint band karo' : '👆 Fingerprint chalu karo'; };
   const msg = t => $('lkMsg').textContent = t;
   $('lkSet').onclick = async () => {
     const a = $('lkPin1').value, b = $('lkPin2').value;
@@ -997,12 +997,12 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
 // Click a number column's title to sort the table: 1st click ascending, 2nd descending. Text columns
 // (Item, Account, SKU...) are left alone; "total" rows keep their place; grouped tables (colspan rows) are skipped.
 (function () {
-  const num = s => { const m = String(s).replace(/[â‚¹,\s]/g, '').match(/^[-+]?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+  const num = s => { const m = String(s).replace(/[₹,\s]/g, '').match(/^[-+]?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
   function mark(table) {
     const rows = [...table.rows]; if (rows.length < 3 || !rows[0].cells[0] || rows[0].cells[0].tagName !== 'TH' || table.querySelector('td[colspan]')) return;
     const body = rows.slice(1).filter(r => !r.classList.contains('total'));
     [...rows[0].cells].forEach((th, i) => {
-      const vals = body.map(r => (r.cells[i] ? r.cells[i].innerText.trim() : '')).filter(v => v && v !== 'â€”');
+      const vals = body.map(r => (r.cells[i] ? r.cells[i].innerText.trim() : '')).filter(v => v && v !== '—');
       const isNum = vals.length > 1 && vals.filter(v => num(v) !== null && !/^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/.test(v)).length >= vals.length * 0.8;
       th.classList.toggle('sortable', isNum);
     });
