@@ -218,7 +218,7 @@ th.sortable.asc::after{content:" ▲";opacity:1;color:var(--pri)}th.sortable.des
 :root:not([data-theme="dark"]) th{background:#f1f5fb}
 :root:not([data-theme="dark"]) header{justify-content:flex-start!important;align-items:center}
 header nav.tabs{margin:0 auto!important}header>#gen{font-family:var(--mono);margin:0}
-@media(min-width:769px){header .ttl{min-width:220px}header>#gen{min-width:220px;text-align:right}}
+@media(min-width:769px){header{flex-wrap:nowrap!important}header .ttl{min-width:220px;display:flex;align-items:center;gap:10px}header>#gen{min-width:220px;text-align:right}}
 /* left section list (desktop) */
 #side{display:none}
 @media(min-width:1100px){
