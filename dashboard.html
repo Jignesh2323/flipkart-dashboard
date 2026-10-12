@@ -275,6 +275,9 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <div class="bar"><select id="prAcc"></select><select id="prKind"><option value="">Kam + Zyada</option><option value="low">⬆ Settlement kam</option><option value="high">⬇ Settlement zyada</option></select>
 <input type="search" id="prFind" placeholder="🔍 SKU dhoondhiye" style="flex:1;min-width:160px"><span id="prCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw" style="max-height:600px"><table id="tPr"></table></div></div>
+<div class="card"><h3>🔍 Item ka Min/Max target</h3>
+<div class="bar"><input type="search" id="tgFind" placeholder="🔍 Item ka naam ya SKU likhiye (jaise sheep hair cutter)" style="flex:1;min-width:160px"><span id="tgCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
+<div class="tw" style="max-height:600px"><table id="tTg"></table></div></div>
 </section>
 
 <section class="tab" data-tab="settings" hidden>
@@ -777,6 +780,26 @@ async function loadPrice() {
         `<td class="bad">${r.gap > 0 ? '+' : ''}${r.gap}%</td><td>${Math.max(1, Math.ceil(Math.abs(r.gap) / (r.k === 'low' ? 10 : 5)))}</td></tr>`).join('');
   };
   ['prAcc', 'prKind'].forEach(i => $(i).onchange = draw); $('prFind').oninput = draw; draw();
+  // Item search: Min/Max settlement target set for every listing (fk_blob 'settlement_targets')
+  let T = {};
+  try { const r = await fetch(SB_URL + '/rest/v1/fk_blob?name=eq.settlement_targets&select=data', { headers: sbHead });
+    let d = JSON.parse((await r.json())[0].data); if (d.value) d = JSON.parse(d.value); T = d; } catch (e) {}
+  const out = new Map(rows.map(r => [r.a + '|' + r.sku, r]));
+  const titleOf = (a, sku) => { const l = (window.FK_LIST || []).find(x => x.sku === sku && x.acc.toUpperCase().endsWith(a)); if (l?.title) return l.title;
+    const t = D.titles || {}, k = Object.keys(t).find(k => k.toUpperCase().endsWith('_' + a + '|' + sku.toUpperCase())); return k ? t[k] : ''; };
+  const all = Object.entries(T).flatMap(([a, m]) => Object.entries(m || {}).map(([sku, v]) => ({ a, sku, mn: v[0], mx: v[1] })));
+  const drawT = () => {
+    const q = ($('tgFind').value || '').trim().toUpperCase();
+    if (!q) { $('tgCnt').textContent = all.length + ' listings ka target set hai'; $('tTg').innerHTML = '<tr><td style="padding:14px;color:var(--mut)">Upar item ka naam ya SKU likhiye.</td></tr>'; return; }
+    const words = q.split(/\s+/), L = all.map(x => ({ ...x, title: titleOf(x.a, x.sku) }))
+      .filter(x => words.every(w => (x.sku + ' ' + x.title).toUpperCase().includes(w))).sort((x, y) => x.a.localeCompare(y.a) || x.sku.localeCompare(y.sku));
+    $('tgCnt').textContent = L.length + ' listings';
+    $('tTg').innerHTML = '<tr><th>Account</th><th style="text-align:center">SKU</th><th>Item</th><th>Min ₹</th><th>Max ₹</th><th>Abhi</th></tr>' +
+      L.map(x => { const o = out.get(x.a + '|' + x.sku);
+        return `<tr><td>${tag(x.a)}</td><td style="text-align:center">${esc(x.sku)}</td><td style="max-width:320px;white-space:normal">${esc(x.title)}</td><td>₹${x.mn}</td><td>₹${x.mx}</td>` +
+          `<td${o ? ' class="bad"' : ''}>${o ? `${o.k === 'low' ? '⬆' : '⬇'} ₹${o.e}` : '✅ Target me'}</td></tr>`; }).join('');
+  };
+  $('tgFind').oninput = drawT; drawT();
 }
 // Mapping tab: one row per account + SKU, status of other sellers saved online (fk_mapping)
 let MAP = {};
