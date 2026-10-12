@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Flipkart Seller Business</title>
 <link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
-<link rel="manifest" href="manifest.webmanifest?v=2"><meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="manifest.webmanifest?v=2"><meta name="theme-color" content="#ffffff">
 <script>if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js?v=3", { scope: "./" }).catch(() => {});</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="data.js"></script>
@@ -178,9 +178,60 @@ th.sortable.asc::after{content:" ▲";opacity:1;color:var(--pri)}th.sortable.des
 <script>
 // Saved theme (per browser) applied before anything draws
 (function () { let th = {}; try { th = JSON.parse(localStorage.fkTheme || "{}"); } catch (e) {}
-  if (th.mode !== "light") document.documentElement.dataset.theme = "dark";
+  if (th.mode === "dark") document.documentElement.dataset.theme = "dark";
   if (th.pri) { document.documentElement.style.setProperty("--pri", th.pri); document.documentElement.style.setProperty("--pri-soft", th.pri + "18"); } })();
 </script>
+<style>
+/* Light (default) = same look as the logged-in Sandip Amazon dashboard: white top bar with the tabs in
+   the middle (blue active pill), glossy 3D account pills, raised KPI tiles, card titles as a centred pill
+   on a tinted band, and a coloured section list on the left (desktop) */
+:root:not([data-theme="dark"]) body{background:#f4f6fa}
+@media(min-width:769px){
+:root:not([data-theme="dark"]) header{background:#fff!important;color:var(--ink);flex-direction:row!important;justify-content:space-between!important;text-align:left!important;
+  padding:10px 24px!important;border-bottom:1px solid var(--line)!important;box-shadow:0 2px 8px rgba(15,23,42,.06);position:sticky;top:0;z-index:20;gap:14px}
+:root:not([data-theme="dark"]) header h1{color:#15803d!important;font-size:22px!important;letter-spacing:0}
+:root:not([data-theme="dark"]) header h1 span{color:#15803d!important;opacity:1}
+:root:not([data-theme="dark"]) header small{color:var(--mut)!important;font-size:12px}
+:root:not([data-theme="dark"]) .logo{position:static!important;transform:none!important;height:40px!important;box-shadow:none;padding:0}
+:root:not([data-theme="dark"]) .stick{background:#f4f6fa;box-shadow:none;top:64px}
+:root:not([data-theme="dark"]) nav.tabs{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 10px rgba(15,23,42,.08);padding:6px}
+:root:not([data-theme="dark"]) nav.tabs button{color:#334155}
+:root:not([data-theme="dark"]) nav.tabs button[aria-selected="true"]{background:linear-gradient(180deg,#3b82f6,#2563eb);color:#fff;box-shadow:0 3px 0 #1d4ed8,0 4px 10px rgba(37,99,235,.35)}
+:root:not([data-theme="dark"]) .stick .toprow{justify-content:center}
+:root:not([data-theme="dark"]) .accbar{justify-content:center}
+:root:not([data-theme="dark"]) .chips{gap:10px}
+:root:not([data-theme="dark"]) .chips button{padding:9px 20px;border-radius:22px;font-size:13px;border:0;opacity:1;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 72%,#fff),var(--c) 55%,color-mix(in srgb,var(--c) 85%,#000));
+  box-shadow:0 4px 0 color-mix(in srgb,var(--c) 55%,#000),0 6px 10px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.45);text-shadow:0 1px 1px rgba(0,0,0,.3)}
+:root:not([data-theme="dark"]) .chips button[aria-pressed="true"]{transform:translateY(2px);box-shadow:0 2px 0 color-mix(in srgb,var(--c) 55%,#000),0 0 0 3px #fff,0 0 0 5px var(--c)}
+}
+:root:not([data-theme="dark"]) .k{text-align:left;border-radius:14px;border:1px solid color-mix(in srgb,var(--t) 25%,#dbe3ee);
+  background:linear-gradient(160deg,#fff 50%,color-mix(in srgb,var(--t) 9%,#fff));box-shadow:0 5px 0 #cdd8e8,0 8px 16px rgba(15,23,42,.06)}
+:root:not([data-theme="dark"]) .k>span{justify-content:flex-start}
+:root:not([data-theme="dark"]) .k b{font-size:28px;font-weight:700}
+:root:not([data-theme="dark"]) .card{border:1px solid #dbe3ee;border-left:4px solid #2563eb;border-radius:14px;box-shadow:0 5px 0 #cdd8e8,0 8px 16px rgba(15,23,42,.05);
+  background:linear-gradient(180deg,#eaf1fd 0,#eaf1fd 62px,#fff 62px)}
+:root:not([data-theme="dark"]) .card>h3{width:fit-content;max-width:calc(100% - 40px);margin:12px auto!important;padding:6px 22px 6px 22px;border:2px solid #a9c2f0;border-radius:22px;
+  background:#dbe7fb!important;color:#1e3a8a;font-size:17px;font-weight:600;text-align:center}
+:root:not([data-theme="dark"]) .card>h3::after{display:none}
+:root:not([data-theme="dark"]) .card.closed{background:#eaf1fd}
+:root:not([data-theme="dark"]) th{background:#f1f5fb}
+:root:not([data-theme="dark"]) header{justify-content:flex-start!important;align-items:center}
+header nav.tabs{margin:0 auto!important}header>#gen{font-family:var(--mono);margin:0}
+@media(min-width:769px){header .ttl{min-width:220px}header>#gen{min-width:220px;text-align:right}}
+/* left section list (desktop) */
+#side{display:none}
+@media(min-width:1100px){
+  :root:not([data-theme="dark"]) #side{display:block;position:fixed;left:0;top:64px;bottom:0;width:250px;overflow-y:auto;padding:14px 12px;background:#f4f6fa;border-right:1px solid var(--line);z-index:15}
+  :root:not([data-theme="dark"]) main{margin-left:250px}
+  #side .sh{font:700 12px var(--sans);color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:2px 4px 12px}
+  #side button{--c:#2563eb;display:block;width:100%;text-align:left;margin:0 0 12px;padding:10px 14px;border-radius:12px;cursor:pointer;
+    font:600 14px/1.3 var(--sans);color:color-mix(in srgb,var(--c) 75%,#000);border:1px solid color-mix(in srgb,var(--c) 30%,#fff);
+    background:linear-gradient(180deg,color-mix(in srgb,var(--c) 8%,#fff),color-mix(in srgb,var(--c) 20%,#fff));box-shadow:0 4px 0 color-mix(in srgb,var(--c) 45%,#fff)}
+  #side button:hover{transform:translateY(1px);box-shadow:0 3px 0 color-mix(in srgb,var(--c) 45%,#fff)}
+  #side button.on{color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 75%,#fff),var(--c));box-shadow:0 4px 0 color-mix(in srgb,var(--c) 60%,#000)}
+}
+</style>
 <script>try { if (localStorage.fkLockPin && !sessionStorage.fkUnlocked) document.documentElement.classList.add('locked'); } catch (e) {}</script>
 <style>
 #lock{display:none}html.locked body>*:not(#lock){display:none!important}
@@ -196,6 +247,7 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <button type="button" id="lkGo">Kholo</button><button type="button" id="lkFp" hidden>👆 Fingerprint / Face se kholo</button><p id="lkErr"></p></div></div>
 <header><img src="logo.png" alt="Ecom24x7 · Flipkart Seller Hub" class="logo"><div><h1>FLIPKART · <span>Seller Business</span></h1><small id="gen"></small></div>
 </header>
+<aside id="side" aria-label="Is tab ke section"></aside>
 <main>
 <div class="stick">
 <div class="toprow"><nav class="tabs" role="tablist" aria-label="Sections">
@@ -924,19 +976,19 @@ $('itemFind').oninput = filterItems; new MutationObserver(filterItems).observe($
   const COLORS = [['#1a7f37', 'Hara'], ['#0969da', 'Neela'], ['#8250df', 'Baingani'], ['#d1242f', 'Laal'], ['#e36209', 'Narangi'], ['#0e7490', 'Teal'], ['#bf3989', 'Gulabi'], ['#24292f', 'Kaala']];
   function paint() { const th = get(), pri = th.pri || '#1a7f37';
     $('setPri').innerHTML = COLORS.map(([c, n]) => `<button type="button" class="swatch" style="--s:${c}" title="${n}" aria-label="${n}" data-c="${c}" aria-pressed="${c === pri}"></button>`).join('');
-    document.querySelectorAll('#setMode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === (th.mode || 'dark')));
+    document.querySelectorAll('#setMode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === (th.mode || 'light')));
     let p = 30; try { p = localStorage.fkPeriod || 30; } catch (e) {}
     document.querySelectorAll('#setPeriod button').forEach(b => b.setAttribute('aria-pressed', b.dataset.p == p)); }
   function apply() { const th = get();
-    if (th.mode !== 'light') root.dataset.theme = 'dark'; else delete root.dataset.theme;
+    if (th.mode === 'dark') root.dataset.theme = 'dark'; else delete root.dataset.theme;
     if (th.pri) { root.style.setProperty('--pri', th.pri); root.style.setProperty('--pri-soft', th.pri + '18'); } else { root.style.removeProperty('--pri'); root.style.removeProperty('--pri-soft'); }
-    Chart.defaults.color = th.mode !== 'light' ? '#8b949e' : '#57606a'; Chart.defaults.borderColor = th.mode !== 'light' ? '#2a3441' : '#e5e7eb';
+    Chart.defaults.color = th.mode === 'dark' ? '#8b949e' : '#57606a'; Chart.defaults.borderColor = th.mode === 'dark' ? '#2a3441' : '#e5e7eb';
     render(); renderSettle(); paint(); }
   $('setPri').onclick = e => { const b = e.target.closest('button'); if (b) { save({ ...get(), pri: b.dataset.c }); apply(); } };
   $('setMode').onclick = e => { const b = e.target.closest('button'); if (b) { save({ ...get(), mode: b.dataset.m }); apply(); } };
   $('setPeriod').onclick = e => { const b = e.target.closest('button'); if (b) { try { localStorage.fkPeriod = b.dataset.p; } catch (x) {} paint(); } };
   $('setReset').onclick = () => { try { ['fkTheme', 'fkPeriod', 'fkTab'].forEach(k => localStorage.removeItem(k)); } catch (e) {} apply(); };
-  if (get().mode !== 'light') { Chart.defaults.color = '#8b949e'; Chart.defaults.borderColor = '#2a3441'; render(); renderSettle(); }
+  if (get().mode === 'dark') { Chart.defaults.color = '#8b949e'; Chart.defaults.borderColor = '#2a3441'; render(); renderSettle(); }
   paint();
   const S = window.FK_SETTLE || {}, ok = (D.status || []).filter(s => s.ok).length;
   $('tInfo').innerHTML = [['Orders data update hua', dmy(D.generated)], ['Bank settlement Seller Hub se liya', window.FK_SETTLE_AT ? dmy(window.FK_SETTLE_AT) : '—'],
@@ -1069,6 +1121,36 @@ $('topBy').onclick = e => { const b = e.target.closest('button'); if (b) { windo
     const parent = rows[0] ? rows[0].parentElement : table;
     [...top, ...body, ...bottom].forEach(r => parent.appendChild(r));
   });
+})();
+</script>
+<script>
+// Left section list (desktop, light theme): one coloured button per card of the open tab; click jumps to it
+(function () {
+  const COL = ['#2563eb', '#16a34a', '#ea580c', '#9333ea', '#dc2626', '#0e7490', '#ca8a04', '#db2777', '#4f46e5', '#059669'];
+  const side = document.getElementById('side');
+  // Top bar like the Amazon app: title left, tabs in the middle, "updated" time on the right
+  const hd = document.querySelector('header'), nv = document.querySelector('nav.tabs'), gen = document.getElementById('gen');
+  const home = nv && nv.parentNode;
+  const place = () => { if (!hd || !nv || !gen) return; const tl = hd.querySelector('div'); tl.classList.add('ttl');
+    if (innerWidth > 768 && nv.parentNode !== hd) { hd.appendChild(nv); hd.appendChild(gen); }
+    else if (innerWidth <= 768 && nv.parentNode === hd) { home.prepend(nv); tl.appendChild(gen); } };
+  place();
+  const fit = () => { place(); const h = hd.offsetHeight + 'px'; side.style.top = h; const st = document.querySelector('.stick');
+    if (st && !document.documentElement.dataset.theme) st.style.top = innerWidth > 768 ? h : ''; };
+  addEventListener('resize', fit); setTimeout(fit, 0); setTimeout(fit, 1500);
+  function build() {
+    const sec = document.querySelector('section.tab:not([hidden])'); if (!sec) return;
+    const name = document.querySelector('nav.tabs button[aria-selected="true"]')?.textContent.trim() || '';
+    const hs = [...sec.querySelectorAll('.card>h3')].filter(h => h.offsetParent !== null || h.closest('.card'));
+    side.innerHTML = `<div class="sh">${name}</div>` + hs.map((h, i) => `<button type="button" style="--c:${COL[i % COL.length]}" data-i="${i}">${h.textContent.replace(/[▴▾]/g, '').trim()}</button>`).join('');
+    side.onclick = e => { const b = e.target.closest('button'); if (!b) return; const h = hs[+b.dataset.i]; const c = h.closest('.card');
+      if (c.classList.contains('closed')) h.click();
+      window.scrollTo({ top: c.getBoundingClientRect().top + scrollY - (document.querySelector('header').offsetHeight + document.querySelector('.stick').offsetHeight + 10), behavior: 'smooth' });
+      side.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
+  }
+  document.querySelector('nav.tabs').addEventListener('click', () => setTimeout(build, 50));
+  new MutationObserver(() => { clearTimeout(build.t); build.t = setTimeout(build, 300); }).observe(document.querySelector('main'), { subtree: true, characterData: true, childList: true });
+  build();
 })();
 </script>
 </body></html>
