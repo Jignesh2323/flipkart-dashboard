@@ -325,8 +325,8 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <section class="tab" data-tab="products" hidden>
 <section class="card" id="costEditor">
 <h3>📦 Products &amp; Cost</h3>
-<p class="note" style="margin:14px 20px 0">Naam aur kharid keemat (₹/unit) badal kar <b>Save</b> dabaiye. Naye products (jinki cost nahi bhari) sabse upar peele rang me aate hain. Pehli baar jo PIN daalenge wahi aage ke liye set ho jayega.</p>
-<div class="bar"><label for="cePin">PIN</label><input type="password" id="cePin" inputmode="numeric" autocomplete="off" style="width:110px"><input type="search" id="ceFind" placeholder="Product dhoondhiye" style="flex:1;min-width:160px"><span id="ceMsg" style="font-size:13px"></span></div>
+<p class="note" style="margin:14px 20px 0">Har product ki kharid keemat (₹/unit). Naye products (jinki cost nahi bhari) sabse upar peele rang me aate hain. Cost badalni ho to Claude ko boliye, wo file badal kar app update kar dega.</p>
+<div class="bar"><input type="search" id="ceFind" placeholder="Product dhoondhiye" style="flex:1;min-width:160px"><span id="ceMsg" style="font-size:13px"></span></div>
 <div class="tw" style="max-height:600px"><table id="tCost"></table></div>
 </section>
 </section>
@@ -335,10 +335,9 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <div class="kpis" id="mapKpis"></div>
 <div class="card"><h3>📋 Account-wise: kitni listing check karna baaki hai</h3><div class="tw"><table id="tMapAcc"></table></div></div>
 <div class="card"><h3>🔗 Listing Mapping: kis listing par doosra seller baitha hai</h3>
-<p class="note" style="margin:14px 18px 0">Har listing ke saamne <b>Sellers dekhiye</b> dabaiye: flipkart.com par us product ke saare sellers khulenge. Agar aapke alawa koi aur seller dikhe to status <b>⚠️ Doosra seller</b> chuniye, kitne seller hain likhiye aur <b>Save</b> dabaiye (PIN wahi jo Products tab ka hai). Sabse zyada bikne wali listing upar hain.</p>
-<div class="bar"><label for="mapPin">PIN</label><input type="password" id="mapPin" inputmode="numeric" autocomplete="off" style="width:110px">
+<p class="note" style="margin:14px 18px 0">Har listing ke saamne <b>Sellers dekhiye</b> dabaiye: flipkart.com par us product ke saare sellers khulenge. Agar aapke alawa koi aur seller dikhe to status <b>⚠️ Doosra seller</b> chuniye, kitne seller hain, ye Claude ko boliye, wo update kar dega. Sabse zyada bikne wali listing upar hain.</p>
+<div class="bar">
 <select id="mapShow"><option value="">Sab listing</option><option value="none">Abhi check nahi hui</option><option value="other">⚠️ Doosra seller</option><option value="case">📨 Case raise kiya</option><option value="ok">✅ Sirf aap</option></select>
-<button type="button" class="ceSave" id="mapSaveAll">💾 Sab save karo</button>
 <input type="search" id="mapFind" placeholder="🔍 SKU / product dhoondhiye" style="flex:1;min-width:160px"><span id="mapMsg" style="font-size:13px"></span></div>
 <div class="tw"><table id="tMap"></table></div></div>
 </section>
@@ -661,19 +660,17 @@ const productOf = sku => String(sku || '').trim()
   .replace(/^(ARZSP|AEZSP|ARZ|ARKZ|AVD|AVSP|AV|KDCSP|KDC|PVDSP|PVD|TDSP|TD|WSKSP|WSK|ZTSP|ZT|ZO|FOV|FO|VUSP|VU|BRSP|BRL|BRE|BR)\s*-\s*(SP-)?/i, '')
   .replace(/[\s_-]+0*\d{1,2}[a-zA-Z]?$/, '').replace(/\s+/g, ' ').trim().toUpperCase();
 // Profit per account: bank payouts in the period − cost of units delivered in the period − packing
-// Product costs live in Supabase (fk_product_cost), readable by anyone with the page, writable only
-// through fk_save_cost() with the PIN. cost.js (from product-cost.csv) is the offline fallback.
-const SB_URL = 'https://begblflwhxbbipsmxytd.supabase.co', SB_KEY = 'sb_publishable_HO0wPEI58Ia5k7CFOIyOhA_A6dtCsuL';
-const sbHead = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
+// Product costs, settlement targets/status and mapping are JSON files in the same GitHub repo
+// (published with the page). They are changed by editing the files and pushing; the page only reads.
+// cost.js (from product-cost.csv) is the offline fallback for costs.
+const getJ = async f => { const r = await fetch(f + '?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error(f + ' ' + r.status); return r.json(); };
 window.FK_NAME = {};
 async function loadCosts() {
   try {
-    const r = await fetch(SB_URL + '/rest/v1/fk_product_cost?select=product,item_name,cost&limit=5000', { headers: sbHead });
-    if (!r.ok) throw new Error(r.status);
     const C = {}, N = {};
-    for (const x of await r.json()) { if (x.cost != null) C[x.product] = +x.cost; if (x.item_name) N[x.product] = x.item_name; }
+    for (const [product, name, cost] of await getJ('costs.json')) { if (cost != null) C[product] = +cost; if (name) N[product] = name; }
     window.FK_COST = C; window.FK_NAME = N;
-  } catch (e) { $('ceMsg').textContent = 'Online cost load nahi hui, file wali cost use ho rahi hai.'; }
+  } catch (e) { $('ceMsg').textContent = 'costs.json load nahi hui, purani file wali cost use ho rahi hai.'; }
   renderSettle(); renderCostEditor();
 }
 function renderCostEditor() {
@@ -685,28 +682,11 @@ function renderCostEditor() {
   const list = all.filter(p => !q || p.includes(q) || (N[p] || '').toUpperCase().includes(q))
     .sort((a, b) => (C[a] == null) - (C[b] == null) || (units[b] || 0) - (units[a] || 0));
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  $('tCost').innerHTML = '<tr><th>Product (SKU se)</th><th>Item naam</th><th>Cost ₹</th><th>Bike (6 mahine)</th><th></th></tr>' +
+  $('tCost').innerHTML = '<tr><th>Product (SKU se)</th><th>Item naam</th><th>Cost ₹</th><th>Bike (6 mahine)</th></tr>' +
     list.map(p => `<tr${C[p] == null ? ' style="background:#fff4d6;color:#6b4e00"' : ''} data-p="${esc(p)}"><td>${esc(p)}${C[p] == null ? ' <b>(naya)</b>' : ''}</td>` +
-      `<td><input value="${esc(N[p] || '')}" placeholder="${esc(p)}" style="width:100%;min-width:140px"></td>` +
-      `<td><input type="number" min="0" step="0.01" value="${C[p] ?? ''}" style="width:90px"></td><td>${units[p] || 0}</td>` +
-      `<td><button type="button" class="ceSave">Save</button></td></tr>`).join('');
+      `<td style="white-space:normal">${esc(N[p] || '')}</td><td>${C[p] != null ? '₹' + C[p] : '—'}</td><td>${units[p] || 0}</td></tr>`).join('');
 }
 $('ceFind').oninput = renderCostEditor;
-$('tCost').onclick = async e => {
-  const b = e.target.closest('.ceSave'); if (!b) return;
-  const tr = b.closest('tr'), [nameIn, costIn] = tr.querySelectorAll('input'), p = tr.dataset.p, pin = $('cePin').value;
-  if (!pin) { $('ceMsg').textContent = 'Pehle PIN daaliye.'; $('cePin').focus(); return; }
-  if (costIn.value === '') { $('ceMsg').textContent = 'Cost bhariye.'; costIn.focus(); return; }
-  b.disabled = true; b.textContent = 'Saving…';
-  try {
-    const r = await fetch(SB_URL + '/rest/v1/rpc/fk_save_cost', { method: 'POST', headers: sbHead,
-      body: JSON.stringify({ p_pin: pin, p_product: p, p_item_name: nameIn.value, p_cost: +costIn.value }) });
-    const msg = await r.json();
-    if (msg === 'ok') { window.FK_COST[p] = +costIn.value; if (nameIn.value.trim()) window.FK_NAME[p] = nameIn.value.trim(); else delete window.FK_NAME[p];
-      $('ceMsg').textContent = `Saved: ${p}`; renderSettle(); renderCostEditor(); }
-    else { $('ceMsg').textContent = typeof msg === 'string' ? msg : 'Save nahi hua, dobara try kariye.'; b.disabled = false; b.textContent = 'Save'; }
-  } catch (err) { $('ceMsg').textContent = 'Internet check kariye, save nahi hua.'; b.disabled = false; b.textContent = 'Save'; }
-};
 // GST rate for a SKU: from its Flipkart invoice (gst.js); else another SKU of the same product; else 5%
 // (5% is what nearly every product here is invoiced at).
 let gstByProduct = null;
@@ -828,8 +808,7 @@ async function loadPrice() {
   const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
   let S;
   try {
-    const r = await fetch(SB_URL + '/rest/v1/fk_blob?name=eq.settlement_status&select=data', { headers: sbHead });
-    let d = JSON.parse((await r.json())[0].data); if (d.value) d = JSON.parse(d.value); S = d;
+    S = await getJ('price.json');
   } catch (e) { $('prNote').textContent = 'Price data abhi load nahi hua.'; if (!loadPrice.retried) { loadPrice.retried = 1; setTimeout(loadPrice, 3000); } return; }
   const A = S.accounts || {}, names = Object.keys(A), sum = k => names.reduce((s, a) => s + (A[a][k] || 0), 0);
   const tot = sum('total'), inR = sum('inR'), low = sum('low'), high = sum('high');
@@ -859,8 +838,7 @@ async function loadPrice() {
   ['prAcc', 'prKind'].forEach(i => $(i).onchange = draw); $('prFind').oninput = draw; draw();
   // Item search: Min/Max settlement target set for every listing (fk_blob 'settlement_targets')
   let T = {};
-  try { const r = await fetch(SB_URL + '/rest/v1/fk_blob?name=eq.settlement_targets&select=data', { headers: sbHead });
-    let d = JSON.parse((await r.json())[0].data); if (d.value) d = JSON.parse(d.value); T = d; } catch (e) {}
+  try { T = await getJ('targets.json'); } catch (e) {}
   const out = new Map(rows.map(r => [r.a + '|' + r.sku, r]));
   const titleOf = (a, sku) => { const l = (window.FK_LIST || []).find(x => x.sku === sku && x.acc.toUpperCase().endsWith(a)); if (l?.title) return l.title;
     const t = D.titles || {}, k = Object.keys(t).find(k => k.toUpperCase().endsWith('_' + a + '|' + sku.toUpperCase())); return k ? t[k] : ''; };
@@ -882,12 +860,19 @@ async function loadPrice() {
 let MAP = {};
 const MAP_ST = { ok: '✅ Sirf aap', other: '⚠️ Doosra seller', case: '📨 Case raise kiya' };
 async function loadMapping() {
-  // The API returns at most 1000 rows per call, so page through
-  try { const all = []; for (let off = 0; ; off += 1000) { const r = await fetch(SB_URL + `/rest/v1/fk_listing?select=acc,sku,fsn,title&order=acc,sku&limit=1000&offset=${off}`, { headers: sbHead });
-      if (!r.ok) break; const p = await r.json(); all.push(...p); if (p.length < 1000) break; } if (all.length) window.FK_LIST = all; } catch (e) {}
-  // Max 1000 rows per call: page through (there are more than 1000 saved checks)
-  try { const M = {}; for (let off = 0; ; off += 1000) { const r = await fetch(SB_URL + `/rest/v1/fk_mapping?select=acc,sku,status,sellers,note,checked_at&order=acc,sku&limit=1000&offset=${off}`, { headers: sbHead });
-      if (!r.ok) break; const p = await r.json(); for (const x of p) M[x.acc + '|' + x.sku] = x; if (p.length < 1000) break; } MAP = M; } catch (e) {}
+  // All active listings = every listing in targets.json (built from the settlement sheet);
+  // status from mapping.json: the listed ones have another seller, the rest were checked as "only you"
+  try {
+    const [T, M] = await Promise.all([getJ('targets.json'), getJ('mapping.json')]);
+    const full = {}; for (const s of (D.status || [])) full[s.acc.split('_').pop().toUpperCase()] = s.acc;
+    for (const k of Object.keys(window.FK_FSN || {})) { const a = k.split('|')[0]; full[a.split('_').pop().toUpperCase()] = a; }
+    const F = window.FK_FSN || {}, TT = D.titles || {}, all = [], map = {};
+    for (const [A, m] of Object.entries(T)) { const acc = full[A] || A;
+      for (const sku of Object.keys(m)) { const k = acc + '|' + sku; all.push({ acc, sku, fsn: F[k] || '', title: TT[k] || '' });
+        map[k] = { status: 'ok', checked_at: M.checked }; } }
+    for (const [acc, sku, n] of M.other || []) map[acc + '|' + sku] = { status: 'other', sellers: n, checked_at: M.checked };
+    if (all.length) window.FK_LIST = all; MAP = map;
+  } catch (e) {}
   renderMapping();
 }
 function renderMapping() {
@@ -912,12 +897,12 @@ function renderMapping() {
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const opt = cur => '<option value="">— chuniye —</option>' + Object.entries(MAP_ST).map(([v, l]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`).join('');
   const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  $('tMap').innerHTML = '<tr><th>Account</th><th>SKU / Product</th><th>30 din me bike</th><th>Flipkart par</th><th>Status</th><th>Kitne seller</th><th>Note</th><th>Last check</th><th></th></tr>' +
+  $('tMap').innerHTML = '<tr><th>Account</th><th>SKU / Product</th><th>30 din me bike</th><th>Flipkart par</th><th>Status</th><th>Kitne seller</th><th>Note</th><th>Last check</th></tr>' +
     list.map((x, i) => { const m = (typeof MAP_DIRTY !== 'undefined' && MAP_DIRTY.get(x.k)) || MAP[x.k] || {}, fsn = x.fsn || F[x.k], g = byAcc.find(r => r.x === x.acc);
-      return (i && list[i - 1].acc === x.acc ? '' : `<tr class="total"><td colspan="9" style="text-align:left">${tag(x.acc)} &nbsp; ${g.n} listing · <span class="bad">${g.left} baaki</span></td></tr>`) + `<tr class="${typeof MAP_DIRTY !== 'undefined' && MAP_DIRTY.has(x.k) ? 'dirty' : ''}" data-k="${esc(x.k)}" data-st="${m.status || 'none'}" data-fsn="${fsn || ''}"><td>${tag(x.acc)}</td><td style="white-space:normal;min-width:220px">${esc(x.sku)}<br><small style="color:var(--mut);font-weight:400">${esc(x.title).slice(0, 70)}</small></td><td>${x.u30}</td>
+      return (i && list[i - 1].acc === x.acc ? '' : `<tr class="total"><td colspan="8" style="text-align:left">${tag(x.acc)} &nbsp; ${g.n} listing · <span class="bad">${g.left} baaki</span></td></tr>`) + `<tr class="${typeof MAP_DIRTY !== 'undefined' && MAP_DIRTY.has(x.k) ? 'dirty' : ''}" data-k="${esc(x.k)}" data-st="${m.status || 'none'}" data-fsn="${fsn || ''}"><td>${tag(x.acc)}</td><td style="white-space:normal;min-width:220px">${esc(x.sku)}<br><small style="color:var(--mut);font-weight:400">${esc(x.title).slice(0, 70)}</small></td><td>${x.u30}</td>
         <td>${fsn ? `<a href="https://www.flipkart.com/sellers?pid=${fsn}" target="_blank" rel="noopener">Sellers dekhiye ↗</a>` : '<span style="color:var(--mut)">FSN nahi mila</span>'}</td>
-        <td><select>${opt(m.status)}</select></td><td><input type="number" min="1" style="width:64px" value="${m.sellers ?? ''}"></td><td><input style="width:150px" value="${esc(m.note)}"></td>
-        <td style="color:var(--mut)">${m.checked_at ? dmy(m.checked_at.slice(0, 10)) : '—'}</td><td><button type="button" class="ceSave">Save</button></td></tr>`; }).join('');
+        <td>${MAP_ST[m.status] || '—'}</td><td>${m.sellers ?? ''}</td><td>${esc(m.note)}</td>
+        <td style="color:var(--mut)">${m.checked_at ? dmy(m.checked_at.slice(0, 10)) : '—'}</td></tr>`; }).join('');
   filterMap();
 }
 function filterMap() {
@@ -925,35 +910,7 @@ function filterMap() {
   document.querySelectorAll('#tMap tr[data-k]').forEach(r => r.hidden = !((!q || r.textContent.toLowerCase().includes(q) || r.dataset.k.toLowerCase().includes(q)) && (!st || r.dataset.st === st)));
 }
 $('mapFind').oninput = filterMap; $('mapShow').onchange = filterMap;
-// Rows changed but not saved yet (kept across re-renders so several can be filled, then saved together)
-const MAP_DIRTY = new Map();
-$('tMap').addEventListener('input', e => { const tr = e.target.closest('tr[data-k]'); if (!tr) return;
-  const [sel] = tr.querySelectorAll('select'), [nIn, noteIn] = tr.querySelectorAll('input');
-  MAP_DIRTY.set(tr.dataset.k, { status: sel.value, sellers: nIn.value, note: noteIn.value }); tr.classList.add('dirty'); mapDirtyMsg(); });
-function mapDirtyMsg() { $('mapSaveAll').textContent = MAP_DIRTY.size ? `💾 Sab save karo (${MAP_DIRTY.size})` : '💾 Sab save karo'; }
-async function saveMapRow(k, v, pin) {
-  const [acc, ...sk] = k.split('|'), tr = [...document.querySelectorAll('#tMap tr[data-k]')].find(r => r.dataset.k === k);
-  const r = await fetch(SB_URL + '/rest/v1/rpc/fk_save_mapping', { method: 'POST', headers: sbHead,
-    body: JSON.stringify({ p_pin: pin, p_acc: acc, p_sku: sk.join('|'), p_fsn: (tr && tr.dataset.fsn) || null, p_status: v.status, p_sellers: v.sellers ? +v.sellers : null, p_note: v.note }) });
-  const msg = await r.json();
-  if (msg !== 'ok') throw new Error(msg.message || msg);
-  MAP[k] = { status: v.status, sellers: v.sellers ? +v.sellers : null, note: v.note, checked_at: new Date().toISOString() }; MAP_DIRTY.delete(k);
-}
-async function saveMapRows(keys) {
-  const pin = $('mapPin').value;
-  if (!pin) { $('mapMsg').textContent = 'Pehle PIN daaliye.'; $('mapPin').focus(); return; }
-  const todo = keys.filter(k => MAP_DIRTY.has(k) && MAP_DIRTY.get(k).status);
-  if (!todo.length) { $('mapMsg').textContent = 'Pehle status chuniye.'; return; }
-  let ok = 0, err = '';
-  for (const k of todo) { $('mapMsg').textContent = `Save ho raha hai… ${ok + 1}/${todo.length}`;
-    try { await saveMapRow(k, MAP_DIRTY.get(k), pin); ok++; } catch (e) { err = e.message; break; } }
-  $('mapMsg').textContent = err ? `${ok} save hue, phir ruk gaya: ${err}` : `✔ ${ok} listing save ho gayi`;
-  renderMapping(); mapDirtyMsg();
-}
-$('tMap').onclick = e => { const b = e.target.closest('button.ceSave'); if (!b) return;
-  const tr = b.closest('tr'), [sel] = tr.querySelectorAll('select'), [nIn, noteIn] = tr.querySelectorAll('input');
-  MAP_DIRTY.set(tr.dataset.k, { status: sel.value, sellers: nIn.value, note: noteIn.value }); saveMapRows([tr.dataset.k]); };
-$('mapSaveAll').onclick = () => saveMapRows([...MAP_DIRTY.keys()]);
+const MAP_DIRTY = new Map(); // read-only now (kept so renderMapping's checks still work)
 loadMapping();
 $('chips').addEventListener('click', () => setTimeout(renderMapping, 0));
 // Account boxes on top: same effect as the dropdown
