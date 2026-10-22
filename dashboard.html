@@ -275,7 +275,7 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 </div>
 <div id="profitTop" hidden>
 <h2 class="sec">Profit</h2>
-<p class="note">Profit = Bank me aaya − Product cost (delivered units × aapki cost) − Packing (₹15/order).</p>
+<p class="note">Profit = Bank me aaya − Product cost (jitni sale ka paisa aaya × average cost) − Packing (₹15/order).</p>
 <div id="pWarn"></div>
 <div class="kpis" id="pKpis"></div>
 </div>
@@ -739,13 +739,18 @@ function renderProfit(keys, S, from, to) {
       const p = productOf(sku), c = C[p]; units += n; if (c) cogs += c * n; else { miss += n; missing.set(p, (missing.get(p) || 0) + n); }
     }
     const pack = (T(k, 'Sale', 'n') + T(k, 'Return', 'n')) * PACK;
+    // Bank money is for the sales PAID in the period, which are not the same units as the orders delivered in it
+    // (22 Oct: 1757 paid sales vs 1349 delivered units). Cost = paid sales × average cost per unit of this
+    // account's delivered orders (their product mix).
+    const paid = T(k, 'Sale', 'n'), known = units - miss;
+    if (paid && known) { cogs = cogs / known * paid; units = paid; }
     return { k, bank, cogs, pack, gst, units, miss, profit: bank - cogs - pack };
   });
   const s = f => rows.reduce((a, r) => a + r[f], 0), bank = s('bank'), profit = s('profit');
-  $('pKpis').innerHTML = [['Bank me aaya', inr(bank), 'Upar Bank Settlement wala hi number'], ['Maal ki kharid (product cost)', inr(s('cogs')), `Har delivered unit × Products tab me bhari aapki cost`],
+  $('pKpis').innerHTML = [['Bank me aaya', inr(bank), 'Upar Bank Settlement wala hi number'], ['Maal ki kharid (product cost)', inr(s('cogs')), `Jitni sale ka paisa aaya × un products ki average cost`],
     ['Packing kharcha', inr(s('pack')), `Kul parcels ${Math.round(s('pack') / PACK)} × ₹${PACK}`],
     ['Munafa (Profit)', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`, `${inr(bank)} − ${inr(s('cogs'))} − ${inr(s('pack'))}`], ['Munafa %', bank ? (profit / bank * 100).toFixed(1) + '%' : '—', 'Munafa ÷ Bank me aaya × 100'],
-    ['Delivered units (jinki cost gini)', s('units'), 'Is period ke Delivered orders ke units']]
+    ['Sale units (jinki cost gini)', s('units'), 'Is period me jitni sale ka paisa bank me aaya']]
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const top = [...missing.entries()].sort((a, b) => b[1] - a[1]);
   const stale = payTo && payTo < to && (new Date(to) - new Date(payTo)) / 864e5 > 3
