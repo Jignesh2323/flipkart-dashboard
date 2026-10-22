@@ -719,10 +719,9 @@ function gstOf(sku) {
   return gstByProduct[productOf(sku)] ?? 5;
 }
 function renderProfit(keys, S, from, to) {
-  // Cost and packing only for the days that have payment data: otherwise a month of costs is set against a few
-  // days of payments (22 Oct: payments known till 28 Sep, costs counted till 22 Oct -> profit looked 1.6%)
-  const pd = keys.flatMap(k => S[k].p.map(p => p[0])).sort();
-  if (pd.length) { if (pd.at(-1) < to) to = pd.at(-1); if (pd[0] > from) from = pd[0]; }
+  // Payments lag orders, so profit is only right when payment data covers the period (22 Oct: payments known
+  // till 28 Sep while costs counted till 22 Oct -> profit looked 1.6%). Warn instead of guessing.
+  const pd = keys.flatMap(k => S[k].p.map(p => p[0])).sort(), payTo = pd.at(-1);
   const C = window.FK_COST || {}, inP = d => d >= from && d <= to;
   $('profitTop').hidden = false;
   if (!Object.keys(C).length) { $('pKpis').innerHTML = ''; $('tProfit').innerHTML = '';
@@ -746,10 +745,12 @@ function renderProfit(keys, S, from, to) {
   $('pKpis').innerHTML = [['Bank me aaya', inr(bank), 'Upar Bank Settlement wala hi number'], ['Maal ki kharid (product cost)', inr(s('cogs')), `Har delivered unit × Products tab me bhari aapki cost`],
     ['Packing kharcha', inr(s('pack')), `Kul parcels ${Math.round(s('pack') / PACK)} × ₹${PACK}`],
     ['Munafa (Profit)', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`, `${inr(bank)} − ${inr(s('cogs'))} − ${inr(s('pack'))}`], ['Munafa %', bank ? (profit / bank * 100).toFixed(1) + '%' : '—', 'Munafa ÷ Bank me aaya × 100'],
-    ['Delivered units (jinki cost gini)', s('units'), `${dmy(from)} se ${dmy(to)} tak (jitne din ka payment data hai) ke Delivered orders ke units`]]
+    ['Delivered units (jinki cost gini)', s('units'), 'Is period ke Delivered orders ke units']]
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const top = [...missing.entries()].sort((a, b) => b[1] - a[1]);
-  $('pWarn').innerHTML = top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? '…' : ''}</div>` : '';
+  const stale = payTo && payTo < to && (new Date(to) - new Date(payTo)) / 864e5 > 3
+    ? `<div class="warn">⚠️ Bank payment ka data sirf ${dmy(payTo)} tak hai, par cost ${dmy(to)} tak ke orders ki gini hai, isliye Munafa abhi galat (kam) dikhega. Claude ko "settlement update karo" boliye.</div>` : '';
+  $('pWarn').innerHTML = stale + (top.length ? `<div class="warn">${top.length} products ki cost nahi bhari (${s('miss')} units), inka cost 0 gina gaya: ${top.slice(0, 8).map(([p, n]) => `${p} (${n})`).join(', ')}${top.length > 8 ? '…' : ''}</div>` : '');
   renderItemProfit(keys, rows, from, to);
   $('tProfit').innerHTML = '<tr><th>Account</th><th>Bank me aaya</th><th>Delivered units</th><th>Product cost</th><th>Packing</th><th>Profit</th><th>Profit %</th></tr>' +
     [...rows].sort((a, b) => b.profit - a.profit).map(r => `<tr><td>${tag(r.k)}</td><td>${inr(r.bank)}</td><td>${r.units}${r.miss ? ` <span style="color:var(--mut)">(${r.miss} bina cost)</span>` : ''}</td><td>${inr(r.cogs)}</td><td>${inr(r.pack)}</td><td class="${r.profit < 0 ? 'bad' : 'ok'}"><b>${inr(r.profit)}</b></td><td>${r.bank ? (r.profit / r.bank * 100).toFixed(1) + '%' : '—'}</td></tr>`).join('') +
