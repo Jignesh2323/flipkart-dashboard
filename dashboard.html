@@ -742,7 +742,9 @@ function renderProfit(keys, S, from, to) {
     // Bank money is for the sales PAID in the period, which are not the same units as the orders delivered in it
     // (22 Oct: 1757 paid sales vs 1349 delivered units). Cost = paid sales × average cost per unit of this
     // account's delivered orders (their product mix).
-    const paid = T(k, 'Sale', 'n'), known = units - miss;
+    // Returned units (RTO + customer return) come back to stock, so their product cost is not a loss: count only
+    // paid sales minus returns settled in the period. (Return charge itself is only on charged customer returns.)
+    const paid = Math.max(0, T(k, 'Sale', 'n') - T(k, 'Return', 'n')), known = units - miss;
     if (paid && known) { cogs = cogs / known * paid; units = paid; }
     return { k, bank, cogs, pack, gst, units, miss, profit: bank - cogs - pack };
   });
@@ -750,7 +752,7 @@ function renderProfit(keys, S, from, to) {
   $('pKpis').innerHTML = [['Bank me aaya', inr(bank), 'Upar Bank Settlement wala hi number'], ['Maal ki kharid (product cost)', inr(s('cogs')), `Jitni sale ka paisa aaya × un products ki average cost`],
     ['Packing kharcha', inr(s('pack')), `Kul parcels ${Math.round(s('pack') / PACK)} × ₹${PACK}`],
     ['Munafa (Profit)', `<span class="${profit < 0 ? 'bad' : 'ok'}">${inr(profit)}</span>`, `${inr(bank)} − ${inr(s('cogs'))} − ${inr(s('pack'))}`], ['Munafa %', bank ? (profit / bank * 100).toFixed(1) + '%' : '—', 'Munafa ÷ Bank me aaya × 100'],
-    ['Sale units (jinki cost gini)', s('units'), 'Is period me jitni sale ka paisa bank me aaya']]
+    ['Sale units (jinki cost gini)', s('units'), 'Paise wali sale − wapas aaye units (RTO + customer return, maal stock me wapas)']]
     .map(([l, v, h]) => `<div class="k"><span>${l}</span><b>${v}</b><small class="how">${h}</small></div>`).join('');
   const top = [...missing.entries()].sort((a, b) => b[1] - a[1]);
   const stale = payTo && payTo < to && (new Date(to) - new Date(payTo)) / 864e5 > 3
