@@ -28,7 +28,7 @@ const cfg = async (k: string) => (await db(`fk_cfg?key=eq.${k}&select=value`))[0
 Deno.serve(async (req) => {
   const u = new URL(req.url), slot = u.searchParams.get("slot") || "", acc = (u.searchParams.get("acc") || "").toUpperCase();
   if (req.headers.get("x-key") !== await cfg("cron_key")) return new Response("no", { status: 401 });
-  if (SLOT_DIR[slot] && u.searchParams.get("summary")) return new Response(await summary(slot));
+  if (SLOT_DIR[slot] && u.searchParams.get("summary")) return new Response(await summary(slot, !!u.searchParams.get("again")));
   if (!SLOT_DIR[slot] || !acc) return new Response("bad args", { status: 400 });
   const lines: string[] = [];
   const log = (m: string) => { lines.push(m); };
@@ -179,10 +179,12 @@ async function upload(slot: string, day: string, name: string, bytes: Uint8Array
 // label_log, failures from each account's latest cloud call of this slot, Pending Handover live from Flipkart.
 const ACCS = ["ARKZO", "VUSTICA", "BRAINLE", "KIDOCA", "TAUDI", "ZOTIMO", "PIVDO", "WISKA", "AVEDIA"];
 const ORDER = ["10-15", "11-45", "01-45"];
-async function summary(slot: string) {
+// again=1 (after the 2nd cloud run): redraw only if the first summary had failed orders (user, 30 Oct)
+async function summary(slot: string, again = false) {
   const now = ist(), day = istDay(now);
   const marks = (await db(`label_mark?day=eq.${day}&slot=eq.${slot}&select=src`)).map((m: any) => m.src);
   if (marks.includes("pc") || !marks.includes("cloud")) return "skip: PC made it / cloud did not run";
+  if (again && !marks.includes("sumfail")) return "skip: first summary was clean";
   const from = new Date(`${day}T00:00:00+05:30`).toISOString();
   const rows: any[] = await db(`label_log?at=gte.${from}&select=at,slot,acc,msg&order=id`);
   const ci = ORDER.indexOf(slot);
@@ -247,5 +249,7 @@ async function summary(slot: string) {
     }
   }
   await upload(slot, day, "Summary-cloud.pdf", await pdf.save());
+  if (fl.length) await db("label_mark", { method: "POST", headers: { Prefer: "resolution=ignore-duplicates" }, body: JSON.stringify({ day, slot, src: "sumfail" }) });
+  else if (again) await db(`label_mark?day=eq.${day}&slot=eq.${slot}&src=eq.sumfail`, { method: "DELETE" });
   return "ok";
 }
