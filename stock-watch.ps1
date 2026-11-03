@@ -9,6 +9,10 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $api  = 'https://api.flipkart.net'
 $tj = Get-Content (Join-Path $root 'targets.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $low = [ordered]@{}
+# price watch: base-price.json = price we set (acc -> sku -> price); listings now more than 5% above it go to price-watch.json
+$bp = Join-Path $root 'base-price.json'
+$base = if (Test-Path $bp) { Get-Content $bp -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
+$over = @()
 foreach ($a in Import-Csv (Join-Path $root 'accounts.csv')) {
     $acc = ($a.Name -split '_', 2)[1].ToUpper()
     $skus = @($tj.$acc.PSObject.Properties.Name); if (-not $skus.Count) { continue }
@@ -26,6 +30,8 @@ foreach ($a in Import-Csv (Join-Path $root 'accounts.csv')) {
             $L = $res.$s; if (-not $L -or $L.listing_status -ne 'ACTIVE') { continue }   # archived/inactive listings are skipped
             $q = ($L.locations | Measure-Object inventory -Sum).Sum
             if ($q -lt $Min) { $low["$acc | $s"] = [int]$q }
+            $b0 = if ($base) { $base.$acc.$s } else { $null }; $now = [double]$L.price.selling_price
+            if ($b0 -and $now -gt [double]$b0 * 1.05) { $over += @{ acc = $acc; sku = $s; base = [double]$b0; now = $now } }
         }
     }
 }
@@ -37,8 +43,11 @@ $sj = Join-Path $root 'stock.json'
 $prev = if (Test-Path $sj) { try { (Get-Content $sj -Raw | ConvertFrom-Json).items | ConvertTo-Json -Compress } catch { '' } } else { '' }
 $data = @{ at = (Get-Date).ToUniversalTime().ToString('o'); items = $items }
 [IO.File]::WriteAllText($sj, ($data | ConvertTo-Json -Depth 4 -Compress), (New-Object System.Text.UTF8Encoding $false))
-if (($items | ConvertTo-Json -Compress) -ne $prev) {
-    Push-Location $root; git add stock.json; git commit -q -m "stock status update" 2>&1 | Out-Null; git push -q 2>&1 | Out-Null; Pop-Location
+$pw = Join-Path $root 'price-watch.json'
+$prevP = if (Test-Path $pw) { try { (Get-Content $pw -Raw | ConvertFrom-Json).items | ConvertTo-Json -Compress } catch { '' } } else { '' }
+[IO.File]::WriteAllText($pw, (@{ at = $data.at; items = $over } | ConvertTo-Json -Depth 4 -Compress), (New-Object System.Text.UTF8Encoding $false))
+if (($items | ConvertTo-Json -Compress) -ne $prev -or ($over | ConvertTo-Json -Compress) -ne $prevP) {
+    Push-Location $root; git add stock.json price-watch.json; git commit -q -m "stock/price watch update" 2>&1 | Out-Null; git push -q 2>&1 | Out-Null; Pop-Location
 }
 $stf = Join-Path $root 'stock-watch-state.json'
 $old = @{}; if (Test-Path $stf) { (Get-Content $stf -Raw | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $old[$_.Name] = $_.Value } }

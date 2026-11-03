@@ -353,6 +353,9 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <div class="bar"><select id="prAcc"></select><select id="prKind"><option value="">Kam + Zyada</option><option value="low">⬆ Settlement kam</option><option value="high">⬇ Settlement zyada</option></select>
 <input type="search" id="prFind" placeholder="🔍 SKU dhoondhiye" style="flex:1;min-width:160px"><span id="prCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw" style="max-height:600px"><table id="tPr"></table></div></div>
+<div class="card"><h3>📈 Price 5% se zyada badh gayi</h3>
+<p class="note" id="pwNote" style="margin:14px 18px 0"></p>
+<div class="tw" style="max-height:500px"><table id="tPw"></table></div></div>
 <div class="card"><h3>🔍 Item ka Min/Max target</h3>
 <div class="bar"><input type="search" id="tgFind" placeholder="🔍 Item ka naam ya SKU likhiye (jaise sheep hair cutter)" style="flex:1;min-width:160px"><span id="tgCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw" style="max-height:600px"><table id="tTg"></table></div></div>
@@ -842,7 +845,15 @@ function makeDemo() {
     if (Math.random() < .1) r.push({ acc, itemId: 'I' + i, date: d, sku, type: Math.random() < .6 ? 'customer_return' : 'courier_return', reason: rs[Math.floor(Math.random() * 4)] }); }
   return { generated: new Date().toISOString().slice(0, 16).replace('T', ' '), orders: o, returns: r, status: Array.from({ length: 9 }, (_, i) => ({ acc: 'Account' + (i + 1), ok: true, msg: 'demo' })) };
 }
-render(); renderSettle(); renderCostEditor(); loadCosts(); loadPrice(); loadStock();
+render(); renderSettle(); renderCostEditor(); loadCosts(); loadPrice(); loadStock(); loadPriceWatch();
+// Price tab: listings whose price is more than 5% above base-price.json (price set on 3 Nov), from stock-watch.ps1 hourly
+async function loadPriceWatch() {
+  let S; try { S = await getJ('price-watch.json'); } catch (e) { $('pwNote').textContent = 'Abhi data nahi hai.'; return; }
+  const L = (S.items || []).map(x => ({ ...x, p: Math.round((x.now / x.base - 1) * 100) })).sort((a, b) => b.p - a.p);
+  $('pwNote').textContent = `Last check: ${new Date(S.at).toLocaleString('en-IN')} (har ghante). Hamari set ki hui price se 5% se zyada: ${L.length} listing.`;
+  $('tPw').innerHTML = '<tr><th>Account</th><th style="text-align:center">SKU</th><th>Set price</th><th>Abhi price</th><th>Badhat</th></tr>' +
+    L.map(x => `<tr><td>${tag(x.acc)}</td><td style="text-align:center">${String(x.sku).replace(/</g, '&lt;')}</td><td>₹${x.base}</td><td>₹${x.now}</td><td class="bad">+${x.p}%</td></tr>`).join('');
+}
 // Stock tab + red alert: stock.json is written and pushed hourly by stock-watch.ps1
 async function loadStock() {
   let S; try { S = await getJ('stock.json'); } catch (e) { return; }
