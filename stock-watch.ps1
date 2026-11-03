@@ -13,6 +13,10 @@ $low = [ordered]@{}
 $bp = Join-Path $root 'base-price.json'
 $base = if (Test-Path $bp) { Get-Content $bp -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 $over = @()
+# price-rise check: price-plan.json = listings to be raised 5% (acc -> sku -> old price); done when price >= old * 1.04
+$pp = Join-Path $root 'price-plan.json'
+$plan = if (Test-Path $pp) { Get-Content $pp -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
+$rDone = 0; $rLeft = @()
 foreach ($a in Import-Csv (Join-Path $root 'accounts.csv')) {
     $acc = ($a.Name -split '_', 2)[1].ToUpper()
     $skus = @($tj.$acc.PSObject.Properties.Name); if (-not $skus.Count) { continue }
@@ -32,6 +36,8 @@ foreach ($a in Import-Csv (Join-Path $root 'accounts.csv')) {
             if ($q -lt $Min) { $low["$acc | $s"] = [int]$q }
             $b0 = if ($base) { $base.$acc.$s } else { $null }; $now = [double]$L.price.selling_price
             if ($b0 -and $now -gt [double]$b0 * 1.05) { $over += @{ acc = $acc; sku = $s; base = [double]$b0; now = $now } }
+            $p0 = if ($plan) { $plan.$acc.$s } else { $null }
+            if ($p0) { if ($now -ge [double]$p0 * 1.04) { $rDone++ } else { $rLeft += @{ acc = $acc; sku = $s; base = [double]$p0; now = $now } } }
         }
     }
 }
@@ -44,9 +50,10 @@ $prev = if (Test-Path $sj) { try { (Get-Content $sj -Raw | ConvertFrom-Json).ite
 $data = @{ at = (Get-Date).ToUniversalTime().ToString('o'); items = $items }
 [IO.File]::WriteAllText($sj, ($data | ConvertTo-Json -Depth 4 -Compress), (New-Object System.Text.UTF8Encoding $false))
 $pw = Join-Path $root 'price-watch.json'
-$prevP = if (Test-Path $pw) { try { (Get-Content $pw -Raw | ConvertFrom-Json).items | ConvertTo-Json -Compress } catch { '' } } else { '' }
-[IO.File]::WriteAllText($pw, (@{ at = $data.at; items = $over } | ConvertTo-Json -Depth 4 -Compress), (New-Object System.Text.UTF8Encoding $false))
-if (($items | ConvertTo-Json -Compress) -ne $prev -or ($over | ConvertTo-Json -Compress) -ne $prevP) {
+$prevP = ''; $prevL = -1
+if (Test-Path $pw) { try { $pj = Get-Content $pw -Raw | ConvertFrom-Json; $prevP = $pj.items | ConvertTo-Json -Compress; $prevL = @($pj.rise.left).Count } catch { } }
+[IO.File]::WriteAllText($pw, (@{ at = $data.at; items = $over; rise = @{ done = $rDone; left = $rLeft } } | ConvertTo-Json -Depth 5 -Compress), (New-Object System.Text.UTF8Encoding $false))
+if (($items | ConvertTo-Json -Compress) -ne $prev -or ($over | ConvertTo-Json -Compress) -ne $prevP -or $rLeft.Count -ne $prevL) {
     Push-Location $root; git add stock.json price-watch.json; git commit -q -m "stock/price watch update" 2>&1 | Out-Null; git push -q 2>&1 | Out-Null; Pop-Location
 }
 $stf = Join-Path $root 'stock-watch-state.json'

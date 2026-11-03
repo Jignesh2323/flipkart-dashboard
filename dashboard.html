@@ -353,6 +353,9 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <div class="bar"><select id="prAcc"></select><select id="prKind"><option value="">Kam + Zyada</option><option value="low">⬆ Settlement kam</option><option value="high">⬇ Settlement zyada</option></select>
 <input type="search" id="prFind" placeholder="🔍 SKU dhoondhiye" style="flex:1;min-width:160px"><span id="prCnt" style="font-size:12.5px;color:var(--mut)"></span></div>
 <div class="tw" style="max-height:600px"><table id="tPr"></table></div></div>
+<div class="card"><h3>⏫ 5% price badhane ka kaam (promotion se pehle)</h3>
+<p class="note" id="rsNote" style="margin:14px 18px 0"></p>
+<div class="tw" style="max-height:500px"><table id="tRs"></table></div></div>
 <div class="card"><h3>📈 Price 5% se zyada badh gayi</h3>
 <p class="note" id="pwNote" style="margin:14px 18px 0"></p>
 <div class="tw" style="max-height:500px"><table id="tPw"></table></div></div>
@@ -853,6 +856,11 @@ async function loadPriceWatch() {
   $('pwNote').textContent = `Last check: ${new Date(S.at).toLocaleString('en-IN')} (har ghante). Hamari set ki hui price se 5% se zyada: ${L.length} listing.`;
   $('tPw').innerHTML = '<tr><th>Account</th><th style="text-align:center">SKU</th><th>Set price</th><th>Abhi price</th><th>Badhat</th></tr>' +
     L.map(x => `<tr><td>${tag(x.acc)}</td><td style="text-align:center">${String(x.sku).replace(/</g, '&lt;')}</td><td>₹${x.base}</td><td>₹${x.now}</td><td class="bad">+${x.p}%</td></tr>`).join('');
+  // rise check: listings of price-plan.json not yet 4%+ above their old price
+  const R = S.rise || { done: 0, left: [] }, left = (R.left || []).map(x => ({ ...x, p: Math.round((x.now / x.base - 1) * 1000) / 10 })).sort((a, b) => a.p - b.p);
+  $('rsNote').textContent = `✅ ${R.done} listing ki price badh gayi, ⏳ ${left.length} baaki. Sab badh jayein tab 5% promotion lagega. (har ghante check)`;
+  $('tRs').innerHTML = '<tr><th>Account</th><th style="text-align:center">SKU</th><th>Purani price</th><th>Abhi price</th><th>Badhi</th></tr>' +
+    left.map(x => `<tr><td>${tag(x.acc)}</td><td style="text-align:center">${String(x.sku).replace(/</g, '&lt;')}</td><td>₹${x.base}</td><td>₹${x.now}</td><td>${x.p > 0 ? '+' : ''}${x.p}%</td></tr>`).join('');
 }
 // Stock tab + red alert: stock.json is written and pushed hourly by stock-watch.ps1
 async function loadStock() {
