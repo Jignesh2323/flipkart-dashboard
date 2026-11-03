@@ -258,10 +258,12 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <button role="tab" data-tab="products" aria-selected="false"><span class="gi">📦</span>Products</button>
 <button role="tab" data-tab="mapping" aria-selected="false"><span class="gi">🔗</span>Mapping</button>
 <button role="tab" data-tab="price" aria-selected="false"><span class="gi">🏷️</span>Price</button>
+<button role="tab" data-tab="stock" aria-selected="false"><span class="gi">📉</span>Stock<b id="stBadge" style="display:none;margin-left:5px;background:#d93025;color:#fff;border-radius:9px;padding:0 6px;font-size:11px"></b></button>
 <button role="tab" data-tab="settings" aria-selected="false"><span class="gi">⚙️</span>Settings</button>
 </nav>
 <div class="bar" id="period" role="group" aria-label="Period"><button type="button" data-d="30">30 Days</button><button type="button" data-d="60">60 Days</button><button type="button" data-d="90">90 Days</button><button type="button" data-d="180">180 Days</button><select id="fAcc" hidden></select><input type="hidden" id="fFrom"><input type="hidden" id="fTo"></div></div>
 <div id="note"></div>
+<div id="stAlert" style="display:none;margin:8px 0;padding:10px 14px;border-radius:10px;background:#fde7e7;color:#a50e0e;font-weight:600;cursor:pointer"></div>
 <div class="accbar"><span class="lbl">Accounts:</span><div class="chips" id="chips" aria-label="Account"></div></div>
 </div>
 
@@ -356,6 +358,11 @@ html.locked #lock{display:flex;position:fixed;inset:0;z-index:9999;align-items:c
 <div class="tw" style="max-height:600px"><table id="tTg"></table></div></div>
 </section>
 
+<section class="tab" data-tab="stock" hidden>
+<div class="card"><h3>📉 Low stock (10 se kam) / Out of stock</h3>
+<p class="note" id="stNote" style="margin:14px 18px 0"></p>
+<div class="tw" style="max-height:700px"><table id="tSt"></table></div></div>
+</section>
 <section class="tab" data-tab="settings" hidden>
 <div class="card"><h3>🎨 Rang aur Theme</h3>
 <div class="setrow"><label>Mode</label><div class="bar" id="setMode"><button type="button" data-m="light">☀️ Light</button><button type="button" data-m="dark">🌙 Dark</button></div></div>
@@ -835,7 +842,17 @@ function makeDemo() {
     if (Math.random() < .1) r.push({ acc, itemId: 'I' + i, date: d, sku, type: Math.random() < .6 ? 'customer_return' : 'courier_return', reason: rs[Math.floor(Math.random() * 4)] }); }
   return { generated: new Date().toISOString().slice(0, 16).replace('T', ' '), orders: o, returns: r, status: Array.from({ length: 9 }, (_, i) => ({ acc: 'Account' + (i + 1), ok: true, msg: 'demo' })) };
 }
-render(); renderSettle(); renderCostEditor(); loadCosts(); loadPrice();
+render(); renderSettle(); renderCostEditor(); loadCosts(); loadPrice(); loadStock();
+// Stock tab + red alert: stock.json is written and pushed hourly by stock-watch.ps1
+async function loadStock() {
+  let S; try { S = await getJ('stock.json'); } catch (e) { return; }
+  const L = (S.items || []).sort((a, b) => a.q - b.q || a.acc.localeCompare(b.acc)), oos = L.filter(x => x.q === 0).length;
+  $('stNote').textContent = `Last check: ${new Date(S.at).toLocaleString('en-IN')} (har ghante). ${oos} out of stock, ${L.length - oos} low.`;
+  $('tSt').innerHTML = '<tr><th>Account</th><th style="text-align:center">SKU</th><th>Stock</th></tr>' + L.map(x => `<tr${x.q === 0 ? ' style="background:#fde7e7"' : ''}><td>${tag(x.acc)}</td><td style="text-align:center">${String(x.sku).replace(/</g, '&lt;')}</td><td${x.q === 0 ? ' class="bad"' : ''}>${x.q === 0 ? 'Out of stock' : x.q}</td></tr>`).join('');
+  if (L.length) { const b = $('stBadge'); b.textContent = L.length; b.style.display = '';
+    const a = $('stAlert'); a.textContent = `⚠️ ${oos} listing out of stock, ${L.length - oos} listing me 10 se kam stock — Stock tab dekhiye`; a.style.display = '';
+    a.onclick = () => document.querySelector('nav.tabs [data-tab=stock]').click(); }
+}
 // Price tab: settlement-in-target status per account, written to Supabase fk_blob 'settlement_status'
 // after each settlement run (counted from Seller Hub's live settlement, not estimated).
 async function loadPrice() {
