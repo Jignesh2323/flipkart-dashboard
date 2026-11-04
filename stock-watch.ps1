@@ -35,7 +35,7 @@ foreach ($a in Import-Csv (Join-Path $root 'accounts.csv')) {
             $q = ($L.locations | Measure-Object inventory -Sum).Sum
             if ($q -lt $Min) { $low["$acc | $s"] = [int]$q }
             $b0 = if ($base) { $base.$acc.$s } else { $null }; $now = [double]$L.price.selling_price
-            if ($b0 -and $now -gt [double]$b0 * 1.05) { $over += @{ acc = $acc; sku = $s; base = [double]$b0; now = $now } }
+            if ($b0 -and $now -gt [double]$b0 * 1.06) { $over += @{ acc = $acc; sku = $s; base = [double]$b0; now = $now } }
             $p0 = if ($plan) { $plan.$acc.$s } else { $null }
             if ($p0) { if ($now -ge [double]$p0 * 1.04) { $rDone++ } else { $rLeft += @{ acc = $acc; sku = $s; base = [double]$p0; now = $now } } }
         }
