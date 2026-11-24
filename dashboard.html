@@ -885,7 +885,7 @@ async function loadPrice() {
   const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '-';
   $('prKpis').innerHTML = [['Kul active listings', tot, 'Saare 9 accounts'], ['Target me', `${inR} (${pct(inR, tot)})`, 'Settlement Min/Max ke andar'],
     ['Settlement kam (badhani)', low, 'Roz 2 × 5% badhti hai'], ['Settlement zyada (ghatani)', high, 'Roz 5% ghatti hai']]
-    .map(([l, v, h]) => `<div class="k"><span>${l}</span><b${/kam|zyada/.test(l) && +v > 0 ? ' class="bad"' : ''}>${v}</b><small class="how">${h}</small></div>`).join('');
+    .map(([l, v, h], i) => `<div class="k" data-pk="${['all', 'in', 'low', 'high'][i]}" style="cursor:pointer" title="Click: listing dikhaiye"><span>${l}</span><b${/kam|zyada/.test(l) && +v > 0 ? ' class="bad"' : ''}>${v}</b><small class="how">${h}</small></div>`).join('');
   const dt = x => new Date(x).toLocaleString('en-IN');
   $('prNote').textContent = `Last update: ${dt(S.at)}. Target = settlement-target-product.xlsx ka Min/Max (±₹5). ` + (S.source === 'api'
     ? `Subah ki jaanch: aaj ki price − Seller Hub fee (${S.feesAt ? dt(S.feesAt) : '-'} wali). Fee badli ho to agle Seller Hub run par sahi ho jayega.`
@@ -913,8 +913,16 @@ async function loadPrice() {
   const titleOf = (a, sku) => { const l = (window.FK_LIST || []).find(x => x.sku === sku && x.acc.toUpperCase().endsWith(a)); if (l?.title) return l.title;
     const t = D.titles || {}, k = Object.keys(t).find(k => k.toUpperCase().endsWith('_' + a + '|' + sku.toUpperCase())); return k ? t[k] : ''; };
   const all = Object.entries(T).flatMap(([a, m]) => Object.entries(m || {}).map(([sku, v]) => ({ a, sku, mn: v[0], mx: v[1] })));
+  let tMode = '';  // '' = search, 'all' = every listing, 'in' = only in target (set by clicking a KPI box)
   const drawT = () => {
     const q = ($('tgFind').value || '').trim().toUpperCase();
+    if (!q && tMode) {
+      const L = all.filter(x => tMode === 'all' || !out.has(x.a + '|' + x.sku)).sort((x, y) => x.a.localeCompare(y.a) || x.sku.localeCompare(y.sku));
+      $('tgCnt').textContent = L.length + (tMode === 'all' ? ' listings (sab)' : ' listings target me');
+      $('tTg').innerHTML = '<tr><th>Account</th><th style="text-align:center">SKU</th><th>Min ₹</th><th>Max ₹</th><th>Abhi</th></tr>' +
+        L.map(x => { const o = out.get(x.a + '|' + x.sku); return `<tr><td>${tag(x.a)}</td><td style="text-align:center">${esc(x.sku)}</td><td>₹${x.mn}</td><td>₹${x.mx}</td>` +
+          `<td${o ? ' class="bad"' : ''}>${o ? `${o.k === 'low' ? '⬆' : '⬇'} ₹${o.e}` : '✅ Target me'}</td></tr>`; }).join('');
+      return; }
     if (!q) { $('tgCnt').textContent = all.length + ' listings ka target set hai'; $('tTg').innerHTML = '<tr><td style="padding:14px;color:var(--mut)">Upar item ka naam ya SKU likhiye.</td></tr>'; return; }
     const words = q.split(/\s+/), L = all.map(x => ({ ...x, title: titleOf(x.a, x.sku) }))
       .filter(x => words.every(w => (x.sku + ' ' + x.title).toUpperCase().includes(w))).sort((x, y) => x.a.localeCompare(y.a) || x.sku.localeCompare(y.sku));
@@ -924,7 +932,13 @@ async function loadPrice() {
         return `<tr><td>${tag(x.a)}</td><td style="text-align:center">${esc(x.sku)}</td><td style="max-width:320px;white-space:normal">${esc(x.title)}</td><td>₹${x.mn}</td><td>₹${x.mx}</td>` +
           `<td${o ? ' class="bad"' : ''}>${o ? `${o.k === 'low' ? '⬆' : '⬇'} ₹${o.e}` : '✅ Target me'}</td></tr>`; }).join('');
   };
-  $('tgFind').oninput = drawT; drawT();
+  $('tgFind').oninput = () => { tMode = ''; drawT(); }; drawT();
+  // KPI boxes: Kam/Zyada -> filter the "Target se bahar" table; Kul/Target me -> list in the target table
+  document.querySelectorAll('#prKpis [data-pk]').forEach(el => el.onclick = () => {
+    const k = el.dataset.pk;
+    if (k === 'low' || k === 'high') { $('prKind').value = k; $('prAcc').value = ''; $('prFind').value = ''; draw(); $('tPr').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else { tMode = k; $('tgFind').value = ''; drawT(); $('tTg').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
 }
 // Mapping tab: one row per account + SKU, status of other sellers saved online (fk_mapping)
 let MAP = {};
